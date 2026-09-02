@@ -204,7 +204,7 @@ Implementation result:
 - Round 3 — module cohesion: critique found `mission.ts` mixed the public domain language with a 280-line transition engine (489 lines total). Change: schemas/types remain in `mission.ts`; invariants and pure transitions moved to `mission-transition.ts`. Focused tests passed 22/22 and the build passed.
 - Round 4 — functions and assertions: critique found tuple casts and an unmanaged copy-feedback timer. Change: named tuple converters replaced casts; clipboard success/failure now drives feedback without a timer. Focused tests passed 10/10 and the build passed.
 - Round 5 — React and physical UI: critique found map semantics, rotated marker numbers, and sub-44px map controls. Change: added an accessible region, readable circular markers, and 44px brand/source/map/zoom targets. E2E passed and final desktop/mobile screenshots were inspected again.
-- Public deployment, public repository publication, real ChatGPT/Chrome discovery, video recording, and Devpost submission remain explicitly pending manual release actions in README.
+- The public repository and MIT license are verified at `github.com/gmoskal/sidequest-webmcp`. Public deployment, real ChatGPT/Chrome discovery, video recording, and Devpost submission remain explicitly pending manual release actions in README.
 
 ## Risks and dependencies
 

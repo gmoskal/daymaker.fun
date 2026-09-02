@@ -9,12 +9,12 @@ This repository implements the Baška Voda demo for [The WebMCP Challenge](https
 ## Submission status
 
 - Deployment: pending
-- Public repository URL: pending
+- Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
 - Demo video: pending
 - License: MIT
 - Submission language: English
 
-The application, tests, screenshots, license, and hosting configuration are complete locally. A public URL, public repository, and public YouTube demo under three minutes still require the participant's hosting and Devpost accounts.
+The application, tests, screenshots, license, hosting configuration, and public repository are complete. A public deployment and public YouTube demo under three minutes still require the participant's hosting and Devpost accounts.
 
 ## Why WebMCP
 
@@ -130,7 +130,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 
 Sidequest is intentionally a focused hackathon prototype: one deterministic mission, local browser persistence, English UI, overview mapping, and no authentication or multi-user sync. It does not provide live GPS, live weather, directions, reservations, automatic web research, or a custom chat interface. OpenStreetMap tiles require network access and are not an offline guarantee.
 
-WebMCP remains progressive enhancement. Actual discovery in ChatGPT/Chrome, public deployment, repository publication, the demo video, and Devpost submission are manual release steps.
+WebMCP remains progressive enhancement. Actual discovery in ChatGPT/Chrome, public deployment, the demo video, and Devpost submission are manual release steps.
 
 ## References
 

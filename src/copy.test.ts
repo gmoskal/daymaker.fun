@@ -16,6 +16,12 @@ describe("English product copy", () => {
     expect(COPY.promptProtocol).toContain("If the live board is blank")
     expect(COPY.promptProtocol).toContain("sessionUrl")
     expect(COPY.promptProtocol).toContain("[Open updated Sidequest plan]")
+    expect(COPY.promptProtocol).toContain(
+      "same language as the person's free-form brief or latest Needs request",
+    )
+    expect(COPY.promptProtocol).toContain(
+      "proper names, source titles, and exact tool-returned values unchanged",
+    )
     expect(COPY.planningInstruction).toContain("generate a Proposed schedule")
     expect(COPY.planningInstruction).toContain("primary city or area")
     expect(COPY.planningInstruction).toContain("short, specific, playful title")

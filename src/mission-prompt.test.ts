@@ -83,6 +83,23 @@ describe("mission prompt", () => {
     expect(prompt).toContain("final successful write")
   })
 
+  it("keeps the agent response in the person's request language", () => {
+    const mission = createBlankMission(
+      new Date("2026-09-03T10:15:00Z"),
+      "Europe/Warsaw",
+    )
+    mission.context.brief = "Find great coffee before my flight."
+    const prompt = toMissionPrompt(mission)
+
+    expect(prompt).toContain(
+      "all user-facing questions, progress summaries, and the final response",
+    )
+    expect(prompt).toContain(
+      "use the language of the person's latest message",
+    )
+    expect(prompt).toContain("Do not translate the exact session link")
+  })
+
   it("copies planning input according to its stage", () => {
     const blank = createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC")
     blank.context.brief = "Find a quiet swim."

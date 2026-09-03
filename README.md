@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.4
-- Production deployment: v0.2.4 live
+- Local release: v0.2.5
+- Production deployment: v0.2.4 live; v0.2.5 pending
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -22,6 +22,7 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 2. Choose **Copy to ChatGPT** and paste the self-contained handoff into ChatGPT on mobile or desktop.
 3. ChatGPT continues in Work, opens the public Sidequest `/needs` page, and calls `get_mission_state`. If that browser opens a blank board, it initializes it from the copied planning input instead of discarding the description because its local revision differs.
 4. ChatGPT asks concise questions if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** to the page it opened with Site Tools. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated Sidequest plan** link.
+   Questions, progress updates, and the final answer use the language of your request; Sidequest keeps proper names, sources, tool values, and the session link unchanged.
 5. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Must keep** / **Can adapt**.
 6. A human Needs edit unlocks **Copy changes to ChatGPT**. Paste it to regenerate the proposal. ChatGPT returns a fresh link after that iteration as well.
 7. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it to review the generated title, date, primary city/area, and items. The proposal is read-only for people: click anywhere on one or more rows to expand details and map links. The complete proposal also has one Google Maps route.

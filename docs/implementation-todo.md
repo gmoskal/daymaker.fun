@@ -38,6 +38,7 @@
 - [x] 17. Make Proposed schedule a read-only expandable result
 - [x] 18. Align the add-Need interaction with the list
 - [x] 19. Transfer a complete session through a shareable URL
+- [~] 20. Keep ChatGPT's response in the person's language
 
 ## Blocking decisions accepted in this plan
 
@@ -1178,6 +1179,66 @@ Implementation result:
   and portable URL result copy. A production Site Tool write returned a
   608-character link for revision 1; a separate empty browser imported it at
   `/schedule`, stored revision 1, and cleaned the fragment from the address.
+
+### 20 [~] Keep ChatGPT's response in the person's language
+
+Description: Make the copied planning protocol keep questions, progress
+summaries, and the final answer in the language of the person's request, even
+though Sidequest's protocol wrapper and UI copy remain English.
+
+Acceptance criteria:
+
+- AC-1: The copied protocol tells ChatGPT to use the language of the person's
+  free-form brief or latest Needs request for all user-facing replies.
+- AC-2: If that request is mixed-language or ambiguous, ChatGPT is instructed
+  to follow the language of the person's latest message.
+- AC-3: Proper names, source titles, and exact tool-returned values remain
+  unchanged, including the final clickable session URL.
+- AC-4: The rule is defined once in the English-only `src/copy.ts` source of
+  truth; no parallel locale state or UI localization mechanism is introduced.
+
+Tests:
+
+- AC-1/3/4 -> unit: `copy.test.ts > keeps the agent handoff and mission
+  positioning explicit` asserts the response-language and unchanged-value
+  contract directly on `COPY.promptProtocol`.
+- AC-1/2/3 -> integration: `mission-prompt.test.ts > keeps the agent response
+  in the person's request language` verifies that the complete copied prompt
+  carries the fallback and preservation rules.
+- A separate translation/codegen gate is skipped because P0 has one declared
+  UI locale and the change instructs the external agent how to select its
+  response language; it does not add a localized UI string catalog.
+
+Sources/References: `src/copy.ts`, `src/copy.test.ts`,
+`src/mission-prompt.test.ts`, `src/mission-prompt.ts`.
+
+Before implementation gate:
+
+- [x] Language source fixed: the person's brief/Needs request, not the English
+  Sidequest protocol wrapper.
+- [x] Fallback fixed: the person's latest message when the request is mixed or
+  ambiguous.
+- [x] Named unit and integration assertions observed red before production
+  copy changes.
+
+Implementation result:
+
+- Behavioral red: `npm run test -- src/copy.test.ts src/mission-prompt.test.ts`
+  ran 7 tests and failed only the two new language-contract assertions because
+  the generated handoff did not yet contain the response-language rules.
+- Focused green: the same command passed 7/7 tests after the protocol became
+  explicit about response language, mixed-language fallback, and values that
+  must remain unchanged.
+- Full local gate: `npm run check` passed 74/74 Vitest tests, the strict
+  TypeScript/Vite production build, and 5/5 Chromium flows.
+- Mature-TypeScript round 1 found no Domain State or transition to add: response
+  language is an agent-output rule, not persisted mission truth. Round 2 kept
+  language selection at the copied handoff boundary instead of leaking it into
+  React or the store. Round 3 retained `COPY.promptProtocol` as the one owner
+  instead of adding a language service or module. Round 4 kept the rule as
+  direct prose rather than introducing a helper, type, or parser with no second
+  use. Round 5 found no React, component, state, effect, or file-structure change
+  justified by this contract-only update.
 
 ## Risks and dependencies
 

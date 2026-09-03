@@ -10,7 +10,6 @@ import {
   isDemoMissionId,
   type DemoMissionId,
 } from "./domain/seed"
-import { toMissionPrompt } from "./mission-prompt"
 import {
   DEFAULT_RESEARCH_DEPTH,
   type ResearchDepth,
@@ -42,7 +41,7 @@ export const missionPathFor = (panel: MissionPanel) =>
   MISSION_PANELS.find((item) => item.id === panel)?.path ?? "/needs"
 
 export type ViewAction =
-  | { brief?: string; prompt: string; type: "CopyPrompt" }
+  | { brief?: string; type: "CopyPrompt" }
   | { type: "CopySessionLink" }
   | { demoId?: DemoMissionId; type: "LoadDemo" }
   | { type: "NewPlan" }
@@ -80,7 +79,6 @@ type PlanWorkspace = {
   emptyHint: string
   heading: string
   mapUrl: string | null
-  prompt: string
   stops: TimelineStopScreen[]
   type: "plan"
 }
@@ -91,7 +89,6 @@ type ContextWorkspace = {
   canShareSession: boolean
   constraints: ConstraintScreen[]
   copyLabel: string
-  prompt: string
   researchDepth: ResearchDepth
   stage: Mission["context"]["stage"]
   type: "context"
@@ -270,7 +267,6 @@ const workspaceFor = (
   researchDepth: ResearchDepth,
   copiedResearchDepth: ResearchDepth,
 ): MissionWorkspaceScreen => {
-  const prompt = toMissionPrompt(mission, researchDepth)
   const latestNeedsEvent = mission.events.find(
     (event) =>
       event.type === "constraints_updated" || event.type === "context_updated",
@@ -293,7 +289,6 @@ const workspaceFor = (
           },
           route,
         ),
-        prompt,
         stops: timeline,
         type: "plan",
       }
@@ -316,7 +311,6 @@ const workspaceFor = (
             : copied
               ? COPY.copiedChanges
               : COPY.copyChanges,
-        prompt,
         researchDepth,
         stage: mission.context.stage,
         type: "context",

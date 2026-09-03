@@ -10,6 +10,7 @@ import {
 } from "react"
 
 import { COPY } from "./copy"
+import { MAX_MISSION_BRIEF_LENGTH } from "./domain/mission"
 import {
   RESEARCH_DEPTHS,
   researchDepthAt,
@@ -161,7 +162,7 @@ const PlanPanel = ({ dispatch, workspace }: {
             className="control copy-action"
             disabled={!workspace.canCopy}
             onClick={() =>
-              dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
+              dispatch({ type: "CopyPrompt" })
             }
             type="button"
           >
@@ -311,7 +312,6 @@ const InlineAdd = ({
 type BriefEditorProps = {
   copyLabel: string
   dispatch: (action: ViewAction) => void
-  prompt: string
   researchDepth: ResearchDepth
   value: string
 }
@@ -325,7 +325,6 @@ type BriefScroll = {
 const BriefEditor = ({
   copyLabel,
   dispatch,
-  prompt,
   researchDepth,
   value,
 }: BriefEditorProps) => {
@@ -378,7 +377,7 @@ const BriefEditor = ({
           <textarea
             aria-label={COPY.planningBrief}
             aria-required="true"
-            maxLength={600}
+            maxLength={MAX_MISSION_BRIEF_LENGTH}
             onBlur={commit}
             onChange={(event) => setBrief(event.target.value)}
             onScroll={readScroll}
@@ -410,7 +409,7 @@ const BriefEditor = ({
         <button
           className="control copy-action"
           disabled={brief.trim() === ""}
-          onClick={() => dispatch({ brief, prompt, type: "CopyPrompt" })}
+          onClick={() => dispatch({ brief, type: "CopyPrompt" })}
           type="button"
         >
           {currentCopyLabel}
@@ -516,7 +515,6 @@ const ContextPanel = ({
         <BriefEditor
           copyLabel={workspace.copyLabel}
           dispatch={dispatch}
-          prompt={workspace.prompt}
           researchDepth={workspace.researchDepth}
           value={workspace.brief}
         />
@@ -573,9 +571,7 @@ const ContextPanel = ({
             <button
               className="control copy-action"
               disabled={!workspace.canCopy}
-              onClick={() =>
-                dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
-              }
+              onClick={() => dispatch({ type: "CopyPrompt" })}
               type="button"
             >
               {workspace.copyLabel}

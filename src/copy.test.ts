@@ -16,14 +16,16 @@ describe("English product copy", () => {
     expect(allCopy).not.toContain("Must-haves")
     expect(COPY.promptOpen).toContain("not only in chat")
     expect(COPY.promptOpen).toContain("continue in Work")
-    expect(COPY.promptProtocol).toContain(
-      "planning URL clears the previous browser-local board",
+    expect(COPY.promptCreateProtocol).toContain(
+      "one-shot URL clears any previous browser-local board",
     )
-    expect(COPY.promptProtocol).toContain(
-      "Do not inspect, compare, preserve, or clear an earlier plan with a tool call",
+    expect(COPY.promptUpdateInstruction).toContain(
+      "Do not clear the board",
     )
-    expect(COPY.promptProtocol).toContain("sessionUrl")
-    expect(COPY.promptProtocol).toContain("[Open updated Sidequest plan]")
+    expect(COPY.promptUpdateProtocol).toContain("replacePlan: false")
+    expect(COPY.promptUpdateProtocol).toContain("needsDelta")
+    expect(COPY.promptResultProtocol).toContain("sessionUrl")
+    expect(COPY.promptResultProtocol).toContain("[Open updated Daymaker plan]")
     expect(allCopy).toContain("LANGUAGE REQUIREMENT")
     expect(allCopy).toContain(
       "Do not follow the language of the surrounding conversation",
@@ -40,7 +42,7 @@ describe("English product copy", () => {
     expect(allCopy).toContain(
       "proper names, source titles, and exact tool-returned values unchanged",
     )
-    expect(COPY.planningInstruction).toContain("generate a Proposed schedule")
+    expect(COPY.promptCreateProtocol).toContain("Generate the complete Proposed schedule")
     expect(COPY.planningInstruction).toContain("primary city or area")
     expect(COPY.planningInstruction).toContain("short, specific, playful title")
     expect(COPY.planningInstruction).toContain("two ways to iterate")
@@ -48,10 +50,10 @@ describe("English product copy", () => {
     expect(COPY.planningInstruction).toContain("feedback directly in this chat")
     expect(COPY.planningInstruction).toContain("share the link with friends")
     expect(COPY.planningInstruction).toContain(
-      "selected research-depth contract",
+      "selected effort contract",
     )
     expect(COPY.planningInstruction).toContain(
-      "Do not send intermediate progress narration",
+      "without intermediate progress narration",
     )
     expect(COPY.copyPrompt).toBe("Copy to ChatGPT")
     expect(COPY.copyChanges).toBe("Copy changes to ChatGPT")

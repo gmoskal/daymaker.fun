@@ -44,7 +44,7 @@ describe("mission presenter", () => {
     const screen = presentMission(input)
 
     expect(screen.updateMarker).toBe(
-      "v0.3.3 · updated 3 Sep 2026 · 15:42 CEST",
+      "v0.4.0 · updated 3 Sep 2026 · 15:42 CEST",
     )
   })
 
@@ -130,11 +130,6 @@ describe("mission presenter", () => {
     expect(contextScreen.workspace.copyLabel).toBe("Changes copied for ChatGPT")
     expect(contextScreen.workspace.canCopy).toBe(false)
     expect(contextScreen.workspace.stage).toBe("needs")
-    expect(contextScreen.workspace.prompt).toContain(
-      '"missionId": "generated-schedule-fixture"',
-    )
-    expect(contextScreen.workspace.prompt).toContain('"lockedCommitments"')
-    expect(contextScreen.workspace.prompt).not.toContain('"events"')
     expect(contextScreen.webMcp).toEqual({
       label: "Site tools connected",
       tone: "positive",

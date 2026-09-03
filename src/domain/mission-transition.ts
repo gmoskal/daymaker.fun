@@ -2,7 +2,6 @@ import {
   AddBoardItemInputSchema,
   AddMissionConstraintInputSchema,
   AddMissionStopInputSchema,
-  PERSONAL_MISSION_ID,
   ReorderMissionConstraintsInputSchema,
   ReorderMissionStopsInputSchema,
   RemoveMissionConstraintInputSchema,
@@ -135,7 +134,6 @@ const applyContext = ({
         ...mission,
         date: context.currentTime.slice(0, 10),
         events: [],
-        id: PERSONAL_MISSION_ID,
         stops: [],
       }
     : mission
@@ -159,9 +157,7 @@ const applyContext = ({
         })),
         stage: "needs",
       },
-      ...(replacePlan
-        ? { planIteration: mission.planIteration + 1 }
-        : {}),
+      planIteration: mission.planIteration + 1,
       timezone,
       title,
     },
@@ -190,12 +186,27 @@ const applyStop = ({
       `${stop.title} is a locked commitment and cannot change status.`,
     )
 
+  const status = parsed.data.status
+  if (status === "removed")
+    return commit({
+      actor: action.value.actor,
+      at: mission.context.currentTime,
+      change: {
+        stopId: stop.id,
+        summary: `Removed ${stop.title}`,
+        type: "stop_removed",
+      },
+      id,
+      mission,
+      patch: { stops: mission.stops.filter((item) => item.id !== stop.id) },
+    })
+
   const stops = mission.stops.map((item) =>
     item.id === stop.id
       ? {
           ...item,
           ...(parsed.data.note === undefined ? {} : { note: parsed.data.note }),
-          status: parsed.data.status,
+          status,
         }
       : item,
   )
@@ -204,7 +215,7 @@ const applyStop = ({
     at: mission.context.currentTime,
     change: {
       stopId: stop.id,
-      summary: `${stop.title} marked ${parsed.data.status}`,
+      summary: `${stop.title} marked ${status}`,
       type: "stop_updated",
     },
     id,

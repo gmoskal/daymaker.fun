@@ -279,10 +279,14 @@ describe("mission store", () => {
 
     expect(store.getSnapshot().stops).toEqual([])
     expect(store.getSnapshot().title).toBe("Untitled plan")
+    expect(store.getSnapshot().id).toBe("personal-plan-store-id")
 
     store.loadDemo()
 
-    expect(store.getSnapshot()).toEqual(PALERMO_ARRIVAL_MISSION)
+    expect(store.getSnapshot()).toEqual({
+      ...PALERMO_ARRIVAL_MISSION,
+      id: "palermo-arrival-demo-store-id",
+    })
     expect(store.getSnapshot()).not.toBe(PALERMO_ARRIVAL_MISSION)
     expect(memory.writes).toEqual([MISSION_STORAGE_KEY, MISSION_STORAGE_KEY])
   })

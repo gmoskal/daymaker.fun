@@ -286,7 +286,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   )
   expect(initialCopied).toContain("continue in Work")
   expect(initialCopied).toContain(
-    "planning URL clears the previous browser-local board",
+    "one-shot URL clears any previous browser-local board",
   )
   expect(initialCopied).toContain("Keep the 16:00 Hotel Trinacria arrival fixed")
   expect(initialCopied).toContain('"sampleData": true')
@@ -348,7 +348,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   await copyChanges.click()
   await expect(
     page.getByRole("button", { name: "Changes copied for ChatGPT" }),
-  ).toBeDisabled()
+  ).toBeVisible()
   await page.getByRole("button", { name: "Cross out one worthwhile sight nearby" }).click()
   await expect(copyChanges).toBeEnabled()
   await page.getByRole("button", { name: "Add need" }).click()
@@ -363,6 +363,9 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   await page.getByRole("button", { name: "Remove practical parking at every stop" }).click()
   await page.screenshot({ fullPage: true, path: "artifacts/sidequest-needs.png" })
   await copyChanges.click()
+  await expect(
+    page.getByRole("button", { name: "Changes copied for ChatGPT" }),
+  ).toBeVisible()
 
   const copied = await page.evaluate(
     () => (window as typeof window & { __copiedText: string }).__copiedText,
@@ -370,8 +373,12 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   expect(copied).toContain("Start tomorrow's route at Palermo Airport")
   expect(copied).toContain('"label": "quiet lunch"')
   expect(copied).toContain('"fixed": true')
-  expect(copied).toContain("replacePlan: true")
-  expect(copied).not.toContain("one worthwhile sight nearby")
+  expect(copied).toContain("HANDOFF MODE: UPDATE THIS SESSION")
+  expect(copied).toContain("replacePlan: false")
+  expect(copied).toContain("/schedule#session=")
+  expect(copied).toContain("Crossed out requirement — one worthwhile sight nearby")
+  expect(copied).toContain("Added requirement — quiet lunch")
+  expect(copied).toContain("Removed need — practical parking at every stop")
   await page.setViewportSize({ height: 844, width: 390 })
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
@@ -641,29 +648,30 @@ test("transfers the complete proposal to an empty browser through its session li
   const receivingPage = await receivingContext.newPage()
   await receivingPage.goto(generated.sessionUrl ?? "")
 
-  await expect(receivingPage).toHaveURL(/\/schedule$/)
-  expect(receivingPage.url()).not.toContain("#session=")
+  await expect(receivingPage).toHaveURL(/\/schedule#session=/)
   await expect(
     receivingPage.getByRole("heading", { name: "Gravel Before Brunch" }),
   ).toBeVisible()
   await expect(receivingPage.locator('[data-testid^="stop-"]')).toHaveCount(3)
-  const stored = await receivingPage.evaluate(() =>
-    JSON.parse(localStorage.getItem("sidequest:mission:v1") ?? "null"),
-  )
-  expect(stored).toMatchObject({
-    revision: 4,
-    stops: [
-      { title: "20 km shaded gravel loop" },
-      { title: "Lunch · Konoba Panorama" },
-      { title: "Snorkel · Punta Rata Beach" },
-    ],
-  })
+  expect(
+    await receivingPage.evaluate(() =>
+      localStorage.getItem("sidequest:mission:v1"),
+    ),
+  ).toBeNull()
 
   await receivingPage.setViewportSize({ height: 900, width: 1100 })
   await receivingPage.reload()
-  await expect(receivingPage).toHaveURL(/\/schedule$/)
+  await expect(receivingPage).toHaveURL(/\/schedule#session=/)
   await expect(
     receivingPage.getByRole("heading", { name: "Gravel Before Brunch" }),
   ).toBeVisible()
+
+  const independentPage = await receivingContext.newPage()
+  await independentPage.goto("/")
+  await expect(independentPage.getByRole("tab", { name: "Proposed schedule" }))
+    .toHaveAttribute("aria-disabled", "true")
+  await expect(
+    independentPage.getByRole("heading", { name: "Gravel Before Brunch" }),
+  ).toHaveCount(0)
   await receivingContext.close()
 })

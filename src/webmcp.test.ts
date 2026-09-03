@@ -271,7 +271,7 @@ describe("WebMCP", () => {
 
     expect(added).toMatchObject({ ok: true, revision: 8 })
     expect(missionStore.getSnapshot()).toMatchObject({
-      id: "personal-plan",
+      id: "generated-schedule-fixture",
       revision: 8,
       title: "Quiet Warsaw afternoon",
     })

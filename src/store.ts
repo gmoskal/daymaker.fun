@@ -1,5 +1,6 @@
 import {
   MissionSchema,
+  PERSONAL_MISSION_ID,
   type Mission,
   type MissionAction,
   type MissionMutation,
@@ -128,10 +129,19 @@ export const createMissionStore = ({
     },
     getSnapshot: () => snapshot,
     loadDemo: (demoId = DEMO_MISSION_ID) =>
-      publish({ mission: createDemoMission(demoId) }),
+      publish({
+        mission: createDemoMission(demoId, `${demoId}-${id()}`),
+      }),
     newPlan: () => {
       const publishedAt = now()
-      publish({ mission: createBlankMission(publishedAt), publishedAt })
+      publish({
+        mission: createBlankMission(
+          publishedAt,
+          Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+          `${PERSONAL_MISSION_ID}-${id()}`,
+        ),
+        publishedAt,
+      })
     },
     subscribe: (listener) => {
       listeners.add(listener)

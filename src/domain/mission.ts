@@ -6,6 +6,7 @@ export const STOP_STATUSES = [
   "completed",
   "skipped",
 ] as const
+export const STOP_UPDATE_STATUSES = [...STOP_STATUSES, "removed"] as const
 export const STOP_KINDS = [
   "activity",
   "service",
@@ -27,12 +28,13 @@ export const EVENT_TYPES = [
   "stops_reordered",
 ] as const
 export const PERSONAL_MISSION_ID = "personal-plan"
+export const MAX_MISSION_BRIEF_LENGTH = 8_000
 
 const htmlPattern = /[<>]/
 const briefText = z
   .string()
   .trim()
-  .max(600)
+  .max(MAX_MISSION_BRIEF_LENGTH)
   .refine((value) => !htmlPattern.test(value), "HTML is not allowed")
 const text = (maxLength: number) =>
   z
@@ -209,7 +211,9 @@ export const UpdateDayContextInputSchema = ExpectedRevisionSchema.extend({
 export const UpdateMissionStopInputSchema = ExpectedRevisionSchema.extend({
   note: optionalText(240).describe("Optional concise user-facing note."),
   reason: text(160).describe("Why this status fits the current mission."),
-  status: z.enum(STOP_STATUSES).describe("New lifecycle status."),
+  status: z
+    .enum(STOP_UPDATE_STATUSES)
+    .describe("New lifecycle status, or removed to delete an obsolete stop."),
   stopId: text(80).describe("Stable ID from get_mission_state."),
 })
 

@@ -19,6 +19,7 @@ const localDate = (now: Date, timezone: string) => {
 export const createBlankMission = (
   now = new Date(),
   timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  id = PERSONAL_MISSION_ID,
 ): Mission => ({
   context: {
     brief: "",
@@ -30,7 +31,7 @@ export const createBlankMission = (
   },
   date: localDate(now, timezone),
   events: [],
-  id: PERSONAL_MISSION_ID,
+  id,
   planIteration: 0,
   revision: 0,
   schemaVersion: 1,
@@ -208,8 +209,12 @@ export const DEMO_MISSIONS = {
 
 export type DemoMissionId = keyof typeof DEMO_MISSIONS
 
-export const isDemoMissionId = (value: string): value is DemoMissionId =>
-  Object.hasOwn(DEMO_MISSIONS, value)
+export const isDemoMissionId = (value: string): boolean =>
+  Object.keys(DEMO_MISSIONS).some(
+    (demoId) => value === demoId || value.startsWith(`${demoId}-`),
+  )
 
-export const createDemoMission = (id: DemoMissionId = DEMO_MISSION_ID): Mission =>
-  structuredClone(DEMO_MISSIONS[id])
+export const createDemoMission = (
+  id: DemoMissionId = DEMO_MISSION_ID,
+  missionId: string = id,
+): Mission => ({ ...structuredClone(DEMO_MISSIONS[id]), id: missionId })

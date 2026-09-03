@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  MAX_MISSION_BRIEF_LENGTH,
   MissionSchema,
   type Mission,
   type MissionAction,
@@ -72,6 +73,72 @@ const replacementAction = (
 })
 
 describe("mission", () => {
+  it("accepts a long multiline planning brief up to the shared UI limit", () => {
+    const brief = [
+      "Plan a detailed multi-day route.",
+      "x".repeat(MAX_MISSION_BRIEF_LENGTH - 35),
+    ].join("\n")
+    const accepted = apply({
+      type: "SetBrief",
+      value: {
+        actor: "human",
+        input: { brief, expectedRevision: 6 },
+      },
+    })
+    const rejected = apply({
+      type: "SetBrief",
+      value: {
+        actor: "human",
+        input: {
+          brief: "x".repeat(MAX_MISSION_BRIEF_LENGTH + 1),
+          expectedRevision: 6,
+        },
+      },
+    })
+
+    expect(expectApplied(accepted).mission.context.brief).toBe(brief)
+    expectRejected(rejected, "INVALID_INPUT")
+  })
+
+  it("keeps the session and existing schedule during an incremental iteration", () => {
+    const value = expectApplied(
+      apply(
+        replacementAction({
+          expectedRevision: 6,
+          replacePlan: false,
+          title: "Adjusted coast day",
+        }),
+      ),
+    ).mission
+
+    expect(value.id).toBe(SEED_MISSION.id)
+    expect(value.stops).toEqual(SEED_MISSION.stops)
+    expect(value.planIteration).toBe(2)
+  })
+
+  it("lets the agent remove an obsolete unlocked stop in place", () => {
+    const value = expectApplied(
+      apply({
+        type: "UpdateStop",
+        value: {
+          actor: "agent",
+          input: {
+            expectedRevision: 6,
+            reason: "The related Need was removed.",
+            status: "removed",
+            stopId: "biokovo-hike",
+          },
+        },
+      }),
+    )
+
+    expect(value.mission.id).toBe(SEED_MISSION.id)
+    expect(value.mission.stops.map((stop) => stop.id)).not.toContain(
+      "biokovo-hike",
+    )
+    expect(value.change.type).toBe("stop_removed")
+  })
+
   it("counts complete plan replacements separately from technical revisions", () => {
     const blank = createBlankMission(new Date("2026-09-03T10:00:00Z"), "UTC")
     const first = expectApplied(
@@ -170,7 +237,7 @@ describe("mission", () => {
 
     expect(value).toMatchObject({
       date: "2026-09-03",
-      id: "personal-plan",
+      id: "generated-schedule-fixture",
       revision: 7,
       title: "Quiet Warsaw afternoon",
     })
@@ -400,7 +467,7 @@ describe("mission", () => {
   })
 
   it("validates raw input at the domain boundary", () => {
-    expectRejected(apply(stopAction({ status: "removed" })), "INVALID_INPUT")
+    expectRejected(apply(stopAction({ status: "deleted" })), "INVALID_INPUT")
   })
 
   it("adds a source-backed stop with a generated unique id", () => {

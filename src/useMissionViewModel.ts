@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { copyText } from "./clipboard"
 import { COPY } from "./copy"
 import { BLANK_MISSION_TITLE } from "./domain/seed"
-import { toMissionPrompt } from "./mission-prompt"
+import { toMissionHandoffPrompt } from "./mission-prompt"
 import { toSessionUrl } from "./session-link"
 import {
   DEFAULT_RESEARCH_DEPTH,
@@ -233,11 +233,8 @@ export const useMissionViewModel = ({
                 },
               },
             })
-          const prompt =
-            action.brief === undefined
-              ? action.prompt
-              : toMissionPrompt(store.getSnapshot(), researchDepth)
-          void copyText(prompt)
+          void toMissionHandoffPrompt(store.getSnapshot(), researchDepth)
+            .then(copyText)
             .then(() => {
               setCopied(true)
               setCopiedResearchDepth(researchDepth)

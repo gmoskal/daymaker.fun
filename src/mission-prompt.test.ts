@@ -7,7 +7,16 @@ import {
   createBlankMission,
   createDemoMission,
 } from "./domain/seed"
-import { toMissionPrompt } from "./mission-prompt"
+import {
+  toMissionHandoffPrompt,
+  toMissionPrompt,
+  type MissionPromptTarget,
+} from "./mission-prompt"
+
+const updateTarget: MissionPromptTarget = {
+  type: "update",
+  url: "https://daymaker.fun/schedule#session=portable-state",
+}
 
 describe("mission prompt", () => {
   it("copies needs without proposed stops", () => {
@@ -16,7 +25,7 @@ describe("mission prompt", () => {
     }
     mission.context.brief =
       "Replace the steep hike with a calm swim and keep dinner fixed."
-    const prompt = toMissionPrompt(mission)
+    const prompt = toMissionPrompt(mission, undefined, updateTarget)
     const snapshot = prompt
       .split(`${COPY.promptSnapshot}\n\n`)
       .at(1)
@@ -28,6 +37,7 @@ describe("mission prompt", () => {
         expect.objectContaining({ locked: true, title: "Dinner reservation" }),
       ],
       missionId: "generated-schedule-fixture",
+      handoffMode: "update",
       needs: expect.arrayContaining([
         { fixed: true, label: "keep dinner at 18:30" },
       ]),
@@ -37,7 +47,8 @@ describe("mission prompt", () => {
     expect(snapshot).not.toContain('"events"')
     expect(snapshot).not.toContain('"mustHaves"')
     expect(snapshot).not.toContain('"sampleData"')
-    expect(prompt).toContain("generate a Proposed schedule")
+    expect(prompt).toContain("UPDATE THIS SESSION")
+    expect(prompt).toContain("Do not clear the board")
   })
 
   it("tells the agent how to replace a blank plan", () => {
@@ -45,7 +56,7 @@ describe("mission prompt", () => {
       createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"),
     )
 
-    expect(prompt).toContain("generate a Proposed schedule")
+    expect(prompt).toContain("Generate the complete Proposed schedule")
     expect(prompt).toContain("get_mission_state")
     expect(prompt).toContain('"missionId": "personal-plan"')
     expect(prompt).not.toContain("Untitled plan")
@@ -65,24 +76,20 @@ describe("mission prompt", () => {
     expect(prompt).toContain("continue in Work")
     expect(prompt).toContain("Do not stop")
     expect(prompt).toContain(
-      "Treat the copied planning input as a new plan request",
+      "HANDOFF MODE: NEW SESSION",
     )
     expect(prompt).toContain(
-      "planning URL clears the previous browser-local board",
+      "one-shot URL clears any previous browser-local board",
     )
     expect(prompt).toContain(
-      "Do not inspect, compare, preserve, or clear an earlier plan with a tool call",
+      "Do not inspect, reconcile, or preserve any unrelated board",
     )
-    expect(prompt).toContain("Immediately call update_day_context")
-    expect(prompt).toContain("with replacePlan: true")
-    expect(prompt).toContain("before research, clarification, or progress narration")
-    expect(prompt).toContain(
-      "to initialize this request",
-    )
+    expect(prompt).toContain("call update_day_context")
+    expect(prompt).toContain("and replacePlan: true")
     expect(prompt).not.toContain("If the live board is blank")
     expect(prompt).not.toContain("preserve its current Needs")
     expect(prompt).toContain("sessionUrl")
-    expect(prompt).toContain("[Open updated Sidequest plan]")
+    expect(prompt).toContain("[Open updated Daymaker plan]")
     expect(prompt).toContain("Do not finish without the clickable link")
   })
 
@@ -97,21 +104,86 @@ describe("mission prompt", () => {
     )
   })
 
-  it("asks the agent to structure Needs and regenerate every time", () => {
+  it("asks the agent to structure Needs for a new session", () => {
     const prompt = toMissionPrompt(SEED_MISSION)
 
     expect(prompt).toContain("extract concise Needs from the free-form brief")
     expect(prompt).toContain("replacePlan: true")
     expect(prompt).toContain("only goal")
     expect(prompt).toContain(
-      "ask a concise clarifying question only when an essential fact is missing",
+      "Ask one concise clarifying question only when an essential fact is missing",
     )
-    expect(prompt).toContain("set the plan date and starting location")
+    expect(prompt).toContain("set the plan date and practical starting location")
     expect(prompt).toContain("primary city or area")
     expect(prompt).toContain("most schedule activity happens")
     expect(prompt).toContain("short, specific, playful title")
     expect(prompt).toContain("exact clickable session link")
     expect(prompt).toContain("final successful write")
+  })
+
+  it("updates a matching session from the human Needs delta without clearing", () => {
+    const mission: Mission = {
+      ...structuredClone(SEED_MISSION),
+      events: [
+        {
+          actor: "human",
+          at: SEED_MISSION.context.currentTime,
+          id: "edit-2",
+          summary: "Removed need — dog with us",
+          type: "constraints_updated",
+        },
+        {
+          actor: "human",
+          at: SEED_MISSION.context.currentTime,
+          id: "edit-1",
+          summary: "Added requirement — shaded swim",
+          type: "constraints_updated",
+        },
+        {
+          actor: "agent",
+          at: SEED_MISSION.context.currentTime,
+          id: "plan-write",
+          summary: "Added Punta Rata",
+          type: "stop_added",
+        },
+      ],
+      id: "personal-plan-session-a",
+    }
+
+    const prompt = toMissionPrompt(mission, "normal", updateTarget)
+    const snapshot = JSON.parse(
+      prompt.split(`${COPY.promptSnapshot}\n\n`).at(1) ?? "null",
+    )
+
+    expect(prompt).toContain(updateTarget.url)
+    expect(prompt).toContain("compare its mission.id with missionId")
+    expect(prompt).toContain("replacePlan: false")
+    expect(prompt).toContain("update only affected schedule stops")
+    expect(prompt).toContain("Preserve every unaffected stop")
+    expect(snapshot).toMatchObject({
+      handoffMode: "update",
+      missionId: "personal-plan-session-a",
+      needsDelta: [
+        "Added requirement — shaded swim",
+        "Removed need — dog with us",
+      ],
+    })
+  })
+
+  it("embeds the complete current session in an iterative handoff URL", async () => {
+    const mission: Mission = {
+      ...structuredClone(SEED_MISSION),
+      id: "personal-plan-session-link",
+    }
+
+    const prompt = await toMissionHandoffPrompt(mission)
+    const openLine = prompt.split("\n").find((line) => line.startsWith("Open "))
+    const url = openLine?.slice(5).split(", continue").at(0)
+
+    expect(url).toContain("https://daymaker.fun/schedule#session=")
+    expect(prompt).toContain('"handoffMode": "update"')
+    expect(prompt).toContain('"missionId": "personal-plan-session-link"')
+    expect(prompt).not.toContain("Open https://daymaker.fun/needs?new=1")
   })
 
   it("uses the selected research depth", () => {

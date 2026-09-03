@@ -234,7 +234,7 @@ const TOOL_CATALOG = [
   }),
   tool({
     description:
-      "Set one existing stop's planned, active, completed, or skipped status by stable ID. Locked commitments stay unchanged. Returns the new revision and portable session URL.",
+      "Set one existing stop's planned, active, completed, or skipped status by stable ID, or remove an obsolete stop. Locked commitments stay unchanged. Returns the new revision and portable session URL.",
     execute: (store, input) =>
       toToolResult(
         store.dispatch({

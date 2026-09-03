@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { App } from "./App"
 import {
+  MAX_MISSION_BRIEF_LENGTH,
+} from "./domain/mission"
+import {
   PALERMO_ARRIVAL_MISSION,
   SEED_MISSION,
   createBlankMission,
@@ -110,6 +113,10 @@ describe("Sidequest app", () => {
     })
     expect(brief).toBeRequired()
     expect(brief).toHaveAttribute("rows", "7")
+    expect(brief).toHaveAttribute(
+      "maxlength",
+      String(MAX_MISSION_BRIEF_LENGTH),
+    )
     expect(screen.getByRole("button", { name: "Copy to ChatGPT" }))
       .toBeDisabled()
     const researchDepth = screen.getByRole("slider", {
@@ -140,6 +147,61 @@ describe("Sidequest app", () => {
     expect(prompt).not.toContain('"needs"')
     expect(prompt).not.toContain('"stops"')
     expect(prompt).toContain("RESEARCH DEPTH: DEEP")
+  })
+
+  it("copies a long Needs description without truncating it", async () => {
+    window.history.replaceState(null, "", "/needs")
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    })
+    render(<App registration={registration(true)} store={blankStore()} />)
+    const longBrief = `Plan this carefully.\n${"detail ".repeat(900)}`
+    const brief = screen.getByRole("textbox", {
+      name: "1 · Describe your needs",
+    })
+
+    fireEvent.change(brief, { target: { value: longBrief } })
+    fireEvent.click(screen.getByRole("button", { name: "Copy to ChatGPT" }))
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
+    const prompt = writeText.mock.calls[0]?.[0] as string
+    const snapshot = JSON.parse(
+      prompt.split("Planning input at copy time:\n\n").at(1) ?? "null",
+    )
+    expect(snapshot.brief).toBe(longBrief.trim())
+  })
+
+  it("copies an edited Needs delta as an update to the same session", async () => {
+    window.history.replaceState(null, "", "/needs")
+    const missionStore = store()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    })
+    render(<App registration={registration(true)} store={missionStore} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Add need" }))
+    fireEvent.change(screen.getByRole("textbox", { name: "New need" }), {
+      target: { value: "find a shaded beach" },
+    })
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "New need" }), {
+      key: "Enter",
+    })
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy changes to ChatGPT" }),
+    )
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
+    const prompt = writeText.mock.calls[0]?.[0] as string
+    expect(prompt).toContain("https://daymaker.fun/schedule#session=")
+    expect(prompt).toContain("HANDOFF MODE: UPDATE THIS SESSION")
+    expect(prompt).toContain("replacePlan: false")
+    expect(prompt).toContain('"missionId": "generated-schedule-fixture"')
+    expect(prompt).toContain("Added requirement — find a shaded beach")
+    expect(prompt).not.toContain("Open https://daymaker.fun/needs?new=1")
   })
 
   it("resets copied feedback as soon as the brief changes", async () => {

@@ -1,8 +1,11 @@
+import { Gunzip, gzipSync } from "fflate"
+
 import { MissionSchema, type Mission } from "./domain/mission"
 
 export const MAX_SESSION_PAYLOAD_CHARS = 64_000
 const MAX_SESSION_JSON_BYTES = 128_000
 const SESSION_FRAGMENT_KEY = "session"
+const MARKDOWN_ESCAPE = /\\(?=[_-])/gu
 
 type CreateSessionUrlParams = {
   mission: Mission
@@ -40,37 +43,19 @@ const base64UrlToBytes = (value: string) => {
   return bytes
 }
 
-const ownedBytes = (bytes: Uint8Array): Uint8Array<ArrayBuffer> =>
-  Uint8Array.from(bytes)
-
-const gzip = async (bytes: Uint8Array) => {
-  const stream = new CompressionStream("gzip")
-  const output = new Response(stream.readable).arrayBuffer()
-  const writer = stream.writable.getWriter()
-  await writer.write(ownedBytes(bytes))
-  await writer.close()
-  return new Uint8Array(await output)
-}
+const gzip = async (bytes: Uint8Array) => gzipSync(bytes, { mtime: 0 })
 
 const gunzip = async (bytes: Uint8Array) => {
-  const input = new Response(ownedBytes(bytes)).body
-  if (input === null) throw new Error("Session stream is unavailable")
-  const reader = input
-    .pipeThrough(new DecompressionStream("gzip"))
-    .getReader()
   const chunks: Uint8Array[] = []
   let byteLength = 0
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    byteLength += value.byteLength
+  const stream = new Gunzip((chunk) => {
+    byteLength += chunk.byteLength
     if (byteLength > MAX_SESSION_JSON_BYTES) {
-      await reader.cancel()
       throw new Error("Decompressed session is too large")
     }
-    chunks.push(value)
-  }
+    chunks.push(chunk)
+  })
+  stream.push(bytes, true)
 
   const result = new Uint8Array(byteLength)
   let offset = 0
@@ -101,10 +86,11 @@ export const readSessionUrl = async (
   source: string | URL,
 ): Promise<SessionUrlReadResult> => {
   const url = typeof source === "string" ? new URL(source) : source
-  const payload = new URLSearchParams(url.hash.slice(1)).get(
+  const payloadInput = new URLSearchParams(url.hash.slice(1)).get(
     SESSION_FRAGMENT_KEY,
   )
-  if (payload === null) return { type: "none" }
+  if (payloadInput === null) return { type: "none" }
+  const payload = payloadInput.replace(MARKDOWN_ESCAPE, "")
   if (payload.length > MAX_SESSION_PAYLOAD_CHARS) return { type: "invalid" }
 
   try {

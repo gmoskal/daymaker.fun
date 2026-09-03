@@ -29,6 +29,7 @@ export const EVENT_TYPES = [
 ] as const
 export const PERSONAL_MISSION_ID = "personal-plan"
 export const MAX_MISSION_BRIEF_LENGTH = 8_000
+const MAX_ENTITY_ID_LENGTH = 160
 
 const htmlPattern = /[<>]/
 const briefText = z
@@ -86,7 +87,7 @@ const identifier = (value: string) =>
 
 export const MissionConstraintSchema = z.strictObject({
   fixed: z.boolean().default(false),
-  id: text(80),
+  id: text(MAX_ENTITY_ID_LENGTH),
   label: text(80),
   status: z.enum(CONSTRAINT_STATUSES),
 })
@@ -128,7 +129,7 @@ export const SourceRefSchema = z.strictObject({
 
 export const MissionStopSchema = z.strictObject({
   durationMinutes: z.number().int().min(5).max(720),
-  id: text(80),
+  id: text(MAX_ENTITY_ID_LENGTH),
   kind: z.enum(STOP_KINDS),
   location: GeoPointSchema,
   locked: z.boolean(),
@@ -153,7 +154,7 @@ export const DayContextSchema = z.strictObject({
 export const MissionEventSchema = z.strictObject({
   actor: z.enum(ACTORS),
   at: dateTime,
-  id: text(80),
+  id: text(MAX_ENTITY_ID_LENGTH),
   summary: text(180),
   type: z.enum(EVENT_TYPES),
 })
@@ -162,7 +163,7 @@ const MissionRecordSchema = z.strictObject({
   context: DayContextSchema,
   date: z.iso.date(),
   events: z.array(MissionEventSchema).max(20),
-  id: text(80),
+  id: text(MAX_ENTITY_ID_LENGTH),
   planIteration: z.number().int().nonnegative().optional(),
   revision: z.number().int().nonnegative(),
   schemaVersion: z.literal(1),
@@ -214,7 +215,7 @@ export const UpdateMissionStopInputSchema = ExpectedRevisionSchema.extend({
   status: z
     .enum(STOP_UPDATE_STATUSES)
     .describe("New lifecycle status, or removed to delete an obsolete stop."),
-  stopId: text(80).describe("Stable ID from get_mission_state."),
+  stopId: text(MAX_ENTITY_ID_LENGTH).describe("Stable ID from get_mission_state."),
 })
 
 export const AddMissionStopInputSchema = ExpectedRevisionSchema.extend({
@@ -239,7 +240,7 @@ export const ReorderMissionStopsInputSchema = ExpectedRevisionSchema.extend({
     .array(
       z.strictObject({
         startsAt: dateTime,
-        stopId: text(80).describe("Stable future stop ID."),
+        stopId: text(MAX_ENTITY_ID_LENGTH).describe("Stable future stop ID."),
       }),
     )
     .min(1)
@@ -253,25 +254,25 @@ export const AddMissionConstraintInputSchema = ExpectedRevisionSchema.extend({
 })
 
 export const ToggleMissionConstraintInputSchema = ExpectedRevisionSchema.extend({
-  constraintId: text(80),
+  constraintId: text(MAX_ENTITY_ID_LENGTH),
 })
 
 export const ReorderMissionConstraintsInputSchema = ExpectedRevisionSchema.extend({
-  orderedConstraintIds: z.array(text(80)).min(1).max(10),
+  orderedConstraintIds: z.array(text(MAX_ENTITY_ID_LENGTH)).min(1).max(10),
 })
 
 export const SetMissionConstraintFixedInputSchema = ExpectedRevisionSchema.extend({
-  constraintId: text(80),
+  constraintId: text(MAX_ENTITY_ID_LENGTH),
   fixed: z.boolean(),
 })
 
 export const RemoveMissionConstraintInputSchema = ExpectedRevisionSchema.extend({
-  constraintId: text(80),
+  constraintId: text(MAX_ENTITY_ID_LENGTH),
 })
 
 export const SetMissionStopLockInputSchema = ExpectedRevisionSchema.extend({
   locked: z.boolean(),
-  stopId: text(80),
+  stopId: text(MAX_ENTITY_ID_LENGTH),
 })
 
 export const SetMissionTitleInputSchema = ExpectedRevisionSchema.extend({
@@ -287,16 +288,16 @@ export const AddBoardItemInputSchema = ExpectedRevisionSchema.extend({
 })
 
 export const RenameMissionStopInputSchema = ExpectedRevisionSchema.extend({
-  stopId: text(80),
+  stopId: text(MAX_ENTITY_ID_LENGTH),
   title: text(80),
 })
 
 export const RemoveMissionStopInputSchema = ExpectedRevisionSchema.extend({
-  stopId: text(80),
+  stopId: text(MAX_ENTITY_ID_LENGTH),
 })
 
 export const RenameMissionConstraintInputSchema = ExpectedRevisionSchema.extend({
-  constraintId: text(80),
+  constraintId: text(MAX_ENTITY_ID_LENGTH),
   label: text(80),
 })
 

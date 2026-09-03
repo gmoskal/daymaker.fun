@@ -45,6 +45,42 @@ describe("portable session links", () => {
     await expect(toSessionUrl(input)).resolves.toBe(await toSessionUrl(input))
   })
 
+  it("loads a link copied from Markdown with escaped base64url characters", async () => {
+    const link = await toSessionUrl({
+      mission: SEED_MISSION,
+      pageUrl: "https://sidequest.example/schedule",
+    })
+    const markdownText = link.replaceAll("_", "\\_").replaceAll("-", "\\-")
+
+    await expect(readSessionUrl(markdownText)).resolves.toEqual({
+      mission: SEED_MISSION,
+      type: "loaded",
+    })
+  })
+
+  it("loads links containing IDs previously generated from long Needs", async () => {
+    const mission = {
+      ...structuredClone(SEED_MISSION),
+      context: {
+        ...structuredClone(SEED_MISSION.context),
+        constraints: SEED_MISSION.context.constraints.map((constraint, index) =>
+          index === 0
+            ? { ...constraint, id: `constraint-${"x".repeat(82)}` }
+            : constraint,
+        ),
+      },
+    }
+    const link = await toSessionUrl({
+      mission,
+      pageUrl: "https://sidequest.example/schedule",
+    })
+
+    await expect(readSessionUrl(link)).resolves.toEqual({
+      mission,
+      type: "loaded",
+    })
+  })
+
   it("rejects malformed, oversized, and schema-invalid payloads", async () => {
     await expect(
       readSessionUrl("https://sidequest.example/needs#session=%25"),

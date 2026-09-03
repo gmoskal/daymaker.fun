@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: v0.2.3 read-only proposal and clearer Needs controls ready for deployment; automatic Vercel Git connection permission pending
+> Status: v0.2.3 read-only proposal and clearer Needs controls deployed; automatic Vercel Git connection permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -1078,6 +1078,9 @@ Implementation result:
   list font and lighter placeholder. Enter and Escape remain covered.
 - Final v0.2.3 gate: 66/66 unit/integration tests, TypeScript/Vite build, and
   4/4 Chromium tests passed.
+- Production deployment `dpl_HVJ6SSik6Rrz1q47s3V7P1u1sceg` reached `READY`
+  and the public alias served asset `index-BB5Jwo5a.js` with the v0.2.3 marker
+  and read-only proposal copy.
 
 ## Risks and dependencies
 

@@ -9,10 +9,6 @@ type CreateSessionUrlParams = {
   pageUrl: string
 }
 
-type ReadSessionUrlParams = {
-  url: string | URL
-}
-
 export type SessionUrlReadResult =
   | { type: "none" }
   | { type: "invalid" }
@@ -101,9 +97,9 @@ export const toSessionUrl = async ({
   return url.toString()
 }
 
-export const readSessionUrl = async ({
-  url: source,
-}: ReadSessionUrlParams): Promise<SessionUrlReadResult> => {
+export const readSessionUrl = async (
+  source: string | URL,
+): Promise<SessionUrlReadResult> => {
   const url = typeof source === "string" ? new URL(source) : source
   const payload = new URLSearchParams(url.hash.slice(1)).get(
     SESSION_FRAGMENT_KEY,
@@ -128,7 +124,7 @@ export const readSessionUrl = async ({
 }
 
 export const withoutSessionFragment = (source: string | URL) => {
-  const url = typeof source === "string" ? new URL(source) : new URL(source)
+  const url = new URL(source)
   url.hash = ""
   return `${url.pathname}${url.search}`
 }

@@ -18,7 +18,7 @@ if (root === null) throw new Error("Sidequest root element is missing")
 
 const start = async () => {
   const pageUrl = new URL(window.location.href)
-  const shared = await readSessionUrl({ url: pageUrl })
+  const shared = await readSessionUrl(pageUrl)
   if (shared.type === "loaded")
     importSharedMission({ storage: localStorage, value: shared.mission })
   if (shared.type !== "none")

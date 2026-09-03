@@ -30,7 +30,7 @@ describe("portable session links", () => {
     expect(url.search).toBe("")
     expect(payload).toMatch(/^[A-Za-z0-9_-]+$/)
     expect([...base64UrlBytes(payload ?? "").slice(0, 2)]).toEqual([0x1f, 0x8b])
-    await expect(readSessionUrl({ url })).resolves.toEqual({
+    await expect(readSessionUrl(url)).resolves.toEqual({
       mission,
       type: "loaded",
     })
@@ -47,12 +47,12 @@ describe("portable session links", () => {
 
   it("rejects malformed, oversized, and schema-invalid payloads", async () => {
     await expect(
-      readSessionUrl({ url: "https://sidequest.example/needs#session=%25" }),
+      readSessionUrl("https://sidequest.example/needs#session=%25"),
     ).resolves.toEqual({ type: "invalid" })
     await expect(
-      readSessionUrl({
-        url: `https://sidequest.example/needs#session=${"a".repeat(MAX_SESSION_PAYLOAD_CHARS + 1)}`,
-      }),
+      readSessionUrl(
+        `https://sidequest.example/needs#session=${"a".repeat(MAX_SESSION_PAYLOAD_CHARS + 1)}`,
+      ),
     ).resolves.toEqual({ type: "invalid" })
 
     const invalidSchema = await toSessionUrl({
@@ -62,14 +62,14 @@ describe("portable session links", () => {
       } as unknown as typeof SEED_MISSION,
       pageUrl: "https://sidequest.example/needs",
     })
-    await expect(readSessionUrl({ url: invalidSchema })).resolves.toEqual({
+    await expect(readSessionUrl(invalidSchema)).resolves.toEqual({
       type: "invalid",
     })
   })
 
   it("ignores URLs without a shared session", async () => {
     await expect(
-      readSessionUrl({ url: "https://sidequest.example/needs" }),
+      readSessionUrl("https://sidequest.example/needs"),
     ).resolves.toEqual({ type: "none" })
   })
 })

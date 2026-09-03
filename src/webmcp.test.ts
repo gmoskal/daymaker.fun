@@ -177,12 +177,12 @@ describe("WebMCP", () => {
     )
 
     expect(initial.sessionUrl).toContain("/schedule#session=")
-    await expect(readSessionUrl({ url: initial.sessionUrl })).resolves.toMatchObject({
+    await expect(readSessionUrl(initial.sessionUrl)).resolves.toMatchObject({
       mission: { revision: 6 },
       type: "loaded",
     })
     expect(updated).toMatchObject({ ok: true, revision: 7 })
-    await expect(readSessionUrl({ url: updated.sessionUrl })).resolves.toMatchObject({
+    await expect(readSessionUrl(updated.sessionUrl)).resolves.toMatchObject({
       mission: {
         revision: 7,
         stops: expect.arrayContaining([

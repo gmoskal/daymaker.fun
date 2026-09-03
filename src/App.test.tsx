@@ -244,7 +244,7 @@ describe("Sidequest app", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
     const link = writeText.mock.calls[0]?.[0] as string
     expect(new URL(link).pathname).toBe("/schedule")
-    await expect(readSessionUrl({ url: link })).resolves.toEqual({
+    await expect(readSessionUrl(link)).resolves.toEqual({
       mission: missionStore.getSnapshot(),
       type: "loaded",
     })

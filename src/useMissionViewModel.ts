@@ -4,6 +4,12 @@ import { COPY } from "./copy"
 import { BLANK_MISSION_TITLE } from "./domain/seed"
 import { toMissionPrompt } from "./mission-prompt"
 import { toSessionUrl } from "./session-link"
+import {
+  DEFAULT_RESEARCH_DEPTH,
+  loadResearchDepth,
+  saveResearchDepth,
+  type ResearchDepth,
+} from "./research-depth"
 import type { MissionStore } from "./store"
 import {
   presentMission,
@@ -43,6 +49,9 @@ export const useMissionViewModel = ({
   const [expandedStopIds, setExpandedStopIds] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
   const [sessionLinkCopied, setSessionLinkCopied] = useState(false)
+  const [researchDepth, setResearchDepth] = useState<ResearchDepth>(() =>
+    loadResearchDepth(localStorage),
+  )
   const [panel, setPanel] = useState<MissionPanel>(() =>
     mission.context.stage === "brief" &&
     missionPanelForPath(window.location.pathname) === "plan"
@@ -114,6 +123,11 @@ export const useMissionViewModel = ({
               ? expanded.filter((stopId) => stopId !== action.stopId)
               : [...expanded, action.stopId],
           )
+          return
+        case "SetResearchDepth":
+          setResearchDepth(action.researchDepth)
+          setCopied(false)
+          saveResearchDepth(localStorage, action.researchDepth)
           return
         case "AddConstraint":
           store.dispatch({
@@ -220,7 +234,7 @@ export const useMissionViewModel = ({
           const prompt =
             action.brief === undefined
               ? action.prompt
-              : toMissionPrompt(store.getSnapshot())
+              : toMissionPrompt(store.getSnapshot(), researchDepth)
           void navigator.clipboard
             .writeText(prompt)
             .then(() => setCopied(true))
@@ -249,7 +263,7 @@ export const useMissionViewModel = ({
           return
       }
     },
-    [navigate, store],
+    [navigate, researchDepth, store],
   )
 
   return {
@@ -261,10 +275,19 @@ export const useMissionViewModel = ({
           expandedStopIds,
           mission,
           panel,
+          researchDepth,
           sessionLinkCopied,
           webMcp,
         }),
-      [copied, expandedStopIds, mission, panel, sessionLinkCopied, webMcp],
+      [
+        copied,
+        expandedStopIds,
+        mission,
+        panel,
+        researchDepth,
+        sessionLinkCopied,
+        webMcp,
+      ],
     ),
   }
 }

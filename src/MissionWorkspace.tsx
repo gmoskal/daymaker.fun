@@ -10,6 +10,13 @@ import {
 } from "react"
 
 import { COPY } from "./copy"
+import {
+  RESEARCH_DEPTHS,
+  researchDepthAt,
+  researchDepthIndex,
+  researchDepthLabelFor,
+  type ResearchDepth,
+} from "./research-depth"
 import type {
   ConstraintScreen,
   MissionWorkspaceScreen,
@@ -305,6 +312,7 @@ type BriefEditorProps = {
   copyLabel: string
   dispatch: (action: ViewAction) => void
   prompt: string
+  researchDepth: ResearchDepth
   value: string
 }
 
@@ -318,6 +326,7 @@ const BriefEditor = ({
   copyLabel,
   dispatch,
   prompt,
+  researchDepth,
   value,
 }: BriefEditorProps) => {
   const field = useRef<HTMLTextAreaElement>(null)
@@ -392,6 +401,10 @@ const BriefEditor = ({
       </label>
       <aside className="agent-prompt">
         <h3>{COPY.handoffTitle}</h3>
+        <ResearchDepthControl
+          dispatch={dispatch}
+          value={researchDepth}
+        />
         <button
           className="control copy-action"
           disabled={brief.trim() === ""}
@@ -404,6 +417,58 @@ const BriefEditor = ({
         </button>
         <p>{COPY.agentHint}</p>
       </aside>
+    </div>
+  )
+}
+
+type ResearchDepthControlProps = {
+  dispatch: (action: ViewAction) => void
+  value: ResearchDepth
+}
+
+const ResearchDepthControl = (p: ResearchDepthControlProps) => {
+  const index = researchDepthIndex(p.value)
+  const label = researchDepthLabelFor(p.value)
+
+  return (
+    <div className="research-depth">
+      <div className="research-depth-heading">
+        <span>{COPY.researchDepth}</span>
+        <output>{label}</output>
+      </div>
+      <div className="research-depth-track" data-depth={p.value}>
+        <span aria-hidden="true" className="research-depth-fill" />
+        <span aria-hidden="true" className="research-depth-markers">
+          {RESEARCH_DEPTHS.map((option) => (
+            <i key={option.id} />
+          ))}
+        </span>
+        <input
+          aria-label={COPY.researchDepth}
+          aria-valuetext={label}
+          max={RESEARCH_DEPTHS.length - 1}
+          min={0}
+          onChange={(event) =>
+            p.dispatch({
+              researchDepth: researchDepthAt(Number(event.target.value)),
+              type: "SetResearchDepth",
+            })
+          }
+          step={1}
+          type="range"
+          value={index}
+        />
+      </div>
+      <div aria-hidden="true" className="research-depth-labels">
+        {RESEARCH_DEPTHS.map((option) => (
+          <span
+            className={option.id === p.value ? "is-active" : ""}
+            key={option.id}
+          >
+            {option.label}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
@@ -445,6 +510,7 @@ const ContextPanel = ({
           copyLabel={workspace.copyLabel}
           dispatch={dispatch}
           prompt={workspace.prompt}
+          researchDepth={workspace.researchDepth}
           value={workspace.brief}
         />
       ) : (
@@ -492,6 +558,10 @@ const ContextPanel = ({
             ) : null}
           </div>
           <aside className="agent-prompt agent-prompt--changes">
+            <ResearchDepthControl
+              dispatch={dispatch}
+              value={workspace.researchDepth}
+            />
             <button
               className="control copy-action"
               disabled={!workspace.canCopy}

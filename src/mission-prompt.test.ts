@@ -114,6 +114,18 @@ describe("mission prompt", () => {
     expect(prompt).toContain("final successful write")
   })
 
+  it("uses the selected research depth", () => {
+    expect(toMissionPrompt(SEED_MISSION, "quick")).toContain(
+      "RESEARCH DEPTH: QUICK",
+    )
+    expect(toMissionPrompt(SEED_MISSION, "normal")).toContain(
+      "RESEARCH DEPTH: NORMAL",
+    )
+    expect(toMissionPrompt(SEED_MISSION, "deep")).toContain(
+      "RESEARCH DEPTH: DEEP",
+    )
+  })
+
   it("keeps the agent response in the person's request language", () => {
     const mission = createBlankMission(
       new Date("2026-09-03T10:15:00Z"),

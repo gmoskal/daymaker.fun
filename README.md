@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [daymaker.fun](https://daymaker.fun)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.9
-- Production deployment: v0.2.9 pending verification
+- Local release: v0.3.0
+- Production deployment: v0.3.0 pending verification
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -19,7 +19,7 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 ## How to use it
 
 1. Open **Needs** and describe what the plan must accomplish. This initial description is required; the placeholder shows a complete example.
-2. Choose **Copy to ChatGPT** and paste the self-contained handoff into ChatGPT on mobile or desktop.
+2. Choose **Quick**, **Normal**, or **Deep** research above **Copy to ChatGPT**, then copy and paste the self-contained handoff into ChatGPT on mobile or desktop. Normal is the default; the device remembers the last selection.
 3. ChatGPT continues in Work and opens the one-shot public Sidequest `/needs?new=1` planning URL. The page clears any unrelated browser-local board itself before registering Site Tools, consumes the marker, and leaves the canonical URL at `/needs`.
 4. ChatGPT reads that new blank board, initializes it from the copied input, asks concise questions only if an essential fact is missing, researches suitable places, and writes the best-fitting **Proposed schedule**. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated Sidequest plan** link.
    Questions, progress updates, and the final answer use the language of your request; Sidequest keeps proper names, sources, tool values, and the session link unchanged.
@@ -71,7 +71,7 @@ WebMCP tools ────┘                                  │
                                                                           └─> Google / Apple Maps
 ```
 
-`Mission` is the only domain source of truth, including the persisted `brief` or `needs` planning stage. React owns only transient view state. Human controls and WebMCP tools dispatch their permitted subsets of the same action union through the same transition gate. People edit Needs; WebMCP generates and revises the Proposed schedule.
+`Mission` is the only plan-domain source of truth, including the persisted `brief` or `needs` planning stage. React owns transient view state, while the independent research-depth preference is stored locally for the device. Human controls and WebMCP tools dispatch their permitted subsets of the same action union through the same transition gate. People edit Needs; WebMCP generates and revises the Proposed schedule.
 
 Key files:
 
@@ -82,6 +82,7 @@ Key files:
 - `src/session-link.ts` — validated JSON → gzip → base64url session snapshots
 - `src/webmcp.ts` — the five Site Tool registrations
 - `src/mission-prompt.ts` — the Needs-only ChatGPT handoff
+- `src/research-depth.ts` — the three prompt contracts and persisted device preference
 - `src/map-links.ts` — Google and Apple Maps URL builders
 - `src/view-model.ts` — pure `Mission + ViewState -> MissionScreen` projection
 - `src/useMissionViewModel.ts` — React action adapter
@@ -125,7 +126,7 @@ Run every gate with:
 npm run check
 ```
 
-The browser tests cover the two-example menu, free-form and structured Needs editing, clipboard handoff, five-tool generation, gzip session transfer into an empty browser, persistence after reload, read-only multi-row schedule expansion, Motion animation, map links, desktop layout, and 390 px overflow.
+The browser tests cover the two-example menu, free-form and structured Needs editing, three-level research selection and persistence, clipboard handoff, five-tool generation, gzip session transfer into an empty browser, persistence after reload, read-only multi-row schedule expansion, Motion animation, map links, desktop layout, and 390 px overflow.
 
 Visual evidence:
 
@@ -148,7 +149,8 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - [x] Deploy v0.2.6 and verify `daymaker.fun` over HTTPS.
 - [x] Deploy v0.2.7 and verify the two-way feedback handoff plus plan iteration utility.
 - [x] Deploy v0.2.8 and verify immediate replacement of an unrelated live proposal.
-- [ ] Deploy v0.2.9 and verify the one-shot local reset, structured-Needs share link, and fictional demo marker.
+- [x] Deploy v0.2.9 and verify the one-shot local reset, structured-Needs share link, and fictional demo marker.
+- [ ] Deploy v0.3.0 and verify Quick / Normal / Deep prompt contracts plus local preference persistence.
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and survives reload.

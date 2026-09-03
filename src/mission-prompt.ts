@@ -6,6 +6,11 @@ import {
   isDemoMissionId,
 } from "./domain/seed"
 import { newPlanEntryUrl } from "./planning-entry"
+import {
+  DEFAULT_RESEARCH_DEPTH,
+  researchInstructionFor,
+  type ResearchDepth,
+} from "./research-depth"
 
 const planningNeedsFor = (mission: Mission) => {
   const needs = mission.context.constraints
@@ -29,11 +34,15 @@ const planningNeedsFor = (mission: Mission) => {
   }
 }
 
-export const toMissionPrompt = (mission: Mission) =>
+export const toMissionPrompt = (
+  mission: Mission,
+  researchDepth: ResearchDepth = DEFAULT_RESEARCH_DEPTH,
+) =>
   [
     COPY.promptLanguage,
     COPY.promptOpen.replace("{url}", newPlanEntryUrl(SIDEQUEST_URL)),
     COPY.planningInstruction,
+    researchInstructionFor(researchDepth),
     COPY.promptProtocol,
     COPY.promptSnapshot,
     JSON.stringify(planningNeedsFor(mission), null, 2),

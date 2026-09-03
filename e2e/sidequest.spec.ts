@@ -235,6 +235,15 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   const initialCopyButton = page.getByRole("button", {
     name: "Copy to ChatGPT",
   })
+  const researchDepth = page.getByRole("slider", { name: "Research depth" })
+  await expect(researchDepth).toHaveAttribute("aria-valuetext", "Normal")
+  await researchDepth.fill("0")
+  await expect(researchDepth).toHaveAttribute("aria-valuetext", "Quick")
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("daymaker:research-depth:v1"),
+    ),
+  ).toBe("quick")
   const initialCopyButtonStyle = await initialCopyButton.evaluate((element) => {
     const style = getComputedStyle(element)
     return {
@@ -270,7 +279,9 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   )
   expect(initialCopied).toContain("Keep the 16:00 Hotel Trinacria arrival fixed")
   expect(initialCopied).toContain('"sampleData": true')
+  expect(initialCopied).toContain("RESEARCH DEPTH: QUICK")
   expect(initialCopied).not.toContain('"needs"')
+  await researchDepth.fill("1")
 
   const extracted = await executeTool(page, "update_day_context", {
     brief: editedBrief,
@@ -376,6 +387,19 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
     path: "artifacts/sidequest-needs-add-mobile.png",
   })
   await mobileNewNeed.press("Escape")
+})
+
+test("remembers the research depth on this device", async ({ page }) => {
+  await page.goto("/")
+  const researchDepth = page.getByRole("slider", { name: "Research depth" })
+  await expect(researchDepth).toHaveAttribute("aria-valuetext", "Normal")
+  await researchDepth.fill("2")
+  await expect(researchDepth).toHaveAttribute("aria-valuetext", "Deep")
+
+  await page.reload()
+
+  await expect(page.getByRole("slider", { name: "Research depth" }))
+    .toHaveAttribute("aria-valuetext", "Deep")
 })
 
 test("agent generates a proposal with item and whole-schedule maps", async ({ page }) => {

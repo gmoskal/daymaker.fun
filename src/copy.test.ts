@@ -46,12 +46,8 @@ describe("English product copy", () => {
     expect(COPY.planningInstruction).toContain("Copy changes to ChatGPT")
     expect(COPY.planningInstruction).toContain("feedback directly in this chat")
     expect(COPY.planningInstruction).toContain("share the link with friends")
-    expect(COPY.planningInstruction).toContain("finish in one pass")
     expect(COPY.planningInstruction).toContain(
-      "run independent lookups in parallel",
-    )
-    expect(COPY.planningInstruction).toContain(
-      "one strong current source per proposed stop",
+      "selected research-depth contract",
     )
     expect(COPY.planningInstruction).toContain(
       "Do not send intermediate progress narration",

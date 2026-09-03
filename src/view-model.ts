@@ -9,6 +9,10 @@ import {
 } from "./domain/seed"
 import { toMissionPrompt } from "./mission-prompt"
 import {
+  DEFAULT_RESEARCH_DEPTH,
+  type ResearchDepth,
+} from "./research-depth"
+import {
   appleMapsUrl,
   googleMapsUrl,
   googleScheduleUrl,
@@ -39,6 +43,7 @@ export type ViewAction =
   | { type: "CopySessionLink" }
   | { demoId?: DemoMissionId; type: "LoadDemo" }
   | { type: "NewPlan" }
+  | { researchDepth: ResearchDepth; type: "SetResearchDepth" }
   | { panel: MissionPanel; type: "SelectPanel" }
   | { stopId: string; type: "ToggleStop" }
   | { label: string; type: "AddConstraint" }
@@ -84,6 +89,7 @@ type ContextWorkspace = {
   constraints: ConstraintScreen[]
   copyLabel: string
   prompt: string
+  researchDepth: ResearchDepth
   stage: Mission["context"]["stage"]
   type: "context"
 }
@@ -124,6 +130,7 @@ type PresentMissionParams = {
   expandedStopIds: string[]
   mission: Mission
   panel: MissionPanel
+  researchDepth?: ResearchDepth
   sessionLinkCopied?: boolean
   viewerTimeZone?: string
   webMcp: WebMcpState
@@ -256,8 +263,9 @@ const workspaceFor = (
   mission: Mission,
   timeline: TimelineStopScreen[],
   route: ScheduleMapPoint[],
+  researchDepth: ResearchDepth,
 ): MissionWorkspaceScreen => {
-  const prompt = toMissionPrompt(mission)
+  const prompt = toMissionPrompt(mission, researchDepth)
   const latestNeedsEvent = mission.events.find(
     (event) =>
       event.type === "constraints_updated" || event.type === "context_updated",
@@ -290,7 +298,7 @@ const workspaceFor = (
         canCopy:
           mission.context.stage === "brief"
             ? mission.context.brief.trim() !== ""
-            : needsChanged,
+            : needsChanged || researchDepth !== DEFAULT_RESEARCH_DEPTH,
         canShareSession:
           mission.context.stage === "needs" &&
           mission.context.constraints.length > 0,
@@ -304,6 +312,7 @@ const workspaceFor = (
               ? COPY.copiedChanges
               : COPY.copyChanges,
         prompt,
+        researchDepth,
         stage: mission.context.stage,
         type: "context",
       }
@@ -315,6 +324,7 @@ export const presentMission = ({
   expandedStopIds,
   mission,
   panel,
+  researchDepth = DEFAULT_RESEARCH_DEPTH,
   sessionLinkCopied = false,
   viewerTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   webMcp,
@@ -356,6 +366,13 @@ export const presentMission = ({
       updatedAt: mission.updatedAt,
     }),
     webMcp: webMcpBadge(webMcp),
-    workspace: workspaceFor(panel, copied, mission, timeline, route),
+    workspace: workspaceFor(
+      panel,
+      copied,
+      mission,
+      timeline,
+      route,
+      researchDepth,
+    ),
   }
 }

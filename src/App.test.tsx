@@ -8,6 +8,7 @@ import {
   createBlankMission,
 } from "./domain/seed"
 import { readSessionUrl } from "./session-link"
+import { RESEARCH_DEPTH_STORAGE_KEY } from "./research-depth"
 import { createMissionStore, type StoragePort } from "./store"
 import type { WebMcpRegistration } from "./webmcp"
 
@@ -38,7 +39,10 @@ const registration = (supported: boolean): Promise<WebMcpRegistration> =>
   Promise.resolve({ dispose: () => undefined, supported })
 const originalClipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard")
 
-beforeEach(() => window.history.replaceState(null, "", "/schedule"))
+beforeEach(() => {
+  window.history.replaceState(null, "", "/schedule")
+  window.localStorage.removeItem(RESEARCH_DEPTH_STORAGE_KEY)
+})
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -95,6 +99,14 @@ describe("Sidequest app", () => {
     expect(brief).toBeRequired()
     expect(screen.getByRole("button", { name: "Copy to ChatGPT" }))
       .toBeDisabled()
+    const researchDepth = screen.getByRole("slider", {
+      name: "Research depth",
+    })
+    expect(researchDepth).toHaveValue("1")
+    expect(researchDepth).toHaveAttribute("aria-valuetext", "Normal")
+    fireEvent.change(researchDepth, { target: { value: "2" } })
+    expect(researchDepth).toHaveAttribute("aria-valuetext", "Deep")
+    expect(window.localStorage.getItem(RESEARCH_DEPTH_STORAGE_KEY)).toBe("deep")
     fireEvent.change(brief, {
       target: { value: "Find a calm swim and keep dinner fixed." },
     })
@@ -107,6 +119,31 @@ describe("Sidequest app", () => {
     expect(prompt).toContain('"lockedCommitments"')
     expect(prompt).not.toContain('"needs"')
     expect(prompt).not.toContain('"stops"')
+    expect(prompt).toContain("RESEARCH DEPTH: DEEP")
+  })
+
+  it("uses research depth as a structured Needs prompt change", async () => {
+    window.history.replaceState(null, "", "/needs")
+    const missionStore = store()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    })
+    render(<App registration={registration(true)} store={missionStore} />)
+
+    const copy = screen.getByRole("button", {
+      name: "Copy changes to ChatGPT",
+    })
+    expect(copy).toBeDisabled()
+    fireEvent.change(screen.getByRole("slider", { name: "Research depth" }), {
+      target: { value: "0" },
+    })
+    expect(copy).toBeEnabled()
+    fireEvent.click(copy)
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
+    expect(writeText.mock.calls[0]?.[0]).toContain("RESEARCH DEPTH: QUICK")
   })
 
   it("edits all forms of Needs", () => {

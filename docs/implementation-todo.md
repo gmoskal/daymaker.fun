@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: v0.2.5 language-aware ChatGPT handoff deployed; automatic Vercel Git connection permission pending
+> Status: v0.2.6 live on daymaker.fun with strict response-language handoff and larger desktop typography; automatic Vercel Git connection permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -38,9 +38,9 @@
 - [x] 17. Make Proposed schedule a read-only expandable result
 - [x] 18. Align the add-Need interaction with the list
 - [x] 19. Transfer a complete session through a shareable URL
-- [~] 20. Keep ChatGPT's response in the person's language
+- [x] 20. Keep ChatGPT's response in the person's language
 - [x] 21. Make daymaker.fun the production domain
-- [~] 22. Raise the desktop typography scale
+- [x] 22. Raise the desktop typography scale
 
 ## Blocking decisions accepted in this plan
 
@@ -1182,7 +1182,7 @@ Implementation result:
   608-character link for revision 1; a separate empty browser imported it at
   `/schedule`, stored revision 1, and cleaned the fragment from the address.
 
-### 20 [~] Keep ChatGPT's response in the person's language
+### 20 [x] Keep ChatGPT's response in the person's language
 
 Description: Make the copied planning protocol keep questions, progress
 summaries, and the final answer in the language of the person's request, even
@@ -1272,6 +1272,9 @@ Implementation result:
   on late protocol prose. Round 3 kept it in the existing copy module. Round 4
   removed the weaker duplicated wording from `promptProtocol`. Round 5 changed
   no React state, component, effect, or physical module boundary.
+- Deployment `dpl_9tgLgCakhooFQo75epoq17ZhfSs4` reached `READY`; public
+  `index-CoX7Omf3.js` contains the first-position language requirement, the
+  all-English outcome for English input, and the cross-language narration ban.
 
 ### 21 [x] Make daymaker.fun the production domain
 
@@ -1337,7 +1340,7 @@ Implementation result:
   `/needs` app in the browser. Both Vercel edge addresses returned HTTP 200 with
   certificate validation for the `www` host.
 
-### 22 [~] Raise the desktop typography scale
+### 22 [x] Raise the desktop typography scale
 
 Description: Give the wide-screen interface a more confident contemporary
 type scale while preserving the existing compact mobile layout and strict
@@ -1391,6 +1394,8 @@ Implementation result:
   change; round 3 kept ownership in the existing stylesheet; round 4 retained
   one direct media query rather than a helper or token layer; round 5 introduced
   no React component, context, memoization, or effect.
+- The same production deployment serves `index-7lP8ynr_.css` with the 561px
+  breakpoint and 18px desktop root scale on both custom hosts.
 
 ## Risks and dependencies
 

@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: v0.2.3 read-only proposal and clearer Needs controls deployed; automatic Vercel Git connection permission pending
+> Status: v0.2.4 portable gzip session links deployed; automatic Vercel Git connection permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -37,7 +37,7 @@
 - [x] 16. Replace model jargon in the Need priority control
 - [x] 17. Make Proposed schedule a read-only expandable result
 - [x] 18. Align the add-Need interaction with the list
-- [~] 19. Transfer a complete session through a shareable URL
+- [x] 19. Transfer a complete session through a shareable URL
 
 ## Blocking decisions accepted in this plan
 
@@ -1083,7 +1083,7 @@ Implementation result:
   and the public alias served asset `index-BB5Jwo5a.js` with the v0.2.3 marker
   and read-only proposal copy.
 
-### 19 [~] Transfer a complete session through a shareable URL
+### 19 [x] Transfer a complete session through a shareable URL
 
 Description: Let a person copy one self-contained link on mobile, send it to
 another person, or open it on desktop without an account, backend, or shared
@@ -1140,11 +1140,44 @@ Before implementation gate:
   persistence remain explicit before React and WebMCP registration.
 - [x] Privacy decision: use a fragment, never a query parameter; clear it with
   `history.replaceState` after the one-time import.
-- [ ] Named unit/integration assertions observed red before production edits.
+- [x] Named unit/integration assertions observed red before production edits.
 
 Implementation result:
 
-- Pending red/green, cross-browser evidence, size audit, and deployment.
+- Red was observed independently at each boundary: the codec module did not
+  exist; the store had no validated shared-session import; the footer exposed
+  no copy action; WebMCP results contained no `sessionUrl`; and the copied
+  protocol allowed ChatGPT to finish without a link.
+- `session-link.ts` now performs deterministic UTF-8 JSON -> gzip -> unpadded
+  base64url encoding. Decode rejects malformed base64url, non-gzip data,
+  oversized compressed or expanded payloads, invalid UTF-8, invalid JSON, and
+  schema-invalid missions without replacing local data.
+- Valid fragments import before store creation, retain the requested route,
+  and disappear through `history.replaceState`. The footer copies the current
+  route as a small borderless utility; every successful WebMCP read and write
+  returns a post-operation link, with no sixth tool or backend.
+- The handoff now explicitly requires the exact final `sessionUrl` as
+  `[Open updated Sidequest plan](...)`; it no longer ends with ambiguous prose
+  telling the person to open a tab that is not linked.
+- Full gate: 73/73 Vitest tests, strict TypeScript/Vite build, and 5/5 Chromium
+  flows. The new browser flow creates a proposal, opens the returned link in an
+  empty 390px browser context, verifies the complete state, removes the hash,
+  resizes to desktop, reloads, and verifies persistence.
+- Mature-TypeScript round 1 found that an unbounded source URL could make a
+  schema-valid mission unshareable, so source URLs are capped at 2,048 chars.
+  Round 2 kept `Mission` as the only truth and derived links on demand instead
+  of adding synchronized session state. Round 3 kept compression/decoding in
+  one adapter, persistence in the store, and bootstrap in the composition
+  root. Round 4 removed the one-field decode params wrapper and a duplicated
+  URL-construction branch. Round 5 kept React to one transient copy-feedback
+  boolean and one click effect; no context, service, or new component was
+  justified.
+- Production deployment `dpl_BeJuaeEp2SsWCAGN1tWZ5ZxBBDE3` is `READY` and
+  aliased at `https://sidequest-webmcp-eta.vercel.app`. The public asset
+  `index-C5ZncSXC.js` contains v0.2.4, the mandatory clickable-link protocol,
+  and portable URL result copy. A production Site Tool write returned a
+  608-character link for revision 1; a separate empty browser imported it at
+  `/schedule`, stored revision 1, and cleaned the fragment from the address.
 
 ## Risks and dependencies
 

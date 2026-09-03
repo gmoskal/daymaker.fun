@@ -113,7 +113,7 @@ describe("Sidequest app", () => {
     expect(screen.getByRole("button", { name: "Copy to ChatGPT" }))
       .toBeDisabled()
     const researchDepth = screen.getByRole("slider", {
-      name: "Research depth",
+      name: "Planning effort",
     })
     expect(researchDepth).toHaveValue("1")
     expect(researchDepth).toHaveAttribute("aria-valuetext", "Normal")
@@ -121,11 +121,11 @@ describe("Sidequest app", () => {
     expect(researchDepth).toHaveAttribute("aria-valuetext", "Deep")
     expect(window.localStorage.getItem(RESEARCH_DEPTH_STORAGE_KEY)).toBe("deep")
     fireEvent.click(
-      screen.getByRole("button", { name: "Set research depth to Quick" }),
+      screen.getByRole("button", { name: "Set planning effort to Quick" }),
     )
     expect(researchDepth).toHaveAttribute("aria-valuetext", "Quick")
     fireEvent.click(
-      screen.getByRole("button", { name: "Set research depth to Deep" }),
+      screen.getByRole("button", { name: "Set planning effort to Deep" }),
     )
     fireEvent.change(brief, {
       target: { value: "Find a calm swim and keep dinner fixed." },
@@ -156,7 +156,7 @@ describe("Sidequest app", () => {
       name: "Copy changes to ChatGPT",
     })
     expect(copy).toBeDisabled()
-    fireEvent.change(screen.getByRole("slider", { name: "Research depth" }), {
+    fireEvent.change(screen.getByRole("slider", { name: "Planning effort" }), {
       target: { value: "0" },
     })
     expect(copy).toBeEnabled()
@@ -164,6 +164,16 @@ describe("Sidequest app", () => {
 
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
     expect(writeText.mock.calls[0]?.[0]).toContain("RESEARCH DEPTH: QUICK")
+    await waitFor(() => expect(copy).toBeDisabled())
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set planning effort to Deep" }),
+    )
+    expect(copy).toBeEnabled()
+    fireEvent.click(copy)
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2))
+    expect(writeText.mock.calls[1]?.[0]).toContain("RESEARCH DEPTH: DEEP")
   })
 
   it("edits all forms of Needs", () => {

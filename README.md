@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [daymaker.fun](https://daymaker.fun)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.3.1
-- Production deployment: v0.3.1 pending verification
+- Local release: v0.3.2
+- Production deployment: v0.3.2 pending verification
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -154,6 +154,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - [x] Deploy v0.2.9 and verify the one-shot local reset, structured-Needs share link, and fictional demo marker.
 - [x] Deploy v0.3.0 and verify Quick / Normal / Deep prompt contracts plus local preference persistence.
 - [ ] Deploy v0.3.1 and verify the compact pointer-draggable research control.
+- [ ] Deploy v0.3.2 and verify the final Effort control, spacing, and clipboard fallback.
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and survives reload.

@@ -400,23 +400,20 @@ const BriefEditor = ({
         </span>
       </label>
       <aside className="agent-prompt">
+        <ResearchDepthControl
+          dispatch={dispatch}
+          title={COPY.effortTitle}
+          value={researchDepth}
+        />
         <h3>{COPY.handoffTitle}</h3>
-        <div className="agent-prompt-actions">
-          <button
-            className="control copy-action"
-            disabled={brief.trim() === ""}
-            onClick={() =>
-              dispatch({ brief, prompt, type: "CopyPrompt" })
-            }
-            type="button"
-          >
-            {copyLabel}
-          </button>
-          <ResearchDepthControl
-            dispatch={dispatch}
-            value={researchDepth}
-          />
-        </div>
+        <button
+          className="control copy-action"
+          disabled={brief.trim() === ""}
+          onClick={() => dispatch({ brief, prompt, type: "CopyPrompt" })}
+          type="button"
+        >
+          {copyLabel}
+        </button>
         <p>{COPY.agentHint}</p>
       </aside>
     </div>
@@ -425,6 +422,7 @@ const BriefEditor = ({
 
 type ResearchDepthControlProps = {
   dispatch: (action: ViewAction) => void
+  title: string
   value: ResearchDepth
 }
 
@@ -435,7 +433,7 @@ const ResearchDepthControl = (p: ResearchDepthControlProps) => {
   return (
     <div className="research-depth">
       <div className="research-depth-heading">
-        <span>{COPY.researchDepth}</span>
+        <span>{p.title}</span>
       </div>
       <div className="research-depth-track" data-depth={p.value}>
         <span aria-hidden="true" className="research-depth-progress" />
@@ -566,22 +564,21 @@ const ContextPanel = ({
             ) : null}
           </div>
           <aside className="agent-prompt agent-prompt--changes">
-            <div className="agent-prompt-actions">
-              <button
-                className="control copy-action"
-                disabled={!workspace.canCopy}
-                onClick={() =>
-                  dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
-                }
-                type="button"
-              >
-                {workspace.copyLabel}
-              </button>
-              <ResearchDepthControl
-                dispatch={dispatch}
-                value={workspace.researchDepth}
-              />
-            </div>
+            <ResearchDepthControl
+              dispatch={dispatch}
+              title={COPY.researchDepth}
+              value={workspace.researchDepth}
+            />
+            <button
+              className="control copy-action"
+              disabled={!workspace.canCopy}
+              onClick={() =>
+                dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
+              }
+              type="button"
+            >
+              {workspace.copyLabel}
+            </button>
             <p>{COPY.changesHint}</p>
           </aside>
         </>

@@ -14,28 +14,38 @@ const fallbackCopy = (value: string, target: ClipboardEnvironment["document"]) =
   field.style.pointerEvents = "none"
   target.body.append(field)
   field.select()
-  const copied = target.execCommand("copy")
-  field.remove()
+  let copied = false
+  try {
+    copied = target.execCommand("copy")
+  } finally {
+    field.remove()
+  }
   if (!copied) throw new Error("Clipboard copy was rejected")
 }
 
-export const copyText = (
+export const copyText = async (
   value: string,
   environment: ClipboardEnvironment = {
     clipboard: navigator.clipboard,
     document,
   },
 ) => {
-  if (environment.clipboard === undefined) {
-    try {
-      fallbackCopy(value, environment.document)
-      return Promise.resolve()
-    } catch (error) {
-      return Promise.reject(error)
-    }
+  let fallbackCopied = false
+  let fallbackError: unknown = new Error("Clipboard copy was rejected")
+  try {
+    fallbackCopy(value, environment.document)
+    fallbackCopied = true
+  } catch (error) {
+    fallbackError = error
   }
 
-  return environment.clipboard
-    .writeText(value)
-    .catch(() => fallbackCopy(value, environment.document))
+  if (environment.clipboard !== undefined)
+    try {
+      await environment.clipboard.writeText(value)
+      return
+    } catch (error) {
+      if (!fallbackCopied) throw error
+    }
+
+  if (!fallbackCopied) throw fallbackError
 }

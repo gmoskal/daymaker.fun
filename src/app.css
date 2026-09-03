@@ -417,13 +417,16 @@ textarea:focus-visible {
 }
 
 .needs-brief {
-  max-width: 520px;
-  margin-bottom: 48px;
+  width: 100%;
+  max-width: none;
+  margin-bottom: 0;
   display: grid;
   gap: 12px;
 }
 
-.needs-brief > span:first-child {
+.needs-brief > span:first-child,
+.agent-prompt h3,
+.research-depth-heading {
   color: #b2b2b6;
   font-size: 0.62rem;
   font-weight: 650;
@@ -579,21 +582,18 @@ textarea:focus-visible {
 }
 
 .agent-prompt h3 {
-  margin: 0 0 16px;
+  margin: 1em 0 16px;
 }
 
 .research-depth {
-  flex: 0 0 144px;
+  flex: 0 0 auto;
   width: 144px;
   min-width: 0;
-  margin: 0;
+  margin: 2.5em 0 1.5em;
 }
 
 .research-depth-heading {
   margin-bottom: 3px;
-  color: #7b7b80;
-  font-size: 0.58rem;
-  font-weight: 600;
 }
 
 .research-depth-track {
@@ -622,7 +622,7 @@ textarea:focus-visible {
   width: calc((100% - 12px) / 2);
   height: 4px;
   border-radius: 2px;
-  background: linear-gradient(90deg, #df5963, var(--accent));
+  background: var(--accent);
   pointer-events: none;
 }
 
@@ -648,7 +648,13 @@ textarea:focus-visible {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #c7c7ca;
+  background: #d9d9dc;
+}
+
+.research-depth-track[data-depth="quick"] .research-depth-stops i:first-child,
+.research-depth-track[data-depth="normal"] .research-depth-stops i:nth-child(-n + 2),
+.research-depth-track[data-depth="deep"] .research-depth-stops i {
+  background: var(--accent);
 }
 
 .research-depth-track input {
@@ -726,20 +732,6 @@ textarea:focus-visible {
 
 .research-depth-labels button[aria-pressed="true"] {
   color: var(--accent);
-}
-
-.agent-prompt-actions {
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.agent-prompt-actions .copy-action {
-  flex: 0 0 auto;
-  padding-right: 12px;
-  padding-left: 12px;
-  white-space: nowrap;
 }
 
 .agent-prompt p {
@@ -1084,11 +1076,6 @@ textarea:focus-visible {
     gap: 5px;
   }
 
-  .agent-prompt--changes .copy-action {
-    padding-right: 9px;
-    padding-left: 9px;
-    font-size: 0.68rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

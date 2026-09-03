@@ -23,7 +23,7 @@ export const COPY = {
   allowNeedToAdapt: "Allow {need} to adapt",
   agentHint:
     "Paste this into ChatGPT on mobile or desktop. It will open Sidequest in Work, structure Needs, and create the Proposed schedule there.",
-  constraintsTitle: "3 · Review and edit needs",
+  constraintsTitle: "Review and edit needs",
   changesHint:
     "After you edit Needs here, copy the changes back to ChatGPT. You can also describe feedback directly in ChatGPT and open the new plan link it returns.",
   copyChanges: "Copy changes to ChatGPT",
@@ -48,7 +48,8 @@ export const COPY = {
   openInAppleMaps: "Open in Apple Maps",
   openInGoogleMaps: "Open in Google Maps",
   openPlanInGoogleMaps: "Open proposed schedule in Google Maps",
-  handoffTitle: "2 · Copy to ChatGPT",
+  effortTitle: "2 · Choose effort",
+  handoffTitle: "3 · Copy to ChatGPT",
   planningBrief: "1 · Describe your needs",
   planningBriefPlaceholder:
     "Example: Start tomorrow's route at Palermo Airport. Include a rental car, excellent breakfast and coffee, one nearby sight, parking, and a fixed 16:00 arrival at Hotel Trinacria.",
@@ -62,14 +63,14 @@ export const COPY = {
   promptProtocol:
     "The one-shot planning URL clears the previous browser-local board before Site Tools register. Do not inspect, compare, preserve, or clear an earlier plan with a tool call. Call get_mission_state as soon as the page opens to obtain the new blank board's revision. Immediately call update_day_context with the copied planning input, that revision, and with replacePlan: true to initialize this request before research, clarification, or progress narration. After each write, use the returned revision for the next write. Every successful read or write returns a sessionUrl containing the complete current board. After the final successful write, end your response with [Open updated Sidequest plan](sessionUrl), replacing sessionUrl with the exact returned URL. Use the URL returned by the final read only when the requested plan was already written in this turn. Do not finish without the clickable link.",
   promptSnapshot: "Planning input at copy time:",
-  release: "v0.3.1",
-  researchDepth: "Research",
-  researchDepthAriaLabel: "Research depth",
+  release: "v0.3.2",
+  researchDepth: "Effort",
+  researchDepthAriaLabel: "Planning effort",
   updated: "updated",
   planTitle: "Proposed schedule",
   scheduleTitle: "Schedule",
   samplePlans: "Sample plans",
-  setResearchDepth: "Set research depth to {level}",
+  setResearchDepth: "Set planning effort to {level}",
   tagline: "Your day changed. Your plan should too.",
   webMcpChecking: "Checking site tools…",
   webMcpConnected: "Site tools connected",

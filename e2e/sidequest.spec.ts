@@ -211,7 +211,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
     name: "1 · Describe your needs",
   })
   await expect(brief).toContainText("Palermo Airport")
-  const editedBrief = `${await brief.inputValue()} Keep the 16:00 Hotel Trinacria arrival fixed. ${"Also verify practical timing and opening hours. ".repeat(3)}`
+  const editedBrief = `${await brief.inputValue()} Keep the 16:00 Hotel Trinacria arrival fixed. ${"Also verify practical timing and opening hours. ".repeat(5)}`
   await brief.fill(editedBrief)
   expect(
     await brief.evaluate((element) => element.scrollHeight > element.clientHeight),
@@ -246,7 +246,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   const initialCopyButton = page.getByRole("button", {
     name: "Copy to ChatGPT",
   })
-  const researchDepth = page.getByRole("slider", { name: "Research depth" })
+  const researchDepth = page.getByRole("slider", { name: "Planning effort" })
   await expect(researchDepth).toHaveAttribute("aria-valuetext", "Normal")
   await researchDepth.fill("0")
   await expect(researchDepth).toHaveAttribute("aria-valuetext", "Quick")
@@ -344,7 +344,11 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   const copyChanges = page.getByRole("button", {
     name: "Copy changes to ChatGPT",
   })
-  await expect(copyChanges).toBeDisabled()
+  await expect(copyChanges).toBeEnabled()
+  await copyChanges.click()
+  await expect(
+    page.getByRole("button", { name: "Changes copied for ChatGPT" }),
+  ).toBeDisabled()
   await page.getByRole("button", { name: "Cross out one worthwhile sight nearby" }).click()
   await expect(copyChanges).toBeEnabled()
   await page.getByRole("button", { name: "Add need" }).click()
@@ -402,7 +406,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
 
 test("remembers the research depth on this device", async ({ page }) => {
   await page.goto("/")
-  const researchDepth = page.getByRole("slider", { name: "Research depth" })
+  const researchDepth = page.getByRole("slider", { name: "Planning effort" })
   await expect(researchDepth).toHaveAttribute("aria-valuetext", "Normal")
   await expect(page.locator(".research-depth-markers")).toHaveCount(0)
   const sliderBox = await researchDepth.boundingBox()
@@ -424,7 +428,7 @@ test("remembers the research depth on this device", async ({ page }) => {
 
   await page.reload()
 
-  await expect(page.getByRole("slider", { name: "Research depth" }))
+  await expect(page.getByRole("slider", { name: "Planning effort" }))
     .toHaveAttribute("aria-valuetext", "Deep")
 })
 
@@ -436,7 +440,7 @@ test("drags the research depth with a mobile touch gesture", async ({ browser })
   })
   const page = await context.newPage()
   await page.goto("/needs?new=1")
-  const researchDepth = page.getByRole("slider", { name: "Research depth" })
+  const researchDepth = page.getByRole("slider", { name: "Planning effort" })
   const sliderBox = await researchDepth.boundingBox()
   if (sliderBox === null) throw new Error("Research slider is not visible")
   const session = await context.newCDPSession(page)

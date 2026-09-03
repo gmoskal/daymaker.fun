@@ -127,6 +127,7 @@ export type MissionScreen = {
 
 type PresentMissionParams = {
   copied: boolean
+  copiedResearchDepth?: ResearchDepth
   expandedStopIds: string[]
   mission: Mission
   panel: MissionPanel
@@ -264,6 +265,7 @@ const workspaceFor = (
   timeline: TimelineStopScreen[],
   route: ScheduleMapPoint[],
   researchDepth: ResearchDepth,
+  copiedResearchDepth: ResearchDepth,
 ): MissionWorkspaceScreen => {
   const prompt = toMissionPrompt(mission, researchDepth)
   const latestNeedsEvent = mission.events.find(
@@ -298,7 +300,7 @@ const workspaceFor = (
         canCopy:
           mission.context.stage === "brief"
             ? mission.context.brief.trim() !== ""
-            : needsChanged || researchDepth !== DEFAULT_RESEARCH_DEPTH,
+            : needsChanged || researchDepth !== copiedResearchDepth,
         canShareSession:
           mission.context.stage === "needs" &&
           mission.context.constraints.length > 0,
@@ -321,6 +323,7 @@ const workspaceFor = (
 
 export const presentMission = ({
   copied,
+  copiedResearchDepth = DEFAULT_RESEARCH_DEPTH,
   expandedStopIds,
   mission,
   panel,
@@ -373,6 +376,7 @@ export const presentMission = ({
       timeline,
       route,
       researchDepth,
+      copiedResearchDepth,
     ),
   }
 }

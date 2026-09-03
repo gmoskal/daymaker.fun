@@ -53,6 +53,8 @@ export const useMissionViewModel = ({
   const [researchDepth, setResearchDepth] = useState<ResearchDepth>(() =>
     loadResearchDepth(localStorage),
   )
+  const [copiedResearchDepth, setCopiedResearchDepth] =
+    useState<ResearchDepth>(researchDepth)
   const [panel, setPanel] = useState<MissionPanel>(() =>
     mission.context.stage === "brief" &&
     missionPanelForPath(window.location.pathname) === "plan"
@@ -236,7 +238,10 @@ export const useMissionViewModel = ({
               ? action.prompt
               : toMissionPrompt(store.getSnapshot(), researchDepth)
           void copyText(prompt)
-            .then(() => setCopied(true))
+            .then(() => {
+              setCopied(true)
+              setCopiedResearchDepth(researchDepth)
+            })
             .catch(() => setCopied(false))
           return
         case "CopySessionLink":
@@ -270,6 +275,7 @@ export const useMissionViewModel = ({
       () =>
         presentMission({
           copied,
+          copiedResearchDepth,
           expandedStopIds,
           mission,
           panel,
@@ -279,6 +285,7 @@ export const useMissionViewModel = ({
         }),
       [
         copied,
+        copiedResearchDepth,
         expandedStopIds,
         mission,
         panel,

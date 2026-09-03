@@ -1,5 +1,9 @@
 import { expect, test, type Locator, type Page } from "@playwright/test"
 
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-09-03T13:44:00.000Z"))
+})
+
 type ToolOutcome = {
   changed?: { stopId?: string }
   ok: boolean

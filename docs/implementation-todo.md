@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: v0.2.2 real update time and Work bootstrap verified locally; production deployment pending
+> Status: v0.2.2 real update time and Work bootstrap deployed; automatic Vercel Git connection permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -32,8 +32,8 @@
 - [x] 11. Let the agent create titled plans from complete copied context
 - [x] 12. Make Needs the human input and Proposed schedule the agent output
 - [x] 13. Make the Needs input and primary handoff action unmistakable
-- [~] 14. Show the real persisted update time
-- [~] 15. Bootstrap the mobile Work page from the copied handoff
+- [x] 14. Show the real persisted update time
+- [x] 15. Bootstrap the mobile Work page from the copied handoff
 
 ## Blocking decisions accepted in this plan
 
@@ -758,7 +758,7 @@ Implementation result:
   aliased at `https://sidequest-webmcp-eta.vercel.app`; the served bundle was
   checked for the v0.2.1 marker and final handoff instruction.
 
-### 14 [~] Show the real persisted update time
+### 14 [x] Show the real persisted update time
 
 Description: Replace the static footer example with the actual time of the last
 accepted mission publication. Keep one persisted timestamp shared by human UI
@@ -830,14 +830,18 @@ Implementation result:
   4/4 Chromium flows.
 - Desktop and 390px evidence under `artifacts/sidequest-brief*.png` and
   `artifacts/sidequest-needs-schedule*.png` shows the real `15:44 CEST`-style
-  marker unobstructed at the bottom. Production evidence remains pending.
+  marker unobstructed at the bottom.
 - Mature-TypeScript simplification round 1 kept timestamp truth only on
   `Mission`; round 2 kept the clock at the store boundary and formatting in the
   presenter; round 3 avoided a new service or parallel state; round 4 converted
   new multi-input helpers to named parameter objects and removed test casts;
   round 5 kept React as a one-field Screen renderer with no ticking effect.
+- Production deployment `dpl_8P4ExGkicMzp91yzaRFZV3Ap6AP8` is READY and
+  aliased at `https://sidequest-webmcp-eta.vercel.app`. A clean 390px browser
+  write persisted `2026-09-03T13:46:07.727Z` and rendered
+  `v0.2.2 · updated 3 Sep 2026 · 15:46 CEST`.
 
-### 15 [~] Bootstrap the mobile Work page from the copied handoff
+### 15 [x] Bootstrap the mobile Work page from the copied handoff
 
 Description: Make the intended mobile flow executable without claiming that
 two browser sandboxes share localStorage. A person copies one self-contained
@@ -898,7 +902,12 @@ Implementation result:
   no backend sync or shared-browser claim was introduced.
 - Unit/integration green is included in the 72/72 full run. The real clipboard
   path asserts `/needs`, Work, and blank-board bootstrap; Chromium remains 4/4
-  at desktop and 390px. Production evidence remains pending.
+  at desktop and 390px.
+- Production clipboard verification at 390px confirmed the `/needs` URL, Work
+  continuation, and blank-board bootstrap instruction. A separate 1100px run
+  confirmed the CTA is visible and the document has no horizontal overflow.
+  Real ChatGPT Work/Site Tools discovery remains a truthful manual check rather
+  than an automated claim.
 
 ## Risks and dependencies
 

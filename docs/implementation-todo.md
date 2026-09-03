@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: v0.2.4 portable gzip session links deployed; automatic Vercel Git connection permission pending
+> Status: v0.2.5 language-aware ChatGPT handoff deployed; automatic Vercel Git connection permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -38,7 +38,7 @@
 - [x] 17. Make Proposed schedule a read-only expandable result
 - [x] 18. Align the add-Need interaction with the list
 - [x] 19. Transfer a complete session through a shareable URL
-- [~] 20. Keep ChatGPT's response in the person's language
+- [x] 20. Keep ChatGPT's response in the person's language
 
 ## Blocking decisions accepted in this plan
 
@@ -1180,7 +1180,7 @@ Implementation result:
   608-character link for revision 1; a separate empty browser imported it at
   `/schedule`, stored revision 1, and cleaned the fragment from the address.
 
-### 20 [~] Keep ChatGPT's response in the person's language
+### 20 [x] Keep ChatGPT's response in the person's language
 
 Description: Make the copied planning protocol keep questions, progress
 summaries, and the final answer in the language of the person's request, even
@@ -1239,6 +1239,10 @@ Implementation result:
   direct prose rather than introducing a helper, type, or parser with no second
   use. Round 5 found no React, component, state, effect, or file-structure change
   justified by this contract-only update.
+- Production deployment `dpl_L4JZ9eMTBHRT5XmDe26jZwfvfKfu` reached `READY`
+  and is aliased at `https://sidequest-webmcp-eta.vercel.app`. Public asset
+  `index-BQQJgeUW.js` contains v0.2.5, both language-selection rules, and the
+  exact-session-link preservation rule.
 
 ## Risks and dependencies
 

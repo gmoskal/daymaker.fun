@@ -5,7 +5,6 @@ import {
   MISSION_PANELS,
   missionPanelForPath,
   presentMission,
-  toHumanStopOrder,
 } from "./view-model"
 
 describe("mission presenter", () => {
@@ -20,7 +19,7 @@ describe("mission presenter", () => {
       copied: false,
       mission: SEED_MISSION,
       panel: "context",
-      selectedStopId: null,
+      expandedStopIds: [],
       webMcp: { type: "connected" },
     })
     expect(screen.workspace.type).toBe("context")
@@ -37,7 +36,7 @@ describe("mission presenter", () => {
       copied: false,
       mission,
       panel: "context" as const,
-      selectedStopId: null,
+      expandedStopIds: [],
       viewerTimeZone: "Europe/Warsaw",
       webMcp: { type: "connected" as const },
     }
@@ -45,35 +44,35 @@ describe("mission presenter", () => {
     const screen = presentMission(input)
 
     expect(screen.updateMarker).toBe(
-      "v0.2.2 · updated 3 Sep 2026 · 15:42 CEST",
+      "v0.2.3 · updated 3 Sep 2026 · 15:42 CEST",
     )
   })
 
-  it("presents one focused plan and the true mission state", () => {
+  it("presents independently expanded plan rows and locations", () => {
     const screen = presentMission({
       copied: false,
       mission: SEED_MISSION,
       panel: "plan",
-      selectedStopId: "biokovo-hike",
+      expandedStopIds: ["biokovo-hike"],
       webMcp: { type: "unavailable" },
     })
 
-    expect(screen.missionTitle).toBe("Baška Voda Adventure")
+    expect(screen.missionTitle).toBe("Gravel, Grub & a Dip")
     expect(screen.revision).toBe("REV 06")
     expect(screen.navigation.find((item) => item.active)?.id).toBe("plan")
     expect(screen.workspace.type).toBe("plan")
     if (screen.workspace.type !== "plan") throw new Error("Expected plan screen")
 
-    expect(screen.workspace.stops.map((stop) => stop.statusLabel)).toEqual([
-      "Active",
-      "Planned",
-      "Planned",
-      "Planned · Locked",
+    expect(screen.workspace.stops.map((stop) => stop.location)).toEqual([
+      "Bike parking, Baška Voda",
+      "Biokovo trailhead",
+      "Baška Voda apartment",
+      "Baška Voda old town",
     ])
-    expect(screen.workspace.stops.filter((stop) => stop.selected)).toHaveLength(1)
+    expect(screen.workspace.stops.filter((stop) => stop.expanded)).toHaveLength(1)
     expect(
       screen.workspace.stops.find((stop) => stop.id === "dinner"),
-    ).toMatchObject({ draggable: false, locked: true, time: "18:30" })
+    ).toMatchObject({ expanded: false, time: "18:30" })
     expect(screen.webMcp).toEqual({
       label: "Manual mode · open in ChatGPT or enable Chrome WebMCP",
       tone: "neutral",
@@ -95,7 +94,7 @@ describe("mission presenter", () => {
       copied: true,
       mission,
       panel: "context",
-      selectedStopId: null,
+      expandedStopIds: [],
       webMcp: { type: "connected" },
     })
     expect(contextScreen.workspace.type).toBe("context")
@@ -118,7 +117,7 @@ describe("mission presenter", () => {
       copied: false,
       mission,
       panel: "plan",
-      selectedStopId: null,
+      expandedStopIds: [],
       webMcp: { type: "connected" },
     })
     expect(planScreen.workspace.type).toBe("plan")
@@ -147,7 +146,7 @@ describe("mission presenter", () => {
       copied: false,
       mission: humanEdit,
       panel: "context",
-      selectedStopId: null,
+      expandedStopIds: [],
       webMcp: { type: "connected" },
     })
     if (afterHuman.workspace.type !== "context")
@@ -170,7 +169,7 @@ describe("mission presenter", () => {
         ],
       },
       panel: "context",
-      selectedStopId: null,
+      expandedStopIds: [],
       webMcp: { type: "connected" },
     })
     if (afterAgent.workspace.type !== "context")
@@ -178,19 +177,4 @@ describe("mission presenter", () => {
     expect(afterAgent.workspace.canCopy).toBe(false)
   })
 
-  it("maps human drag order into unlocked schedule slots", () => {
-    const input = toHumanStopOrder(SEED_MISSION, [
-      "gravel-loop",
-      "return-shower",
-      "biokovo-hike",
-    ])
-
-    expect(input?.orderedStops).toEqual([
-      { startsAt: "2026-08-30T11:30:00+02:00", stopId: "gravel-loop" },
-      { startsAt: "2026-08-30T15:30:00+02:00", stopId: "return-shower" },
-      { startsAt: "2026-08-30T17:15:00+02:00", stopId: "biokovo-hike" },
-      { startsAt: "2026-08-30T18:30:00+02:00", stopId: "dinner" },
-    ])
-    expect(toHumanStopOrder(SEED_MISSION, ["dinner"])).toBeNull()
-  })
 })

@@ -39,39 +39,23 @@ export type ViewAction =
   | { demoId?: DemoMissionId; type: "LoadDemo" }
   | { type: "NewPlan" }
   | { panel: MissionPanel; type: "SelectPanel" }
-  | { stopId: string; type: "ToggleStopActions" }
-  | { stopId: string; type: "DeleteStop" }
-  | {
-      status: "completed" | "planned" | "skipped"
-      stopId: string
-      type: "SetStopStatus"
-    }
-  | { locked: boolean; stopId: string; type: "SetStopLock" }
-  | { stopIds: string[]; type: "ReorderStops" }
+  | { stopId: string; type: "ToggleStop" }
   | { label: string; type: "AddConstraint" }
   | { constraintId: string; type: "ToggleConstraint" }
   | { constraintIds: string[]; type: "ReorderConstraints" }
   | { constraintId: string; fixed: boolean; type: "SetConstraintFixed" }
   | { constraintId: string; type: "RemoveConstraint" }
   | { brief: string; type: "SetBrief" }
-  | { title: string; type: "SetTitle" }
-  | { title: string; type: "AddItem" }
-  | { stopId: string; title: string; type: "RenameStop" }
   | { constraintId: string; label: string; type: "RenameConstraint" }
 
 export type TimelineStopScreen = {
-  actionLabel: string
-  draggable: boolean
+  expanded: boolean
   id: string
-  locked: boolean
-  lockLabel: string
+  location: string
   note?: string
   rationale: string
   mapLinks?: { apple: string; google: string }
-  selected: boolean
   source?: { title: string; url: string }
-  status: MissionStop["status"]
-  statusLabel: string
   time: string
   title: string
 }
@@ -134,9 +118,9 @@ export type MissionScreen = {
 
 type PresentMissionParams = {
   copied: boolean
+  expandedStopIds: string[]
   mission: Mission
   panel: MissionPanel
-  selectedStopId: string | null
   viewerTimeZone?: string
   webMcp: WebMcpState
 }
@@ -163,9 +147,6 @@ const clock = (dateTime: string, timezone: string) =>
     minute: "2-digit",
     timeZone: timezone,
   }).format(new Date(dateTime))
-const titleCase = (value: string) =>
-  `${value.charAt(0).toUpperCase()}${value.slice(1)}`
-
 type FormatUpdateMarkerParams = {
   timezone: string
   updatedAt: string
@@ -195,12 +176,6 @@ const formatUpdateMarker = ({
   return `${COPY.release} · ${COPY.updated} ${Number(part("day"))} ${month} ${part("year")} · ${time}`
 }
 
-const focusedStopId = (mission: Mission, selectedStopId: string | null) => {
-  if (mission.stops.some((stop) => stop.id === selectedStopId))
-    return selectedStopId
-  return null
-}
-
 type ScheduleMapPoint = MapPoint & { id: string }
 
 const mapPointsFor = (stops: MissionStop[]): ScheduleMapPoint[] =>
@@ -217,22 +192,16 @@ const routeFor = (mission: Mission): ScheduleMapPoint[] =>
 
 const timelineFor = (
   mission: Mission,
-  selectedStopId: string | null,
+  expandedStopIds: string[],
   route: ScheduleMapPoint[],
 ): TimelineStopScreen[] => {
   const routeById = new Map(route.map((stop) => [stop.id, stop]))
   return mission.stops.map((stop) => {
     const mapPoint = routeById.get(stop.id)
     return {
-      actionLabel:
-        stop.status === "completed" || stop.status === "skipped"
-          ? `Restore ${stop.title} to planned`
-          : `Mark ${stop.title}`,
-      draggable:
-        !stop.locked && (stop.status === "active" || stop.status === "planned"),
+      expanded: expandedStopIds.includes(stop.id),
       id: stop.id,
-      locked: stop.locked,
-      lockLabel: `${stop.locked ? COPY.unlock : COPY.lock} ${stop.title}`,
+      location: stop.location.label,
       ...(stop.note === undefined ? {} : { note: stop.note }),
       rationale: stop.rationale,
       ...(mapPoint === undefined
@@ -243,12 +212,9 @@ const timelineFor = (
               google: googleMapsUrl(mapPoint),
             },
           }),
-      selected: stop.id === selectedStopId,
       ...(stop.source === undefined
         ? {}
         : { source: { title: stop.source.title, url: stop.source.url } }),
-      status: stop.status,
-      statusLabel: `${titleCase(stop.status)}${stop.locked ? ` · ${COPY.locked}` : ""}`,
       time: clock(stop.startsAt, mission.timezone),
       title: stop.title,
     }
@@ -339,15 +305,18 @@ const workspaceFor = (
 
 export const presentMission = ({
   copied,
+  expandedStopIds,
   mission,
   panel,
-  selectedStopId,
   viewerTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   webMcp,
 }: PresentMissionParams): MissionScreen => {
-  const selected = focusedStopId(mission, selectedStopId)
   const route = routeFor(mission)
-  const timeline = timelineFor(mission, selected, mapPointsFor(mission.stops))
+  const timeline = timelineFor(
+    mission,
+    expandedStopIds,
+    mapPointsFor(mission.stops),
+  )
 
   return {
     date: dateParts(mission.date),
@@ -374,42 +343,5 @@ export const presentMission = ({
     }),
     webMcp: webMcpBadge(webMcp),
     workspace: workspaceFor(panel, copied, mission, timeline, route),
-  }
-}
-
-const sameIdsOnce = (actual: string[], proposed: string[]) =>
-  actual.length === proposed.length &&
-  new Set(proposed).size === proposed.length &&
-  actual.every((id) => proposed.includes(id))
-
-export const toHumanStopOrder = (mission: Mission, stopIds: string[]) => {
-  const future = futureStops(mission)
-  const movable = future.filter((stop) => !stop.locked)
-  if (!sameIdsOnce(movable.map((stop) => stop.id), stopIds)) return null
-
-  const movableById = new Map(movable.map((stop) => [stop.id, stop]))
-  const queue = []
-  for (const stopId of stopIds) {
-    const stop = movableById.get(stopId)
-    if (stop === undefined) return null
-    queue.push(stop)
-  }
-  let nextMovable = 0
-  const orderedStops = []
-  for (const slot of future) {
-    if (slot.locked) {
-      orderedStops.push({ startsAt: slot.startsAt, stopId: slot.id })
-      continue
-    }
-    const stop = queue[nextMovable]
-    if (stop === undefined) return null
-    nextMovable += 1
-    orderedStops.push({ startsAt: slot.startsAt, stopId: stop.id })
-  }
-
-  return {
-    expectedRevision: mission.revision,
-    orderedStops,
-    reason: "Reordered by the person using the Sidequest board.",
   }
 }

@@ -2,7 +2,7 @@
 
 > Your day changed. Your plan should too.
 
-Sidequest turns ordinary travel needs into an editable, source-backed schedule. The person writes or clicks together **Needs**; ChatGPT structures them, researches suitable places, and writes a fresh **Proposed schedule** to the Sidequest page it opens through WebMCP Site Tools.
+Sidequest turns ordinary travel needs into an editable planning brief and a source-backed schedule. The person writes or clicks together **Needs**; ChatGPT structures them, researches suitable places, and writes a fresh, read-only **Proposed schedule** to the Sidequest page it opens through WebMCP Site Tools.
 
 This repository is an English-only entry for [The WebMCP Challenge](https://webmcp.devpost.com/).
 
@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.2
-- Production deployment: v0.2.2 live
+- Local release: v0.2.3
+- Production deployment: v0.2.2 live; v0.2.3 pending this change
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -22,9 +22,9 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 2. Choose **Copy to ChatGPT** and paste the self-contained handoff into ChatGPT on mobile or desktop.
 3. ChatGPT continues in Work, opens the public Sidequest `/needs` page, and calls `get_mission_state`. If that browser opens a blank board, it initializes it from the copied planning input instead of discarding the description because its local revision differs.
 4. ChatGPT asks concise questions if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** to the page it opened with Site Tools.
-5. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Fixed**.
+5. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Must keep** / **Can adapt**.
 6. A human Needs edit unlocks **Copy changes to ChatGPT**. Paste it to regenerate the proposal. Changes made by ChatGPT through the opened board's Site Tools appear there directly and do not require another copy.
-7. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it on that board to review the plan date, starting location, and generated items. Each item opens its place in Google Maps or Apple Maps; the schedule also has one complete Google Maps route.
+7. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it to review the generated title, date, primary city/area, and items. The proposal is read-only for people: click anywhere on one or more rows to expand details and map links. The complete proposal also has one Google Maps route.
 
 **Load demo** contains two input examples, not prebuilt schedules:
 
@@ -33,13 +33,13 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 ## Why WebMCP
 
-A normal assistant can return an itinerary as chat text. Sidequest makes the result durable and directly editable:
+A normal assistant can return an itinerary as chat text. Sidequest makes the input directly editable and the generated result durable:
 
 - the page and agent share one typed mission store;
 - the agent can read the latest brief, fixed needs, stop IDs, locks, places, sources, and revision;
 - every accepted tool write appears immediately in the page opened by Work, persists locally there, and updates the real footer timestamp;
 - every write uses optimistic concurrency, so stale agents cannot silently overwrite newer human changes;
-- the full manual UI still works without WebMCP.
+- the Needs editor and proposal review still work without WebMCP.
 
 Sidequest is not a chat client and does not run a remote MCP server. ChatGPT remains the language and research surface. The open page registers five imperative `document.modelContext.registerTool` tools and acts as the shared planning artifact.
 
@@ -67,7 +67,7 @@ WebMCP tools ────┘                                  │
                                                                           └─> Google / Apple Maps
 ```
 
-`Mission` is the only domain source of truth, including the persisted `brief` or `needs` planning stage. React owns only transient view state. Human controls and WebMCP tools dispatch the same action union through the same transition gate.
+`Mission` is the only domain source of truth, including the persisted `brief` or `needs` planning stage. React owns only transient view state. Human controls and WebMCP tools dispatch their permitted subsets of the same action union through the same transition gate. People edit Needs; WebMCP generates and revises the Proposed schedule.
 
 Key files:
 
@@ -80,13 +80,15 @@ Key files:
 - `src/map-links.ts` — Google and Apple Maps URL builders
 - `src/view-model.ts` — pure `Mission + ViewState -> MissionScreen` projection
 - `src/useMissionViewModel.ts` — React action adapter
-- `src/App.tsx` and `src/MissionWorkspace.tsx` — minimal UI and Motion reorder boundary
+- `src/App.tsx` and `src/MissionWorkspace.tsx` — minimal UI, Motion Needs reorder, and schedule expansion
 
 ### State and session identity
 
 There is no account or backend session. The app reads one mission from `sidequest:mission:v1` in `localStorage`. Each accepted human or agent mutation updates memory, stamps the actual wall-clock time, and persists the same mission. State survives reloads on the same origin and browser profile; another browser, device, private window, or profile has a separate plan.
 
 WebMCP tools close over the live store belonging to the open document. A human edit on that board is visible to the next `get_mission_state`. The copied JSON is both a conversation snapshot and the bootstrap payload for a blank page opened by mobile or desktop Work. Once bootstrapped, the agent uses the live revision for every write. The original browser and the Work browser do not pretend to share localStorage; review and continue editing on the page Work opened.
+
+The page cannot proactively start a new turn in an already open ChatGPT conversation. After a human changes Needs, **Copy changes to ChatGPT** is the explicit handoff; the next agent turn reads the live board before writing. Automatic reverse notifications would require a shared backend and a ChatGPT integration with an event channel.
 
 Already-open duplicate tabs do not live-sync in this prototype. Reload before switching editing between tabs. Multi-device identity and collaboration require a backend and are outside this focused build.
 
@@ -116,13 +118,14 @@ Run every gate with:
 npm run check
 ```
 
-The browser tests cover the two-example menu, free-form and structured Needs editing, clipboard handoff, five-tool generation, map links, smooth whole-item reorder, desktop layout, and 390 px overflow.
+The browser tests cover the two-example menu, free-form and structured Needs editing, clipboard handoff, five-tool generation, read-only multi-row schedule expansion, Motion animation, map links, desktop layout, and 390 px overflow.
 
 Visual evidence:
 
 - `artifacts/sidequest-brief.png`
 - `artifacts/sidequest-brief-mobile.png`
 - `artifacts/sidequest-needs.png`
+- `artifacts/sidequest-needs-add-mobile.png`
 - `artifacts/sidequest-needs-schedule.png`
 - `artifacts/sidequest-needs-schedule-mobile.png`
 
@@ -132,6 +135,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 
 - [x] Host a production build on a public HTTPS URL.
 - [x] Deploy v0.2.2 and verify the production asset.
+- [ ] Deploy v0.2.3 and verify the read-only schedule asset.
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and survives reload.

@@ -73,6 +73,9 @@ describe("mission prompt", () => {
     expect(prompt).toContain("only goal")
     expect(prompt).toContain("ask concise clarifying questions")
     expect(prompt).toContain("set the plan date and starting location")
+    expect(prompt).toContain("primary city or area")
+    expect(prompt).toContain("most schedule activity happens")
+    expect(prompt).toContain("short, specific, playful title")
     expect(prompt).toContain("open Proposed schedule")
   })
 

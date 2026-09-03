@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: v0.2.2 real update time and Work bootstrap deployed; automatic Vercel Git connection permission pending
+> Status: v0.2.3 read-only proposal and clearer Needs controls ready for deployment; automatic Vercel Git connection permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -34,17 +34,20 @@
 - [x] 13. Make the Needs input and primary handoff action unmistakable
 - [x] 14. Show the real persisted update time
 - [x] 15. Bootstrap the mobile Work page from the copied handoff
+- [x] 16. Replace model jargon in the Need priority control
+- [x] 17. Make Proposed schedule a read-only expandable result
+- [x] 18. Align the add-Need interaction with the list
 
 ## Blocking decisions accepted in this plan
 
 - One `Mission` aggregate and one external `MissionStore` are the only source of domain truth.
 - A small direct `MissionAction` discriminated union is sufficient; event sourcing, a backend, custom chat, and additional state libraries are out of scope. Two stable workspace URLs use the native History API without a router dependency.
 - Zod strict schemas are the runtime boundary and the source for inferred input types plus WebMCP JSON Schema.
-- View state (selected stop, copy feedback, WebMCP availability) remains separate from mission state.
+- View state (independently expanded stops, copy feedback, WebMCP availability) remains separate from mission state.
 - The page registers tools once from the top-level composition root and passes `{ signal }` as the current second argument to `registerTool`.
-- The usability revision uses strict Bauhaus minimalism: a white canvas, black geometric typography, one high-contrast red accent, restrained date context, readable schedule times, generous negative space, one active workspace panel, and at most one expanded stop. Decorative shadows, gradients, neumorphic surfaces, and container borders are prohibited.
-- Motion for React is the interaction adapter for draggable operational lists. The mission store remains authoritative; drag previews are renderer-local and commit one declared action at drag end.
-- Schedule order and constraint order are editable. People explicitly control stop locks; agents must respect them. History remains an immutable audit instead of becoming a second editable list.
+- The usability revision uses strict Bauhaus minimalism: a white canvas, black geometric typography, one high-contrast red accent, restrained date context, readable schedule times, generous negative space, one active workspace panel, and independently expandable proposal items. Decorative shadows, gradients, neumorphic surfaces, and container borders are prohibited.
+- Motion for React animates read-only proposal expansion and reorders editable Needs. The mission store remains authoritative; expansion is renderer-local and never commits a mission action.
+- Proposed schedule is agent-generated and read-only for people. Needs remain editable and reorderable; agents must respect persisted non-negotiable needs and locked commitments.
 - Map access is derived from the Proposed schedule: each located item has Google Maps and Apple Maps launch actions, and the complete schedule has one Google Maps directions link. The app never claims to provide turn-by-turn navigation.
 
 ## Recommended implementation sequence
@@ -52,12 +55,12 @@
 1. Test/build harness and behavioral red tests.
 2. Pure domain transition and store/persistence.
 3. WebMCP adapter and contract tests.
-4. Pure Screen projection, React View, Motion reorder adapter, maps launcher, and E2E.
+4. Pure Screen projection, React View, Motion interaction adapter, maps launcher, and E2E.
 5. README/license/hosting configuration, full gates, screenshots, and five mature-typescript simplification rounds.
 
 ## Context and architecture thesis
 
-The bounded context is live day operations. `Mission + MissionAction -> MissionMutation` is the only legal transition. The store owns persistence and notification after accepted mutations. A pure presenter projects `Mission + ViewState -> MissionScreen`; React renders the screen and emits `ViewAction`. WebMCP is an outside adapter that validates input and dispatches the same mission actions as human controls.
+The bounded context is live day operations. `Mission + MissionAction -> MissionMutation` is the only legal transition. The store owns persistence and notification after accepted mutations. A pure presenter projects `Mission + ViewState -> MissionScreen`; React renders the screen and emits `ViewAction`. WebMCP is an outside adapter that validates input and owns proposal writes; human ViewActions mutate Needs only.
 
 ## Reuse and source-of-truth map
 
@@ -908,6 +911,173 @@ Implementation result:
   confirmed the CTA is visible and the document has no horizontal overflow.
   Real ChatGPT Work/Site Tools discovery remains a truthful manual check rather
   than an automated claim.
+
+### 16 [x] Replace model jargon in the Need priority control
+
+Description: Keep the existing per-Need boolean and minimal text-only toggle,
+but replace the implementation vocabulary `Fixed / Flexible` with language that
+explains the planning consequence to a person.
+
+Acceptance criteria:
+
+- AC-1: a non-negotiable Need visibly reads `Must keep`; its toggle action is
+  announced as allowing that named Need to adapt.
+- AC-2: a tradeable Need visibly reads `Can adapt`; its toggle action is
+  announced as making that named Need non-negotiable.
+- AC-3: toggling still changes the same canonical `fixed` boolean and unlocks
+  `Copy changes to ChatGPT`; no second priority field or new workflow appears.
+- AC-4: the control remains borderless, backgroundless, and text-only. Both
+  labels stay on one line without overlap or horizontal overflow at 390px.
+- AC-5: all new user-facing text remains in the English `COPY` source of truth;
+  the internal WebMCP `fixed` contract and copied JSON stay unchanged.
+
+Tests:
+
+- AC-1/2/3 -> integration: `App.test.tsx > explains whether each Need must be
+  kept or can adapt` checks visible state, accessible action, mutation, and copy
+  unlock through the real store.
+- AC-4 -> browser: the existing `edits Needs and copies the current handoff`
+  flow checks the 390px document width and refreshes
+  `artifacts/sidequest-needs-mobile.png`.
+- AC-5 -> unit: `copy.test.ts > keeps the agent handoff and mission positioning
+  explicit`; a separate i18n codegen gate is skipped because this repository's
+  declared P0 locale is English-only and `src/copy.ts` is its copy mechanism.
+
+Sources/References: `src/copy.ts`, `src/MissionWorkspace.tsx`, `src/App.test.tsx`,
+`src/copy.test.ts`, `e2e/sidequest.spec.ts`, and the existing `fixed` field in
+`src/domain/mission.ts`.
+
+Before implementation gate:
+
+- [x] Design direction: retain Sidequest's bold-clarity Bauhaus system, pure
+  neutrals, one red semantic accent, and no added legend, icon, border, panel,
+  background, shadow, or animation.
+- [x] Existing copy, accessible labels, mutation route, and 390px constraint
+  inspected on clean commit `8f29b08`.
+- [x] Named App/copy assertions observed red before production copy changes.
+
+Implementation result:
+
+- Red: the focused run failed both named assertions because the interface still
+  exposed `Fixed / Flexible` and their implementation-shaped action names.
+- `Must keep / Can adapt` now explain planning consequence while the canonical
+  WebMCP `fixed` boolean and copied JSON remain unchanged.
+- The real 390px browser flow has no horizontal overflow; the labels remain on
+  one line in `artifacts/sidequest-needs-add-mobile.png`.
+- Included in the 66/66 unit/integration and 4/4 Chromium v0.2.3 gate.
+
+### 17 [x] Make Proposed schedule a read-only expandable result
+
+Description: Treat the Proposed schedule as generated output. Human controls may
+inspect it and open its maps, but may not edit, add, remove, reorder, lock, skip,
+or complete schedule items.
+
+Acceptance criteria:
+
+- AC-1: the plan title and every schedule item are read-only in the human UI;
+  there is no plan add control, drag behavior, item action menu, or human plan
+  mutation action.
+- AC-2: clicking anywhere in an item's summary row (time, title, location, or
+  chevron) independently expands or collapses that item. Multiple items may be
+  open at once and expansion does not change the mission revision.
+- AC-3: expansion uses Motion height/opacity animation without animating or
+  replacing the title typography.
+- AC-4: each collapsed row shows its concrete location instead of the internal
+  `planned`, `active`, `completed`, `skipped`, or `locked` state.
+- AC-5: opening an item does not add a red selected state; the single red accent
+  remains reserved for semantic primary actions elsewhere.
+- AC-6: ChatGPT can still replace and update the Proposed schedule through the
+  existing five WebMCP tools, while Needs retain their current inline editing
+  and drag behavior.
+- AC-7: the planning handoff asks ChatGPT to use a concise primary city/area as
+  the plan location label and a short, specific, playful generated title.
+
+Tests:
+
+- AC-1/2/4/5 -> integration: `App.test.tsx > keeps Proposed schedule read-only
+  and independently expands whole rows` checks the real rendered controls,
+  locations, two simultaneous expansions, collapse, and unchanged store.
+- AC-3/5 -> browser: the generated-proposal E2E checks the Motion detail shell,
+  stable title typography, neutral expanded time, and non-overlap.
+- AC-6 -> integration: the existing WebMCP generation flow remains green and
+  the schedule appears after tool writes; Needs drag/edit coverage remains.
+- AC-7 -> unit: `mission-prompt.test.ts > asks the agent to structure Needs and
+  regenerate every time` locks the primary-area and playful-title instructions.
+
+Sources/References: `src/view-model.ts`, `src/useMissionViewModel.ts`,
+`src/MissionWorkspace.tsx`, `src/App.tsx`, `src/app.css`, their colocated tests,
+and `e2e/sidequest.spec.ts`.
+
+Before implementation gate:
+
+- [x] Domain/view boundary fixed: expansion is local View State; generated
+  schedule content remains canonical Domain State and WebMCP remains its writer.
+- [x] Minimal renderer contract chosen: rows expose renderable facts plus one
+  `expanded` boolean; no human edit capability is projected.
+- [x] Named read-only/multi-expand integration assertion observed red before
+  production edits.
+
+Implementation result:
+
+- Red: the named integration failed on the missing location, plan drag surface,
+  item mutation controls, title editor, singleton expansion, and persisted
+  selection behavior.
+- The human Screen contract now exposes only schedule facts plus `expanded`;
+  title/item editing, add, delete, status, lock, and reorder ViewActions were
+  removed. The five WebMCP writers and domain invariants remain intact.
+- A whole-row button toggles independent local expansion. Motion animates only
+  the detail shell's height/opacity, leaving title typography stable and all
+  opened rows in normal document flow.
+- The overall label is the concise primary area (`Baška Voda` in evidence),
+  item rows show precise places, and the prompt requires a primary city/area
+  plus a short, specific, playful generated title.
+- Desktop and 390px evidence in `artifacts/sidequest-needs-schedule.png` and
+  `artifacts/sidequest-needs-schedule-mobile.png` shows two open items, neutral
+  times, no overlap, and no human plan controls.
+- Five mature-typescript simplification rounds: (1) separated expansion from
+  Domain State; (2) narrowed human ViewActions to Needs and inspection; (3)
+  retained WebMCP proposal writes at the existing adapter boundary; (4) deleted
+  obsolete plan capability fields, reorder helpers, editors, action components,
+  and copy; (5) kept one simple Motion shell and removed now-unused editor props
+  and CSS. Each changed round was followed by its focused gate.
+
+### 18 [x] Align the add-Need interaction with the list
+
+Description: Make the add control read as the next Need row rather than a
+separate form below the list.
+
+Acceptance criteria:
+
+- AC-1: the plus sits in the same column and footprint as the circular Need
+  checkbox above it.
+- AC-2: after the plus is pressed, the input appears on that same row in the
+  future Need label column.
+- AC-3: the input uses the same typography and spacing as a rendered Need,
+  with no border or background; only its placeholder is lighter.
+- AC-4: Enter still creates the Need and Escape still closes the input.
+
+Tests:
+
+- AC-1/2/4 -> integration: `App.test.tsx > adds a Need from an item-shaped inline
+  row` verifies shared row ownership and the real store write.
+- AC-3 -> browser: the 390px Needs screenshot and overflow check verify the
+  item-shaped alignment and typography.
+
+Before implementation gate:
+
+- [x] Named integration assertion observed red before production edits.
+
+Implementation result:
+
+- Red: the named assertion failed because the add button and input had no shared
+  item-shaped row.
+- The new grid uses the exact 38px control column and 10px list gap. Browser
+  geometry proves both the plus/checkbox and input/Need-label offsets differ by
+  less than one pixel at 390px.
+- `artifacts/sidequest-needs-add-mobile.png` shows the borderless input with the
+  list font and lighter placeholder. Enter and Escape remain covered.
+- Final v0.2.3 gate: 66/66 unit/integration tests, TypeScript/Vite build, and
+  4/4 Chromium tests passed.
 
 ## Risks and dependencies
 

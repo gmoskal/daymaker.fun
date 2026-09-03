@@ -62,7 +62,7 @@ export const SEED_MISSION: Mission = {
       },
     ],
     currentLocation: {
-      label: "Bike parking, Baška Voda",
+      label: "Baška Voda",
       lat: 43.3569,
       lng: 16.9502,
     },
@@ -143,7 +143,7 @@ export const SEED_MISSION: Mission = {
     },
   ],
   timezone: "Europe/Zagreb",
-  title: "Baška Voda Adventure",
+  title: "Gravel, Grub & a Dip",
   updatedAt: "2026-09-03T13:23:00.000Z",
 }
 

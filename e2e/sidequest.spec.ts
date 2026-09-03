@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-09-03T13:44:00.000Z"))
@@ -115,7 +115,7 @@ const generateCroatiaProposal = async (page: Page) => {
       { fixed: false, label: "calculate the return time" },
     ],
     currentLocation: {
-      label: "Grand Hotel Slavia, Baška Voda",
+      label: "Baška Voda",
       lat: 43.3565,
       lng: 16.9494,
     },
@@ -125,7 +125,7 @@ const generateCroatiaProposal = async (page: Page) => {
     reason: "Structured the person's free-form Needs before generating.",
     replacePlan: true,
     timezone: "Europe/Zagreb",
-    title: "South Croatia gravel day",
+    title: "Gravel Before Brunch",
   })
   expect(context).toMatchObject({ ok: true, revision: 1 })
 
@@ -164,18 +164,6 @@ const generateCroatiaProposal = async (page: Page) => {
     title: "Snorkel · Punta Rata Beach",
   })
   expect(swim).toMatchObject({ ok: true, revision: 4 })
-}
-
-const dragTo = async (page: Page, handle: Locator, target: Locator) => {
-  const sourceBox = await handle.boundingBox()
-  const targetBox = await target.boundingBox()
-  if (sourceBox === null || targetBox === null)
-    throw new Error("Drag targets must be visible")
-
-  await page.mouse.move(sourceBox.x + 8, sourceBox.y + sourceBox.height / 2)
-  await page.mouse.down()
-  await page.mouse.move(targetBox.x + 8, targetBox.y + 8, { steps: 18 })
-  await page.mouse.up()
 }
 
 test("shows only the two free-form Needs examples without overflow", async ({ page }) => {
@@ -307,9 +295,14 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   await page.getByRole("button", { name: "Cross out one worthwhile sight nearby" }).click()
   await expect(copyChanges).toBeEnabled()
   await page.getByRole("button", { name: "Add need" }).click()
-  await page.getByRole("textbox", { name: "New need" }).fill("quiet lunch")
-  await page.getByRole("textbox", { name: "New need" }).press("Enter")
-  await page.getByRole("button", { name: "Mark quiet lunch as fixed" }).click()
+  const newNeed = page.getByRole("textbox", { name: "New need" })
+  await expect(newNeed.locator("xpath=ancestor::*[contains(@class, 'need-add-row')]"))
+    .toBeVisible()
+  await newNeed.fill("quiet lunch")
+  await newNeed.press("Enter")
+  await page
+    .getByRole("button", { name: "Make quiet lunch non-negotiable" })
+    .click()
   await page.getByRole("button", { name: "Remove practical parking at every stop" }).click()
   await page.screenshot({ fullPage: true, path: "artifacts/sidequest-needs.png" })
   await copyChanges.click()
@@ -326,10 +319,32 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(390)
+  await page.getByRole("button", { name: "Add need" }).click()
+  const mobileNewNeed = page.getByRole("textbox", { name: "New need" })
+  const addAlignment = await mobileNewNeed.evaluate((input) => {
+    const addRow = input.closest(".need-add-row")
+    const add = addRow?.querySelector(".add-trigger")
+    const need = document.querySelector(".constraint-list .inline-editor")
+    const check = document.querySelector(".constraint-list .check-control")
+    if (add === undefined || add === null || need === null || check === null)
+      return null
+    const addBox = add.getBoundingClientRect()
+    const checkBox = check.getBoundingClientRect()
+    return {
+      contentDelta: Math.abs(
+        input.getBoundingClientRect().left - need.getBoundingClientRect().left,
+      ),
+      controlDelta: Math.abs(addBox.left - checkBox.left),
+    }
+  })
+  expect(addAlignment).not.toBeNull()
+  expect(addAlignment?.contentDelta).toBeLessThan(1)
+  expect(addAlignment?.controlDelta).toBeLessThan(1)
   await page.screenshot({
     fullPage: true,
-    path: "artifacts/sidequest-needs-mobile.png",
+    path: "artifacts/sidequest-needs-add-mobile.png",
   })
+  await mobileNewNeed.press("Escape")
 })
 
 test("agent generates a proposal with item and whole-schedule maps", async ({ page }) => {
@@ -342,7 +357,7 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
   await page.getByRole("tab", { name: "Proposed schedule" }).click()
   await expect(page).toHaveURL(/\/schedule$/)
   const day = page.getByRole("region", { name: "Friday, 04 September 2026" })
-  await expect(day.getByText("Grand Hotel Slavia, Baška Voda")).toBeVisible()
+  await expect(day.getByText("Baška Voda")).toBeVisible()
   await expect(day.getByText("06:30")).toHaveCount(0)
   await expect(page.getByRole("button", { name: "20 km shaded gravel loop", exact: true }))
     .toBeVisible()
@@ -365,18 +380,24 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
     name: "Lunch · Konoba Panorama",
     exact: true,
   })
-  const before = await titleButton.evaluate(
+  const title = titleButton.locator(".stop-title")
+  const before = await title.evaluate(
     (element) => getComputedStyle(element).fontSize,
   )
   await titleButton.click()
-  const editor = page.getByRole("textbox", {
+  await expect(titleButton).toHaveAttribute("aria-expanded", "true")
+  await page.waitForTimeout(250)
+  expect(await title.evaluate((element) => getComputedStyle(element).fontSize)).toBe(before)
+  await expect(page.getByRole("button", {
+    name: "20 km shaded gravel loop",
+    exact: true,
+  })).toHaveAttribute("aria-expanded", "true")
+  await expect(page.getByRole("textbox", {
     name: "Edit item title: Lunch · Konoba Panorama",
-  })
-  await expect(editor).toBeVisible()
-  expect(await editor.evaluate((element) => getComputedStyle(element).fontSize)).toBe(before)
+  })).toHaveCount(0)
 
-  const detailsDoNotOverlapNextItem = await editor.evaluate((titleEditor) => {
-    const openItem = titleEditor.closest("li")
+  const detailsDoNotOverlapNextItem = await titleButton.evaluate((button) => {
+    const openItem = button.closest("li")
     if (openItem === null) return false
     const nextItem = openItem.nextElementSibling
     return nextItem === null
@@ -385,6 +406,13 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
           nextItem.getBoundingClientRect().top
   })
   expect(detailsDoNotOverlapNextItem).toBe(true)
+  expect(
+    await titleButton.locator("time").evaluate(
+      (element) => getComputedStyle(element).color,
+    ),
+  ).toBe("rgb(168, 168, 172)")
+  await expect(titleButton.locator("xpath=following-sibling::*[contains(@class, 'stop-detail-motion')]"))
+    .toBeVisible()
   expect(
     await page
       .getByRole("button", {
@@ -431,7 +459,7 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
   })
 })
 
-test("reorders the generated proposal from the whole unlocked item", async ({ page }) => {
+test("keeps the generated proposal read-only", async ({ page }) => {
   await installWebMcpHarness(page)
   await page.setViewportSize({ height: 900, width: 1100 })
   await page.goto("/")
@@ -439,31 +467,25 @@ test("reorders the generated proposal from the whole unlocked item", async ({ pa
   await generateCroatiaProposal(page)
   await page.getByRole("tab", { name: "Proposed schedule" }).click()
 
-  const swim = page.getByRole("button", {
-    name: "Snorkel · Punta Rata Beach",
+  const rows = page.locator('[data-testid^="stop-"]')
+  await expect(rows).toHaveCount(3)
+  expect(await rows.evaluateAll((items) => items.every(
+    (item) => !item.hasAttribute("data-draggable"),
+  ))).toBe(true)
+  await expect(page.getByRole("button", { name: "Add item" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "Show item actions" })).toHaveCount(0)
+  await expect(page.getByRole("textbox", { name: /Edit item title/ })).toHaveCount(0)
+
+  const first = page.getByRole("button", {
+    name: "20 km shaded gravel loop",
     exact: true,
   })
-  expect(await swim.evaluate((element) => getComputedStyle(element).cursor)).toBe("grab")
-  await dragTo(
-    page,
-    swim,
-    page.getByRole("button", { name: "Lunch · Konoba Panorama", exact: true }),
-  )
-
-  await expect
-    .poll(() =>
-      page
-        .locator('[data-testid^="stop-"]')
-        .evaluateAll((stops) =>
-          stops.map((stop) => {
-            const editor = stop.querySelector<HTMLInputElement>(".inline-editor")
-            return editor?.value ?? stop.querySelector(".stop-title-button")?.textContent
-          }),
-        ),
-    )
-    .toEqual([
-      expect.stringContaining("20 km shaded gravel loop"),
-      expect.stringContaining("Snorkel · Punta Rata Beach"),
-      expect.stringContaining("Lunch · Konoba Panorama"),
-    ])
+  const second = page.getByRole("button", {
+    name: "Lunch · Konoba Panorama",
+    exact: true,
+  })
+  await first.locator("time").click()
+  await second.locator(".stop-location").click()
+  await expect(first).toHaveAttribute("aria-expanded", "true")
+  await expect(second).toHaveAttribute("aria-expanded", "true")
 })

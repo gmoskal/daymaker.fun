@@ -8,7 +8,6 @@ import {
   presentMission,
   missionPanelForPath,
   missionPathFor,
-  toHumanStopOrder,
   type MissionPanel,
   type ViewAction,
   type WebMcpState,
@@ -40,7 +39,7 @@ export const useMissionViewModel = ({
     store.getSnapshot,
     store.getSnapshot,
   )
-  const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
+  const [expandedStopIds, setExpandedStopIds] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
   const [panel, setPanel] = useState<MissionPanel>(() =>
     mission.context.stage === "brief" &&
@@ -104,66 +103,13 @@ export const useMissionViewModel = ({
             return
           navigate(action.panel)
           return
-        case "ToggleStopActions":
-          setSelectedStopId((selected) =>
-            selected === action.stopId ? null : action.stopId,
+        case "ToggleStop":
+          setExpandedStopIds((expanded) =>
+            expanded.includes(action.stopId)
+              ? expanded.filter((stopId) => stopId !== action.stopId)
+              : [...expanded, action.stopId],
           )
           return
-        case "DeleteStop":
-          if (!window.confirm(COPY.deleteItemConfirm)) return
-          if (
-            store.dispatch({
-              type: "RemoveStop",
-              value: {
-                actor: "human",
-                input: {
-                  expectedRevision: store.getSnapshot().revision,
-                  stopId: action.stopId,
-                },
-              },
-            }).type === "applied"
-          )
-            setSelectedStopId(null)
-          return
-        case "SetStopStatus":
-          if (
-            store.dispatch({
-              type: "UpdateStop",
-              value: {
-                actor: "human",
-                input: {
-                  expectedRevision: store.getSnapshot().revision,
-                  reason: "Updated from the Sidequest board.",
-                  status: action.status,
-                  stopId: action.stopId,
-                },
-              },
-            }).type === "applied"
-          )
-            setSelectedStopId(null)
-          return
-        case "SetStopLock":
-          store.dispatch({
-            type: "SetStopLock",
-            value: {
-              actor: "human",
-              input: {
-                expectedRevision: store.getSnapshot().revision,
-                locked: action.locked,
-                stopId: action.stopId,
-              },
-            },
-          })
-          return
-        case "ReorderStops": {
-          const input = toHumanStopOrder(store.getSnapshot(), action.stopIds)
-          if (input === null) return
-          store.dispatch({
-            type: "ReorderStops",
-            value: { actor: "human", input },
-          })
-          return
-        }
         case "AddConstraint":
           store.dispatch({
             type: "AddConstraint",
@@ -237,43 +183,6 @@ export const useMissionViewModel = ({
             },
           })
           return
-        case "SetTitle":
-          store.dispatch({
-            type: "SetTitle",
-            value: {
-              actor: "human",
-              input: {
-                expectedRevision: store.getSnapshot().revision,
-                title: action.title,
-              },
-            },
-          })
-          return
-        case "AddItem":
-          store.dispatch({
-            type: "AddItem",
-            value: {
-              actor: "human",
-              input: {
-                expectedRevision: store.getSnapshot().revision,
-                title: action.title,
-              },
-            },
-          })
-          return
-        case "RenameStop":
-          store.dispatch({
-            type: "RenameStop",
-            value: {
-              actor: "human",
-              input: {
-                expectedRevision: store.getSnapshot().revision,
-                stopId: action.stopId,
-                title: action.title,
-              },
-            },
-          })
-          return
         case "RenameConstraint":
           store.dispatch({
             type: "RenameConstraint",
@@ -314,13 +223,13 @@ export const useMissionViewModel = ({
           return
         case "NewPlan":
           store.newPlan()
-          setSelectedStopId(null)
+          setExpandedStopIds([])
           navigate("context", true)
           return
         case "LoadDemo":
           if (hasPlanContent(store) && !window.confirm(COPY.loadDemoConfirm)) return
           store.loadDemo(action.demoId)
-          setSelectedStopId(null)
+          setExpandedStopIds([])
           navigate("context", true)
           return
       }
@@ -331,8 +240,8 @@ export const useMissionViewModel = ({
   return {
     dispatch,
     screen: useMemo(
-      () => presentMission({ copied, mission, panel, selectedStopId, webMcp }),
-      [copied, mission, panel, selectedStopId, webMcp],
+      () => presentMission({ copied, expandedStopIds, mission, panel, webMcp }),
+      [copied, expandedStopIds, mission, panel, webMcp],
     ),
   }
 }

@@ -1,4 +1,4 @@
-import { useState, type FocusEvent, type KeyboardEvent } from "react"
+import { useState } from "react"
 
 import { COPY, DEMO_OPTIONS } from "./copy"
 import { MissionWorkspace } from "./MissionWorkspace"
@@ -17,49 +17,8 @@ type MissionViewProps = {
   screen: MissionScreen
 }
 
-const TitleEditor = ({
-  dispatch,
-  title,
-}: {
-  dispatch: (action: ViewAction) => void
-  title: string
-}) => {
-  const commit = (event: FocusEvent<HTMLSpanElement>) => {
-    const next = event.currentTarget.textContent?.trim() ?? ""
-    if (next === "" || next === title) {
-      event.currentTarget.textContent = title
-      return
-    }
-    dispatch({ title: next, type: "SetTitle" })
-  }
-  const handleKey = (event: KeyboardEvent<HTMLSpanElement>) => {
-    if (event.key !== "Enter") return
-    event.preventDefault()
-    event.currentTarget.blur()
-  }
-
-  return (
-    <h1>
-      <span
-        aria-label={COPY.boardTitle}
-        contentEditable
-        key={title}
-        onBlur={commit}
-        onKeyDown={handleKey}
-        role="textbox"
-        suppressContentEditableWarning
-      >
-        {title}
-      </span>
-    </h1>
-  )
-}
-
 const MissionView = ({ dispatch, screen }: MissionViewProps) => {
-  const [actionsOpen, setActionsOpen] = useState(false)
-  const [addTarget, setAddTarget] = useState<"item" | "requirement" | null>(
-    null,
-  )
+  const [addingRequirement, setAddingRequirement] = useState(false)
   const [demoMenuOpen, setDemoMenuOpen] = useState(false)
 
   return (
@@ -75,7 +34,7 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
             onClick={(event) => {
               event.preventDefault()
               if (item.disabled) return
-              setAddTarget(null)
+              setAddingRequirement(false)
               dispatch({ panel: item.id, type: "SelectPanel" })
             }}
             role="tab"
@@ -88,7 +47,7 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
 
       <header className="board-title">
         {screen.missionTitle === "" ? null : (
-          <TitleEditor dispatch={dispatch} title={screen.missionTitle} />
+          <h1>{screen.missionTitle}</h1>
         )}
       </header>
 
@@ -99,7 +58,7 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
               <button
                 key={option.id}
                 onClick={() => {
-                  setAddTarget(null)
+                  setAddingRequirement(false)
                   setDemoMenuOpen(false)
                   dispatch({ demoId: option.id, type: "LoadDemo" })
                 }}
@@ -118,7 +77,7 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
           }
           className="primary-action"
           onClick={() => {
-            setAddTarget(null)
+            setAddingRequirement(false)
             if (screen.primaryAction.type === "LoadDemo") {
               setDemoMenuOpen((open) => !open)
               return
@@ -149,15 +108,13 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
       ) : null}
 
       <MissionWorkspace
-        actionsOpen={actionsOpen}
-        addTarget={addTarget}
-        closeAdd={() => setAddTarget(null)}
+        addingRequirement={addingRequirement}
+        closeAdd={() => setAddingRequirement(false)}
         dispatch={dispatch}
         key={screen.workspace.type}
-        openAdd={(target) =>
-          setAddTarget((current) => (current === target ? null : target))
+        toggleAddingRequirement={() =>
+          setAddingRequirement((adding) => !adding)
         }
-        toggleActions={() => setActionsOpen((open) => !open)}
         workspace={screen.workspace}
       />
 

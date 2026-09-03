@@ -177,7 +177,7 @@ describe("WebMCP", () => {
           ]),
           stage: "needs",
         },
-        title: "Baška Voda Adventure",
+        title: "Gravel, Grub & a Dip",
       },
       ok: true,
       revision: 6,
@@ -266,7 +266,7 @@ describe("WebMCP", () => {
         { fixed: true, label: "keep dinner at 18:30" },
       ],
       currentLocation: {
-        label: "Bike parking, Baška Voda",
+        label: "Baška Voda",
         lat: 43.3569,
         lng: 16.9502,
       },
@@ -276,7 +276,7 @@ describe("WebMCP", () => {
       reason: "The group finished the ride and reported low energy.",
       replacePlan: false,
       timezone: "Europe/Zagreb",
-      title: "Baška Voda Adventure",
+      title: "Gravel, Grub & a Dip",
     })
     const skipped = await execute<ToolMutationResult>(context, "update_mission_stop", {
       expectedRevision: contextResult.revision,

@@ -142,6 +142,18 @@ input:focus-visible,
   list-style: none;
 }
 
+.empty-plan {
+  max-width: 390px;
+  min-height: 130px;
+}
+
+.empty-plan p {
+  margin: 0 0 14px;
+  color: #77777c;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
 .stop-row {
   position: relative;
   margin-bottom: 30px;

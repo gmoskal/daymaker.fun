@@ -133,7 +133,7 @@ export const MissionSchema = z.strictObject({
   id: text(80),
   revision: z.number().int().nonnegative(),
   schemaVersion: z.literal(1),
-  stops: z.array(MissionStopSchema).min(1).max(8),
+  stops: z.array(MissionStopSchema).max(8),
   timezone: text(80),
   title: text(80),
 })

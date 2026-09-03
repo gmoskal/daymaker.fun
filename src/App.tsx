@@ -141,12 +141,21 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
           <span className="menu-revision">{screen.revision}</span>
           <button
             onClick={() => {
-              dispatch({ type: "Reset" })
+              dispatch({ type: "NewPlan" })
               setMenuOpen(false)
             }}
             type="button"
           >
-            {COPY.reset}
+            {COPY.newPlan}
+          </button>
+          <button
+            onClick={() => {
+              dispatch({ type: "LoadDemo" })
+              setMenuOpen(false)
+            }}
+            type="button"
+          >
+            {COPY.loadDemo}
           </button>
         </nav>
       ) : null}

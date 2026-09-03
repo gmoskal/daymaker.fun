@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
 import { COPY } from "./copy"
+import { BLANK_MISSION_TITLE } from "./domain/seed"
 import type { MissionStore } from "./store"
 import {
   presentMission,
@@ -14,6 +15,16 @@ import type { WebMcpRegistration } from "./webmcp"
 type UseMissionViewModelParams = {
   registration: Promise<WebMcpRegistration>
   store: MissionStore
+}
+
+const hasPlanContent = (store: MissionStore) => {
+  const mission = store.getSnapshot()
+  return (
+    mission.stops.length > 0 ||
+    mission.context.constraints.length > 0 ||
+    mission.events.length > 0 ||
+    mission.title !== BLANK_MISSION_TITLE
+  )
 }
 
 export const useMissionViewModel = ({
@@ -188,16 +199,21 @@ export const useMissionViewModel = ({
         case "CopyPrompt":
           if (navigator.clipboard === undefined) return
           void navigator.clipboard
-            .writeText(COPY.demoPrompt)
+            .writeText(action.prompt)
             .then(() => setCopied(true))
             .catch(() => setCopied(false))
           return
-        case "Reset":
-          if (window.confirm(COPY.resetConfirm)) {
-            store.reset()
-            setSelectedStopId(null)
-            setPanel("plan")
-          }
+        case "NewPlan":
+          if (hasPlanContent(store) && !window.confirm(COPY.newPlanConfirm)) return
+          store.newPlan()
+          setSelectedStopId(null)
+          setPanel("plan")
+          return
+        case "LoadDemo":
+          if (hasPlanContent(store) && !window.confirm(COPY.loadDemoConfirm)) return
+          store.loadDemo()
+          setSelectedStopId(null)
+          setPanel("plan")
           return
       }
     },

@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: usability revision complete; production redeploy pending; Git integration pending
+> Status: fresh-start revision in progress; production redeploy pending; Git integration pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -26,6 +26,7 @@
 - [x] 5. Complete delivery files, full gates, visual QA, and simplification rounds
 - [ ] 6. Connect the public repository to the deployed Vercel project
 - [x] 7. Make first use and every interactive control unmistakable
+- [~] 8. Make a fresh personal plan the default and explain the chat boundary
 
 ## Blocking decisions accepted in this plan
 
@@ -105,7 +106,7 @@ Acceptance criteria:
 - AC-1: Valid context, stop, add, and reorder actions increment revision exactly once and record the actor.
 - AC-2: stale, malformed, missing-stop, locked-stop, invalid-order, and limit errors do not mutate or persist state.
 - AC-3: dinner remains locked at 18:30; every future stop appears exactly once after reorder.
-- AC-4: reset restores revision 6, the active gravel ride, and an empty event log; invalid persisted data removes only the Sidequest key.
+- AC-4: explicit demo loading restores revision 6, the active gravel ride, and an empty event log; invalid persisted data removes only the Sidequest key and falls back to a blank plan.
 - AC-5: human Done/Skip/Undo use the same action path as WebMCP.
 
 Tests:
@@ -118,7 +119,7 @@ Sources/References: `src/domain/mission.ts`, `src/domain/seed.ts`, `src/store.ts
 
 Implementation result:
 
-- Behavioral red: `npm run test -- src/domain/mission.test.ts src/store.test.ts` ran 14 tests with 12 intended failures across transition, stale/locked/order errors, add, persistence, load, and reset.
+- Behavioral red: `npm run test -- src/domain/mission.test.ts src/store.test.ts` ran 14 tests with 12 intended failures across transition, stale/locked/order errors, add, persistence, load, and fixture restoration.
 - Green: the same focused command passed 14/14 tests; `npm run build` passed TypeScript and Vite production build.
 - Source of truth: strict Zod schemas infer input/domain types; one `MissionAction` union enters `applyMissionAction`; the store persists and notifies only `applied` mutations.
 
@@ -172,10 +173,10 @@ Sources/References: `src/view-model.ts`, `src/App.tsx`, `src/MissionMap.tsx`, `s
 
 Implementation result:
 
-- Behavioral red: `npm run test -- src/copy.test.ts src/view-model.test.ts src/App.test.tsx` failed 6/6 assertions against the UI skeleton, covering copy, screen projection, manual status change, source links, and reset.
+- Behavioral red: `npm run test -- src/copy.test.ts src/view-model.test.ts src/App.test.tsx` failed 6/6 assertions against the UI skeleton, covering copy, screen projection, manual status change, source links, and fixture restoration.
 - Green: the same focused suite passed 6/6 and `npm run build` completed successfully.
 - Browser green: `npm run test:e2e` passed the real revision 7 -> 12 flow through a native-shaped `document.modelContext.registerTool` harness, verified five registrations, the locked 18:30 dinner, and no horizontal overflow at 390px.
-- Visual evidence inspected: `artifacts/sidequest-desktop.png` (1440px) and `artifacts/sidequest-mobile.png` (390px). A low-contrast reset label found during inspection was corrected and both screenshots were regenerated.
+- Visual evidence inspected: `artifacts/sidequest-desktop.png` (1440px) and `artifacts/sidequest-mobile.png` (390px). A low-contrast scenario-control label found during inspection was corrected and both screenshots were regenerated.
 - Timeline, accessible map route list, Google Maps preview, and Google/Apple launch URLs derive from one presenter route; completed/skipped stops stay in history but leave the active route.
 
 ### 5 [x] Complete delivery files, full gates, visual QA, and simplification rounds
@@ -240,7 +241,7 @@ Status:
 
 - Production is complete. The remaining GitHub permission step was paused when the user explicitly reprioritized the usability problem.
 
-### 7 [~] Make first use and every interactive control unmistakable
+### 7 [x] Make first use and every interactive control unmistakable
 
 Description: Replace the visually flat three-column dashboard with a clean Bauhaus day view inspired by the supplied reference. A first-time visitor should see one current object, one clear action hierarchy, and explicit navigation to secondary information without needing a walkthrough.
 
@@ -292,6 +293,41 @@ Implementation result:
 - The route adapter no longer uses Leaflet, OpenStreetMap, polylines, or straight-line distance. It renders a Google Maps preview whose click opens Google Maps and exposes an Apple Maps alternative.
 - Full green: `npm run check` passed 36/36 unit/integration/contract tests, strict TypeScript and the Vite production build, plus both Chromium interaction flows 2/2.
 - Five simplification rounds: (1) kept all edits in the existing `MissionAction` gate; (2) kept panel selection as one closed ADT; (3) split workspace and maps rendering from composition; (4) removed unused timeline metadata after the final visual reduction; (5) kept reorder preview local to React and committed exactly once at drag end. Each changed slice was followed by its focused tests.
+
+### 8 [x] Make a fresh personal plan the default and explain the chat boundary
+
+Description: Replace the implicit demo-first experience with a blank current-day plan and one concise explanation of the product boundary: ChatGPT is the conversation and reasoning surface, while Sidequest exposes WebMCP tools and persists the shared result.
+
+Acceptance criteria:
+
+- AC-1: missing or invalid local state starts as an empty current-day plan with no demo items; existing valid user state still loads unchanged.
+- AC-2: the empty Plan workspace says that ChatGPT reads and updates this page with Site Tools, offers a copyable fresh-plan prompt containing the production URL, and still permits manual inline creation.
+- AC-3: the hidden menu exposes explicit `New plan` and `Load demo` actions; replacement of non-empty work requires confirmation, while switching from a truly empty plan does not.
+- AC-4: the deterministic Baška Voda fixture remains available for the submission flow, but E2E must load it explicitly.
+- AC-5: a blank mission remains valid for the same exact five WebMCP tools; no embedded chat, backend, sixth tool, or remote MCP server is introduced.
+- AC-6: local time renders in the mission timezone, and manually added items with the unset placeholder location do not produce a false map at coordinates 0,0.
+
+Tests:
+
+- AC-1/3 -> `store.test.ts > starts blank...` and `store.test.ts > switches explicitly between a new plan and the deterministic demo`.
+- AC-2/3 -> `App.test.tsx > starts as a blank plan and keeps the demo optional`.
+- AC-4 -> both Playwright flows assert the blank first state and invoke `Load demo` before the deterministic scenario.
+- AC-5 -> the existing WebMCP catalog test continues to require exactly five registrations and the full suite covers empty mission schema compatibility.
+- AC-6 -> presenter/store focused tests plus browser inspection of the current-day empty state.
+
+Before implementation gate:
+
+- [x] Existing store loading, deterministic seed, presenter, copy, menu, App tests, and E2E harness inspected.
+- [x] Behavioral red: focused store/App run failed on missing `createBlankMission`, `newPlan`, `Load demo`, `New plan`, and the empty ChatGPT/WebMCP explanation.
+
+Implementation result:
+
+- A missing or invalid persisted mission now produces a valid blank plan for the user's current day and timezone. Existing valid state remains unchanged.
+- The empty Plan workspace gives one concise ChatGPT/Site Tools explanation and copies a fresh-plan prompt containing the production URL; manual inline creation remains available.
+- The hidden menu now offers `New plan` and `Load demo`, with confirmation limited to replacement of non-empty work. The deterministic fixture remains an explicit judging path.
+- The exact five WebMCP tools accept the blank mission and can construct its first stop through the same typed store. Placeholder coordinates never create a false route entry.
+- Full green: `npm run check` passed 38/38 unit, integration, and contract tests, the strict TypeScript/Vite production build, and both Chromium flows 2/2.
+- Browser inspection at desktop and 390px confirmed the blank current-day hierarchy, unclipped title, single active workspace, and frameless actions.
 
 ## Risks and dependencies
 

@@ -81,7 +81,7 @@ A single-page web application with:
 - a map with pins and a simple line connecting the planned sequence;
 - source cards attached to relevant stops;
 - a short “Human / Agent changed…” activity log;
-- a button that restores a deterministic demo scenario;
+- a blank personal plan by default, plus explicit `New plan` and `Load demo` actions;
 - five imperative WebMCP tools registered in the top-level page.
 
 We are not building our own chat, an agent backend, turn-by-turn navigation, automatic routing, or a multi-day planner.
@@ -156,13 +156,13 @@ The most important positioning line:
 
 ## One-screen MVP
 
-### Top bar
+### Header and hidden menu
 
 - Sidequest logo;
-- mission name: `Baška Voda Adventure`;
+- editable mission name;
 - WebMCP status: `Connected`, `Unavailable`, or `Checking`;
-- `Reset demo` button;
-- hard commitment: `Dinner 18:30 · 3h 20m left`.
+- hidden-menu actions for `New plan` and `Load demo`;
+- the next hard commitment when the current plan has one.
 
 ### Left column — Context + Timeline
 
@@ -208,7 +208,7 @@ The most important positioning line:
 - one shared store for the UI and WebMCP;
 - five WebMCP tools;
 - immediate timeline, map, and log updates after a tool call;
-- localStorage persistence and demo reset;
+- localStorage persistence, a fresh-plan action, and an optional deterministic demo;
 - a responsive single-screen layout;
 - a clear state when WebMCP is unavailable;
 - contract tests and the main scenario test;
@@ -314,7 +314,7 @@ Criteria:
 - the log shows actor, time, and change summary;
 - the newest change appears first;
 - the log does not expose the agent's private chain of thought;
-- reset restores the demo state.
+- `New plan` clears the working plan and `Load demo` restores the deterministic fixture.
 
 ## Core demo scenario — “The day changed”
 
@@ -538,7 +538,7 @@ Next, Sidequest could add collaborative missions, live location with explicit co
 | Criterion | What we demonstrate |
 |---|---|
 | WebMCP Leverage | Five real tools, sequential mutations, live-state reads, a shared store, revisions, and visible verification |
-| Execution | A coherent single screen, manual fallback, demo reset, login-free deployment, tests, and a prepared scenario |
+| Execution | A coherent single screen, manual fallback, blank-first use, an optional deterministic demo, login-free deployment, tests, and a prepared scenario |
 | Potential Impact | A concrete problem for people already on the move; measurably less copying and state reconstruction |
 | Creativity & Ambition | The DayOps category: recovering a plan after reality changes rather than generating one |
 
@@ -610,12 +610,13 @@ Visual: the final mission.
 
 ```text
 Open the live URL in ChatGPT's built-in browser and use GPT-5.6 Sol or Terra.
-The app opens on a resettable demo mission. Click “Done” on the gravel ride,
-then copy the prompt shown under “Demo prompt” and ask the agent to update the
-open Sidequest page. You can inspect the five registered actions under Site
-tools. To test in Chrome 149+, enable chrome://flags/#enable-webmcp-testing and
-restart Chrome. If needed, click “Reset demo” to restore the initial state.
-No account, API key, or payment is required.
+A first visit opens a blank current-day plan. Use “Copy prompt for ChatGPT” to
+create a real plan, or choose “Load demo” from the hidden menu for the repeatable
+Baška Voda scenario. In the demo, click “Done” on the gravel ride and ask the
+agent to update the open Sidequest page. You can inspect the five registered
+actions under Site tools. To test in Chrome 149+, enable
+chrome://flags/#enable-webmcp-testing and restart Chrome. Choose “New plan” to
+return to a blank board. No account, API key, or payment is required.
 ```
 
 ## Final product checklist

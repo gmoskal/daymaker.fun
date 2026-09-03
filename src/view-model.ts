@@ -1,6 +1,7 @@
 import { COPY } from "./copy"
 import type { Mission, MissionConstraint, MissionStop } from "./domain/mission"
 import { futureStops } from "./domain/mission-transition"
+import { BLANK_LOCATION_LABEL, DEMO_MISSION_ID } from "./domain/seed"
 
 export type WebMcpState =
   | { type: "checking" }
@@ -18,8 +19,9 @@ export const MISSION_PANELS = [
 export type MissionPanel = (typeof MISSION_PANELS)[number]["id"]
 
 export type ViewAction =
-  | { type: "CopyPrompt" }
-  | { type: "Reset" }
+  | { prompt: string; type: "CopyPrompt" }
+  | { type: "LoadDemo" }
+  | { type: "NewPlan" }
   | { panel: MissionPanel; type: "SelectPanel" }
   | { stopId: string; type: "SelectStop" }
   | { stopId: string; type: "ShowStopOnMap" }
@@ -67,7 +69,10 @@ export type TimelineStopScreen = {
 export type ConstraintScreen = Pick<MissionConstraint, "id" | "label" | "status">
 
 type PlanWorkspace = {
+  copyLabel: string
+  emptyHint: string
   heading: string
+  prompt: string
   stops: TimelineStopScreen[]
   type: "plan"
 }
@@ -78,6 +83,7 @@ type ContextWorkspace = {
   currentLocation: string
   currentTime: string
   energy: string
+  prompt: string
   type: "context"
 }
 
@@ -129,7 +135,13 @@ type PresentMissionParams = {
   webMcp: WebMcpState
 }
 
-const clock = (dateTime: string) => dateTime.slice(11, 16)
+const clock = (dateTime: string, timezone: string) =>
+  new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    hourCycle: "h23",
+    minute: "2-digit",
+    timeZone: timezone,
+  }).format(new Date(dateTime))
 const titleCase = (value: string) =>
   `${value.charAt(0).toUpperCase()}${value.slice(1)}`
 
@@ -148,14 +160,16 @@ const routeFor = (
   mission: Mission,
   selectedStopId: string | null,
 ): RouteStopScreen[] =>
-  futureStops(mission).map((stop, index) => ({
-    coordinates: [stop.location.lat, stop.location.lng],
-    id: stop.id,
-    index: index + 1,
-    location: stop.location.label,
-    selected: stop.id === selectedStopId,
-    title: stop.title,
-  }))
+  futureStops(mission)
+    .filter((stop) => stop.location.label !== BLANK_LOCATION_LABEL)
+    .map((stop, index) => ({
+      coordinates: [stop.location.lat, stop.location.lng],
+      id: stop.id,
+      index: index + 1,
+      location: stop.location.label,
+      selected: stop.id === selectedStopId,
+      title: stop.title,
+    }))
 
 const timelineFor = (
   mission: Mission,
@@ -182,7 +196,7 @@ const timelineFor = (
       : { source: { title: stop.source.title, url: stop.source.url } }),
     status: stop.status,
     statusLabel: titleCase(stop.status),
-    time: clock(stop.startsAt),
+    time: clock(stop.startsAt, mission.timezone),
     title: stop.title,
   }))
 }
@@ -200,10 +214,10 @@ const webMcpBadge = (state: WebMcpState): MissionScreen["webMcp"] => {
   }
 }
 
-const dateParts = (date: string, timezone: string): MissionScreen["date"] => {
+const dateParts = (date: string): MissionScreen["date"] => {
   const value = new Date(`${date}T12:00:00Z`)
   const part = (options: Intl.DateTimeFormatOptions) =>
-    new Intl.DateTimeFormat("en-GB", { ...options, timeZone: timezone }).format(value)
+    new Intl.DateTimeFormat("en-GB", { ...options, timeZone: "UTC" }).format(value)
   return {
     day: part({ day: "2-digit" }),
     month: part({ month: "long" }),
@@ -219,16 +233,25 @@ const workspaceFor = (
   timeline: TimelineStopScreen[],
   route: RouteStopScreen[],
 ): MissionWorkspaceScreen => {
+  const prompt = mission.id === DEMO_MISSION_ID ? COPY.demoPrompt : COPY.freshPrompt
   switch (panel) {
     case "plan":
-      return { heading: COPY.scheduleTitle, stops: timeline, type: "plan" }
+      return {
+        copyLabel: copied ? COPY.copiedPrompt : COPY.copyPrompt,
+        emptyHint: COPY.emptyPlanHint,
+        heading: COPY.scheduleTitle,
+        prompt,
+        stops: timeline,
+        type: "plan",
+      }
     case "context":
       return {
         constraints: mission.context.constraints,
         copyLabel: copied ? COPY.copiedPrompt : COPY.copyPrompt,
         currentLocation: mission.context.currentLocation.label,
-        currentTime: clock(mission.context.currentTime),
+        currentTime: clock(mission.context.currentTime, mission.timezone),
         energy: titleCase(mission.context.energy),
+        prompt,
         type: "context",
       }
     case "route":
@@ -237,7 +260,7 @@ const workspaceFor = (
       return {
         events: mission.events.map((event) => ({
           actor: titleCase(event.actor),
-          at: clock(event.at),
+          at: clock(event.at, mission.timezone),
           id: event.id,
           summary: event.summary,
           type: event.type.replaceAll("_", " "),
@@ -259,7 +282,7 @@ export const presentMission = ({
   const timeline = timelineFor(mission, selected, route)
 
   return {
-    date: dateParts(mission.date, mission.timezone),
+    date: dateParts(mission.date),
     missionTitle: mission.title,
     navigation: MISSION_PANELS.map((item) => ({
       active: item.id === panel,

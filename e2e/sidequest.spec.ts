@@ -46,6 +46,11 @@ const executeTool = (page: Page, name: string, input: unknown) =>
     { input, name },
   ) as Promise<ToolOutcome>
 
+const loadDemo = async (page: Page) => {
+  await page.getByRole("button", { name: "Open menu" }).click()
+  await page.getByRole("button", { name: "Load demo" }).click()
+}
+
 const dragTo = async (page: Page, handle: Locator, target: Locator) => {
   const sourceBox = await handle.boundingBox()
   const targetBox = await target.boundingBox()
@@ -70,6 +75,8 @@ test("completes and captures the Sidequest killer flow", async ({ page }) => {
   await page.setViewportSize({ height: 900, width: 1440 })
   await page.goto("/")
 
+  await expect(page.getByText(/Copy the prompt below into ChatGPT/)).toBeVisible()
+  await loadDemo(page)
   await page.getByRole("button", { name: "Open menu" }).click()
   await expect(page.getByText("REV 06")).toBeVisible()
   await expect(page.getByText("Site tools connected")).toBeVisible()
@@ -210,6 +217,7 @@ test("edits and reorders the human operational lists", async ({ page }) => {
   await installWebMcpHarness(page)
   await page.setViewportSize({ height: 900, width: 1100 })
   await page.goto("/")
+  await loadDemo(page)
 
   await dragTo(
     page,

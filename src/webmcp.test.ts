@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { SEED_MISSION } from "./domain/seed"
+import { SEED_MISSION, createBlankMission } from "./domain/seed"
 import { createMissionStore, type MissionStore, type StoragePort } from "./store"
 import {
   TOOL_NAMES,
@@ -152,6 +152,62 @@ describe("WebMCP", () => {
       revision: 6,
     })
     expect(missionStore.getSnapshot()).toBe(before)
+  })
+
+  it("builds a fresh plan through the same five tools", async () => {
+    const context = fakeContext()
+    const missionStore = createMissionStore({
+      id: ids(),
+      mission: createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"),
+      storage: memoryStorage,
+    })
+    await registerMissionTools(missionStore)
+
+    const initial = await execute<MissionStateResult>(
+      context,
+      "get_mission_state",
+      {},
+    )
+    expect(initial).toMatchObject({
+      mission: { stops: [], title: "Untitled plan" },
+      ok: true,
+      revision: 0,
+    })
+
+    const contextResult = await execute<ToolMutationResult>(
+      context,
+      "update_day_context",
+      {
+        constraints: ["quiet place", "finish before 18:00"],
+        currentLocation: { label: "Warsaw", lat: 52.2297, lng: 21.0122 },
+        currentTime: "2026-09-03T12:15:00+02:00",
+        energy: "medium",
+        expectedRevision: 0,
+        reason: "Starting a personal afternoon plan.",
+      },
+    )
+    const added = await execute<ToolMutationResult>(
+      context,
+      "add_mission_stop",
+      {
+        durationMinutes: 45,
+        expectedRevision: contextResult.revision,
+        kind: "activity",
+        location: { label: "Saxon Garden", lat: 52.2403, lng: 21.009 },
+        rationale: "A quiet central walk that fits the available time.",
+        source: {
+          checkedAt: "2026-09-03T12:16:00+02:00",
+          title: "Warsaw tourism",
+          url: "https://warsawtour.pl/",
+        },
+        startsAt: "2026-09-03T13:00:00+02:00",
+        title: "Walk through Saxon Garden",
+        travelMinutesFromPrevious: 15,
+      },
+    )
+
+    expect(added).toMatchObject({ ok: true, revision: 2 })
+    expect(missionStore.getSnapshot().stops).toHaveLength(1)
   })
 
   it("executes the killer flow through the real store", async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { SEED_MISSION } from "./domain/seed"
+import { SEED_MISSION, createBlankMission } from "./domain/seed"
 import {
   MISSION_STORAGE_KEY,
   createMissionStore,
@@ -85,7 +85,8 @@ describe("mission store", () => {
     expect(notifications).toBe(0)
   })
 
-  it("loads valid data and removes only an invalid Sidequest value", () => {
+  it("starts blank, loads valid data, and removes only an invalid value", () => {
+    const empty = memoryStorage()
     const valid = memoryStorage({
       [MISSION_STORAGE_KEY]: JSON.stringify({ ...SEED_MISSION, revision: 9 }),
       unrelated: "preserve me",
@@ -95,13 +96,16 @@ describe("mission store", () => {
       unrelated: "preserve me",
     })
 
+    expect(loadMission(empty.storage, new Date("2026-09-03T10:15:00Z"), "UTC"))
+      .toEqual(createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"))
     expect(loadMission(valid.storage).revision).toBe(9)
-    expect(loadMission(invalid.storage)).toEqual(SEED_MISSION)
+    expect(loadMission(invalid.storage, new Date("2026-09-03T10:15:00Z"), "UTC"))
+      .toEqual(createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"))
     expect(invalid.removals).toEqual([MISSION_STORAGE_KEY])
     expect(invalid.values.get("unrelated")).toBe("preserve me")
   })
 
-  it("reset restores a fresh deterministic seed", () => {
+  it("switches explicitly between a new plan and the deterministic demo", () => {
     const memory = memoryStorage()
     const store = createMissionStore({
       id: () => "store-id",
@@ -109,10 +113,15 @@ describe("mission store", () => {
       storage: memory.storage,
     })
 
-    store.reset()
+    store.newPlan()
+
+    expect(store.getSnapshot().stops).toEqual([])
+    expect(store.getSnapshot().title).toBe("Untitled plan")
+
+    store.loadDemo()
 
     expect(store.getSnapshot()).toEqual(SEED_MISSION)
     expect(store.getSnapshot()).not.toBe(SEED_MISSION)
-    expect(memory.writes).toEqual([MISSION_STORAGE_KEY])
+    expect(memory.writes).toEqual([MISSION_STORAGE_KEY, MISSION_STORAGE_KEY])
   })
 })

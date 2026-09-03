@@ -5,7 +5,7 @@ import {
   type MissionMutation,
 } from "./domain/mission"
 import { applyMissionAction } from "./domain/mission-transition"
-import { SEED_MISSION } from "./domain/seed"
+import { SEED_MISSION, createBlankMission } from "./domain/seed"
 
 export const MISSION_STORAGE_KEY = "sidequest:mission:v1"
 
@@ -14,7 +14,8 @@ export type StoragePort = Pick<Storage, "getItem" | "removeItem" | "setItem">
 export type MissionStore = {
   dispatch: (action: MissionAction) => MissionMutation
   getSnapshot: () => Mission
-  reset: () => void
+  loadDemo: () => void
+  newPlan: () => void
   subscribe: (listener: () => void) => () => void
 }
 
@@ -24,11 +25,15 @@ type CreateMissionStoreParams = {
   storage: StoragePort
 }
 
-const seed = (): Mission => structuredClone(SEED_MISSION)
+const demo = (): Mission => structuredClone(SEED_MISSION)
 
-export const loadMission = (storage: StoragePort): Mission => {
+export const loadMission = (
+  storage: StoragePort,
+  now = new Date(),
+  timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+): Mission => {
   const stored = storage.getItem(MISSION_STORAGE_KEY)
-  if (stored === null) return seed()
+  if (stored === null) return createBlankMission(now, timezone)
 
   try {
     const parsed = MissionSchema.safeParse(JSON.parse(stored))
@@ -38,7 +43,7 @@ export const loadMission = (storage: StoragePort): Mission => {
   }
 
   storage.removeItem(MISSION_STORAGE_KEY)
-  return seed()
+  return createBlankMission(now, timezone)
 }
 
 export const createMissionStore = ({
@@ -62,7 +67,8 @@ export const createMissionStore = ({
       return mutation
     },
     getSnapshot: () => snapshot,
-    reset: () => publish(seed()),
+    loadDemo: () => publish(demo()),
+    newPlan: () => publish(createBlankMission()),
     subscribe: (listener) => {
       listeners.add(listener)
       return () => listeners.delete(listener)

@@ -198,14 +198,16 @@ const StopItem = ({
             )}
             <div className="detail-actions">
               <StopActions dispatch={dispatch} stop={stop} />
-              <button
-                aria-label={`Show ${stop.title} on map`}
-                className="control"
-                onClick={() => dispatch({ stopId: stop.id, type: "ShowStopOnMap" })}
-                type="button"
-              >
-                {COPY.viewOnMap}
-              </button>
+              {stop.routeIndex === null ? null : (
+                <button
+                  aria-label={`Show ${stop.title} on map`}
+                  className="control"
+                  onClick={() => dispatch({ stopId: stop.id, type: "ShowStopOnMap" })}
+                  type="button"
+                >
+                  {COPY.viewOnMap}
+                </button>
+              )}
             </div>
           </div>
         ) : null}
@@ -250,17 +252,32 @@ const PlanPanel = ({
   return (
     <section aria-labelledby="schedule-title" className="panel panel--plan" id="panel-plan" role="tabpanel">
       <h2 className="visually-hidden" id="schedule-title">{workspace.heading}</h2>
-      <Reorder.Group
-        as="ol"
-        axis="y"
-        className="stop-list"
-        onReorder={reorder}
-        values={order}
-      >
-        {orderedStops.map((stop) => (
-          <StopItem commit={commit} dispatch={dispatch} key={stop.id} stop={stop} />
-        ))}
-      </Reorder.Group>
+      {orderedStops.length === 0 ? (
+        <div className="empty-plan">
+          <p>{workspace.emptyHint}</p>
+          <button
+            className="control control--primary"
+            onClick={() =>
+              dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
+            }
+            type="button"
+          >
+            {workspace.copyLabel}
+          </button>
+        </div>
+      ) : (
+        <Reorder.Group
+          as="ol"
+          axis="y"
+          className="stop-list"
+          onReorder={reorder}
+          values={order}
+        >
+          {orderedStops.map((stop) => (
+            <StopItem commit={commit} dispatch={dispatch} key={stop.id} stop={stop} />
+          ))}
+        </Reorder.Group>
+      )}
       <InlineAdd
         ariaLabel={COPY.addItem}
         id="add-item"
@@ -411,7 +428,9 @@ const ContextPanel = ({
         <p>{COPY.agentHint}</p>
         <button
           className="control"
-          onClick={() => dispatch({ type: "CopyPrompt" })}
+          onClick={() =>
+            dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
+          }
           type="button"
         >
           {workspace.copyLabel}

@@ -1,5 +1,41 @@
 import type { Mission } from "./mission"
 
+export const DEMO_MISSION_ID = "baska-voda-demo"
+export const BLANK_MISSION_TITLE = "Untitled plan"
+export const BLANK_LOCATION_LABEL = "Set your location"
+
+const localDate = (now: Date, timezone: string) => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: timezone,
+    year: "numeric",
+  }).formatToParts(now)
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "01"
+  return `${value("year")}-${value("month")}-${value("day")}`
+}
+
+export const createBlankMission = (
+  now = new Date(),
+  timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+): Mission => ({
+  context: {
+    constraints: [],
+    currentLocation: { label: BLANK_LOCATION_LABEL, lat: 0, lng: 0 },
+    currentTime: now.toISOString(),
+    energy: "medium",
+  },
+  date: localDate(now, timezone),
+  events: [],
+  id: "personal-plan",
+  revision: 0,
+  schemaVersion: 1,
+  stops: [],
+  timezone,
+  title: BLANK_MISSION_TITLE,
+})
+
 export const SEED_MISSION: Mission = {
   context: {
     constraints: [
@@ -26,7 +62,7 @@ export const SEED_MISSION: Mission = {
   },
   date: "2026-08-30",
   events: [],
-  id: "baska-voda-demo",
+  id: DEMO_MISSION_ID,
   revision: 6,
   schemaVersion: 1,
   stops: [

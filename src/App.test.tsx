@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { App } from "./App"
-import { SEED_MISSION } from "./domain/seed"
+import { SEED_MISSION, createBlankMission } from "./domain/seed"
 import { createMissionStore, type StoragePort } from "./store"
 import type { WebMcpRegistration } from "./webmcp"
 
@@ -23,12 +23,37 @@ const store = () =>
     mission: SEED_MISSION,
     storage,
   })
+const blankStore = () =>
+  createMissionStore({
+    id: () => "ui-id",
+    mission: createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"),
+    storage,
+  })
 const registration = (supported: boolean): Promise<WebMcpRegistration> =>
   Promise.resolve({ dispose: () => undefined, supported })
 
 afterEach(() => vi.restoreAllMocks())
 
 describe("Sidequest app", () => {
+  it("starts as a blank plan and keeps the demo optional", () => {
+    const missionStore = blankStore()
+    vi.spyOn(window, "confirm").mockReturnValue(true)
+    render(<App registration={registration(false)} store={missionStore} />)
+
+    expect(screen.getByText(/Copy the prompt below into ChatGPT/)).toBeVisible()
+    expect(screen.getByRole("button", { name: "Copy prompt for ChatGPT" }))
+      .toBeVisible()
+
+    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
+    fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
+    expect(screen.getByDisplayValue("Forest gravel loop")).toBeVisible()
+
+    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
+    fireEvent.click(screen.getByRole("button", { name: "New plan" }))
+    expect(missionStore.getSnapshot().stops).toEqual([])
+    expect(screen.getByText(/Copy the prompt below into ChatGPT/)).toBeVisible()
+  })
+
   it("keeps one focused workspace with explicit controls", () => {
     const missionStore = store()
     render(<App registration={registration(false)} store={missionStore} />)
@@ -241,7 +266,7 @@ describe("Sidequest app", () => {
     expect(source).toHaveAttribute("rel", "noopener noreferrer")
   })
 
-  it("resets a changed mission after confirmation", () => {
+  it("loads the demo again after starting a new plan", () => {
     const missionStore = store()
     missionStore.dispatch({
       type: "UpdateStop",
@@ -259,8 +284,10 @@ describe("Sidequest app", () => {
     render(<App registration={registration(false)} store={missionStore} />)
 
     fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
-    fireEvent.click(screen.getByRole("button", { name: "Reset demo" }))
+    fireEvent.click(screen.getByRole("button", { name: "New plan" }))
 
+    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
+    fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
     fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
     expect(screen.getByText("REV 06")).toBeInTheDocument()
     expect(screen.getByTestId("stop-gravel-loop")).toHaveTextContent("Active")

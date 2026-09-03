@@ -17,7 +17,7 @@ Deliver this vertical slice first:
 4. the agent reorders the remaining stops;
 5. the timeline, map, and activity log immediately show the result;
 6. the locked dinner remains at 18:30;
-7. `Reset demo` restores the identical initial state.
+7. `Load demo` restores the identical fixture and `New plan` returns to a blank current-day board.
 
 Record any ideas outside this slice in the README as future work, but do not implement them until the demo is stable.
 
@@ -176,7 +176,7 @@ The most important architectural rule:
 ### Layers
 
 1. **Domain** — types, Zod schemas, pure operations, and invariants.
-2. **Application/store** — state, subscriptions, persistence, and reset.
+2. **Application/store** — state, subscriptions, persistence, fresh-plan creation, and fixture loading.
 3. **WebMCP adapter** — tool definitions and input → domain command mapping.
 4. **UI** — rendering and human actions.
 5. **Infrastructure** — localStorage, Google/Apple map URLs, and source links.
@@ -351,7 +351,8 @@ type MissionStore = {
   updateStop(input: UpdateMissionStopInput, actor: Actor): ToolMutationResult;
   addStop(input: AddMissionStopInput, actor: Actor): ToolMutationResult;
   reorderStops(input: ReorderMissionStopsInput, actor: Actor): ToolMutationResult;
-  resetDemo(): void;
+  newPlan(): void;
+  loadDemo(): void;
 };
 ```
 
@@ -360,9 +361,9 @@ type MissionStore = {
 - Keep `currentMission` inside the store module.
 - `getSnapshot()` must return the same object reference until the next mutation so that `useSyncExternalStore` works correctly.
 - After a successful command: create a new immutable snapshot, increment the revision, append an event, write localStorage, and notify listeners.
-- `resetDemo()` replaces state with an exact deep clone of the seed—including `revision: 6` and an empty activity log—and notifies subscribers. Reset is scenario control, not a mission mutation.
+- `newPlan()` replaces state with a blank current-day mission, while `loadDemo()` installs an exact deep clone of the seed—including `revision: 6` and an empty activity log. Both notify subscribers and remain scenario controls rather than mission mutations.
 - Persistence key: `sidequest:mission:v1`.
-- If localStorage contains an invalid or outdated payload, remove only that key and use the seed; do not clear all localStorage.
+- If localStorage contains an invalid or outdated payload, remove only that key and use a blank current-day mission; do not clear all localStorage.
 - Every method first parses input with Zod, then checks the revision, then enforces invariants.
 
 ### Human actions
@@ -904,12 +905,13 @@ export const SEED_MISSION: Mission = {
 
 After the user clicks `Done`, the gravel ride becomes `completed` and the revision increases to 7. The seed already has a current time of 15:10, so this one user action creates exactly one `human` event. This is the state the agent reads.
 
-`Reset demo` should:
+Fresh-plan and demo actions should:
 
-- ask for a standard confirmation only when the current state differs from the seed;
+- start a first visit with a valid blank mission for the current day;
+- ask for confirmation before replacing non-empty work;
 - overwrite only `sidequest:mission:v1`;
-- restore the active gravel ride and revision 6;
-- let the user click `Done` again during recording.
+- let `Load demo` restore the active gravel ride and revision 6;
+- let `New plan` return to a blank board without removing unrelated browser data.
 
 ## 14. UI implementation contract
 
@@ -949,9 +951,9 @@ States:
 
 Never block the UI based on this status.
 
-### Demo prompt
+### ChatGPT prompt
 
-Add a discreet `Copy demo prompt` button. On click, it copies the exact prompt from the product document. Do not add a chat box.
+On an empty plan, show a discreet `Copy prompt for ChatGPT` action. It copies the production URL and asks ChatGPT to open the page, gather the user's goal and constraints, and update the board through Site Tools. When the fixture is loaded, copy the exact demo prompt from the product document. Do not add a chat box.
 
 ## 15. Map and external data
 
@@ -1008,7 +1010,7 @@ Do not set `Origin-Agent-Cluster: ?0`. You may add `Permissions-Policy: tools=(s
 
 ### Private data
 
-The seed is a fictional demo mission. Do not use device GPS, contacts, browsing history, or account data. State in the README that localStorage remains inside the application's origin and can be cleared with `Reset demo`.
+The seed is a fictional demo mission. Do not use device GPS, contacts, browsing history, or account data. State in the README that localStorage remains inside the application's origin and the working plan can be cleared with `New plan`.
 
 ## 17. Testing strategy
 
@@ -1025,7 +1027,7 @@ Test pure domain operations:
 - a skipped stop is excluded from the future-route selector;
 - reorder requires every future ID exactly once;
 - reorder preserves the locked dinner time;
-- reset restores the seed and removes subsequent events;
+- loading the demo restores the seed and removes subsequent events;
 - the event log is trimmed to 20 records.
 
 ### 17.2 WebMCP contract tests — P0
@@ -1047,21 +1049,22 @@ Use a fake `document.modelContext.registerTool` and capture the definitions:
 
 ### 17.3 React integration tests — P0
 
-- the UI renders the seed;
+- the UI starts with a valid blank current-day plan;
+- `Load demo` renders the deterministic seed;
 - clicking `Done` updates status, revision, and activity log;
 - invoking the store through an agent handler updates the existing DOM;
 - the timeline and map selector have the same order;
 - `unavailable` status does not disable human controls;
 - source links contain secure attributes;
-- Reset demo restores the initial view.
+- `New plan` and `Load demo` switch between blank and deterministic states.
 
 ### 17.4 Playwright E2E — one core test
 
 Before the page loads, inject a fake `document.modelContext` that stores registered tool definitions in `window.__registeredTools`. Then:
 
 1. open `/`;
-2. assert the four initial stop cards;
-3. click `Done` on the gravel ride;
+2. assert the blank first-use state, then choose `Load demo`;
+3. assert the four fixture stops and click `Done` on the gravel ride;
 4. in the page context, invoke the five tool handlers in sequence using the demo data;
 5. after each mutation, use the revision returned by the previous call;
 6. assert that the hike has `skipped` status;
@@ -1070,7 +1073,7 @@ Before the page loads, inject a fake `document.modelContext` that stores registe
 9. assert exactly `18:30` on dinner;
 10. assert `Agent` entries in the activity log;
 11. reload and verify persistence;
-12. click Reset and verify the seed.
+12. choose `Load demo` again and verify the seed.
 
 Do not try to prove the real WebMCP implementation through headless Playwright. This test proves the adapter and UI contract. Confirm the real browser integration manually.
 
@@ -1138,7 +1141,7 @@ No SPA redirect is needed when `/` is the only route. If you add `/debug`, imple
 - verify HTTPS and headers;
 - open the live URL without cache or in a private window;
 - complete the entire manual WebMCP flow against the live URL;
-- verify Reset;
+- verify `New plan` and `Load demo`;
 - verify source links and attribution;
 - only then record the video.
 
@@ -1164,7 +1167,7 @@ Exit criterion: domain tests pass and the complete scenario can run in code with
 - [ ] Implement the external store.
 - [ ] Add the localStorage adapter.
 - [ ] Add actor-aware events.
-- [ ] Add reset.
+- [ ] Add blank-plan creation and explicit demo loading.
 - [ ] Add `useMission` based on `useSyncExternalStore`.
 
 Exit criterion: human and agent commands update one store; reload preserves state.
@@ -1178,7 +1181,7 @@ Exit criterion: human and agent commands update one store; reload preserves stat
 - [ ] Activity log.
 - [ ] Google Maps preview, provider launch links, and selection sync.
 - [ ] Responsive layout.
-- [ ] Copy demo prompt.
+- [ ] Copy the fresh-plan or demo prompt appropriate to the current state.
 
 Exit criterion: the before/after flow can be reproduced manually and the screen looks good at 1,440×900.
 
@@ -1306,12 +1309,12 @@ Do not require a judge to build the repository. The README must make the complet
 - [ ] A skipped stop disappears from the active route but remains in history.
 - [ ] Source links are visible and secure.
 - [ ] Unavailable WebMCP does not block the UI.
-- [ ] Demo reset is deterministic.
+- [ ] Demo loading is deterministic.
 - [ ] The screen is suitable for a 1,440×900 recording.
 
 ### Tests
 
-- [ ] Unit: revision, locked, add, reorder, reset.
+- [ ] Unit: revision, locked, add, reorder, new plan, and demo loading.
 - [ ] Contract: exactly five definitions and all budgets.
 - [ ] Integration: a tool handler updates the React DOM.
 - [ ] E2E: the complete killer flow.
@@ -1337,7 +1340,7 @@ Implement Sidequest from the two project documents in this repository:
 Start by inspecting the repository, package manager, AGENTS.md files, and current
 changes. Preserve all user work. Build only the P0 vertical slice first: the
 Baška Voda demo mission, shared MissionStore, human Done/Skip actions, timeline,
-Motion-reorderable lists, Google Maps preview, actor-aware activity log, deterministic reset, and exactly five
+Motion-reorderable lists, Google Maps preview, actor-aware activity log, deterministic demo loading, and exactly five
 imperative WebMCP tools registered in the top-level page through
 document.modelContext.registerTool().
 

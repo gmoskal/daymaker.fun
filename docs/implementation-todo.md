@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: Needs-first planning flow complete; production redeploy authorization pending
+> Status: Needs-first planning flow deployed; automatic Vercel Git connection permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -236,14 +236,14 @@ Implementation result:
 
 - Behavioral red: `npm run test -- src/delivery.test.ts` failed first because `vercel.json` was absent, then remained red until README could contain a verified production URL.
 - Configuration green: `npm run build` passed locally and in Vercel using the Vite preset, `npm run build`, and `dist` output.
-- Production deployment `dpl_92FA4zouhQBj8XF4jcPVQ5UHAv2Z` reached `Ready` and was aliased to `https://sidequest-webmcp-eta.vercel.app`.
+- Production deployment `dpl_9ynveDQx1YteHqeLjZgXEvqzZfwh` reached `Ready` and was aliased to `https://sidequest-webmcp-eta.vercel.app`; the served bundle contains v0.2.0 and the two Needs examples.
 - Anonymous HTTPS verification returned `200` with the configured CSP, permissions policy, referrer policy, MIME protection, and clickjacking protection.
 - Browser verification rendered the deployed mission at 1440px and 390px with no horizontal overflow.
-- Git connection is pending because the Vercel GitHub integration does not yet have access to the repository; the authenticated project settings are ready for the explicit permission step.
+- `vercel git connect` still reports that the Vercel GitHub integration does not have access to the public repository. Automatic deployments remain pending that provider permission; direct production deployment works.
 
 Status:
 
-- Production is complete. The remaining GitHub permission step was paused when the user explicitly reprioritized the usability problem.
+- Production v0.2.0 is complete. The remaining blocker is granting the Vercel GitHub integration access to `gmoskal/sidequest-webmcp`.
 
 ### 7 [x] Make first use and every interactive control unmistakable
 

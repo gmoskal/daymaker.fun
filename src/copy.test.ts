@@ -14,5 +14,9 @@ describe("English product copy", () => {
     expect(COPY.done).toBe("Mark done")
     expect(COPY.skip).toBe("Skip")
     expect(COPY.undo).toBe("Restore")
+    expect(COPY.emptyPlanHint).toContain("Drag any unlocked item to reorder it")
+    expect(COPY.emptyPlanHint).toContain(
+      "Route opens the whole plan in Google Maps",
+    )
   })
 })

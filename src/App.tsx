@@ -1,6 +1,6 @@
-import { useEffect, useState, type FocusEvent, type KeyboardEvent } from "react"
+import { useState, type FocusEvent, type KeyboardEvent } from "react"
 
-import { COPY } from "./copy"
+import { COPY, DEMO_OPTIONS } from "./copy"
 import { MissionWorkspace } from "./MissionWorkspace"
 import type { MissionStore } from "./store"
 import { useMissionViewModel } from "./useMissionViewModel"
@@ -55,47 +55,34 @@ const TitleEditor = ({
   )
 }
 
-const MenuIcon = () => (
-  <svg aria-hidden="true" viewBox="0 0 24 24">
-    <path d="M5 7h14M5 12h14M5 17h14" />
-  </svg>
-)
-
-const PlusIcon = () => (
-  <svg aria-hidden="true" viewBox="0 0 24 24">
-    <path d="M12 5v14M5 12h14" />
-  </svg>
-)
-
 const MissionView = ({ dispatch, screen }: MissionViewProps) => {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [focusTarget, setFocusTarget] = useState<"item" | "requirement" | null>(
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const [addTarget, setAddTarget] = useState<"item" | "requirement" | null>(
     null,
   )
-
-  useEffect(() => {
-    if (focusTarget === null) return
-    const target = document.querySelector<HTMLInputElement>(
-      focusTarget === "requirement" ? "#add-requirement" : "#add-item",
-    )
-    if (target === null) return
-    target.focus()
-    setFocusTarget(null)
-  }, [focusTarget, screen.workspace.type])
-
-  const add = () => {
-    setMenuOpen(false)
-    if (screen.workspace.type === "context") {
-      setFocusTarget("requirement")
-      return
-    }
-    if (screen.workspace.type !== "plan")
-      dispatch({ panel: "plan", type: "SelectPanel" })
-    setFocusTarget("item")
-  }
+  const [demoMenuOpen, setDemoMenuOpen] = useState(false)
 
   return (
     <main className="app-shell" id="mission">
+      <nav aria-label={COPY.missionViews} className="side-tabs" role="tablist">
+        {screen.navigation.map((item) => (
+          <a
+            aria-selected={item.active}
+            className={item.active ? "is-active" : ""}
+            href={item.path}
+            key={item.id}
+            onClick={(event) => {
+              event.preventDefault()
+              setAddTarget(null)
+              dispatch({ panel: item.id, type: "SelectPanel" })
+            }}
+            role="tab"
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+
       <header className="board-title">
         <TitleEditor dispatch={dispatch} title={screen.missionTitle} />
       </header>
@@ -112,73 +99,55 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
       </section>
 
       <MissionWorkspace
+        actionsOpen={actionsOpen}
+        addTarget={addTarget}
+        closeAdd={() => setAddTarget(null)}
         dispatch={dispatch}
         key={`${screen.revision}-${screen.workspace.type}`}
+        openAdd={(target) =>
+          setAddTarget((current) => (current === target ? null : target))
+        }
+        toggleActions={() => setActionsOpen((open) => !open)}
         workspace={screen.workspace}
       />
 
-      {menuOpen ? (
-        <nav aria-label={COPY.missionViews} className="floating-menu" role="tablist">
-          {screen.navigation.map((item) => (
-            <button
-              aria-selected={item.active}
-              className={item.active ? "is-active" : ""}
-              key={item.id}
-              onClick={() => {
-                dispatch({ panel: item.id, type: "SelectPanel" })
-                setMenuOpen(false)
-              }}
-              role="tab"
-              type="button"
-            >
-              {item.label}
-            </button>
-          ))}
-          <span className={`connection connection--${screen.webMcp.tone}`}>
-            <i aria-hidden="true" />
-            {screen.webMcp.label}
-          </span>
-          <span className="menu-revision">{screen.revision}</span>
-          <button
-            onClick={() => {
-              dispatch({ type: "NewPlan" })
-              setMenuOpen(false)
-            }}
-            type="button"
-          >
-            {COPY.newPlan}
-          </button>
-          <button
-            onClick={() => {
-              dispatch({ type: "LoadDemo" })
-              setMenuOpen(false)
-            }}
-            type="button"
-          >
-            {COPY.loadDemo}
-          </button>
-        </nav>
-      ) : null}
-
-      <div className="floating-actions">
+      <div className="primary-control">
+        {demoMenuOpen && screen.primaryAction.type === "LoadDemo" ? (
+          <div aria-label={COPY.samplePlans} className="demo-menu" role="menu">
+            {DEMO_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => {
+                  setAddTarget(null)
+                  setDemoMenuOpen(false)
+                  dispatch({ demoId: option.id, type: "LoadDemo" })
+                }}
+                role="menuitem"
+                type="button"
+              >
+                <strong>{option.label}</strong>
+                <span>{option.description}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
         <button
-          aria-expanded={menuOpen}
-          aria-label={menuOpen ? COPY.closeMenu : COPY.openMenu}
-          className="menu-action"
-          onClick={() => setMenuOpen((open) => !open)}
-          type="button"
-        >
-          <MenuIcon />
-        </button>
-        <button
-          aria-label={
-            screen.workspace.type === "context" ? COPY.addRequirement : COPY.addItem
+          aria-expanded={
+            screen.primaryAction.type === "LoadDemo" ? demoMenuOpen : undefined
           }
-          className="add-action"
-          onClick={add}
+          className="primary-action"
+          onClick={() => {
+            setAddTarget(null)
+            if (screen.primaryAction.type === "LoadDemo") {
+              setDemoMenuOpen((open) => !open)
+              return
+            }
+            setDemoMenuOpen(false)
+            dispatch(screen.primaryAction)
+          }}
           type="button"
         >
-          <PlusIcon />
+          {screen.primaryAction.label}
         </button>
       </div>
     </main>

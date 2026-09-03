@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { SEED_MISSION, createBlankMission } from "./domain/seed"
+import { MissionSchema } from "./domain/mission"
+import {
+  DEMO_MISSIONS,
+  SEED_MISSION,
+  createBlankMission,
+} from "./domain/seed"
 import {
   MISSION_STORAGE_KEY,
   createMissionStore,
@@ -27,6 +32,31 @@ const memoryStorage = (initial: Record<string, string> = {}) => {
 }
 
 describe("mission store", () => {
+  it("loads each named demo from the typed catalog", () => {
+    expect(Object.keys(DEMO_MISSIONS)).toHaveLength(3)
+    Object.values(DEMO_MISSIONS).forEach((mission) =>
+      expect(MissionSchema.safeParse(mission).success).toBe(true),
+    )
+    const memory = memoryStorage()
+    const missionStore = createMissionStore({
+      id: () => "event-id",
+      mission: createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"),
+      storage: memory.storage,
+    })
+
+    Reflect.apply(missionStore.loadDemo, missionStore, ["san-francisco-demo"])
+    expect(missionStore.getSnapshot().title).toBe("San Francisco Errands")
+    expect(missionStore.getSnapshot().stops.some((stop) => stop.locked)).toBe(true)
+
+    Reflect.apply(missionStore.loadDemo, missionStore, ["barcelona-demo"])
+    expect(missionStore.getSnapshot().title).toBe("Barcelona Swim & Coffee")
+    expect(missionStore.getSnapshot().stops.map((stop) => stop.title)).toEqual(
+      expect.arrayContaining(["NOMAD specialty coffee", "Swim · Bogatell Beach"]),
+    )
+    const firstBarcelona = missionStore.getSnapshot()
+    Reflect.apply(missionStore.loadDemo, missionStore, ["barcelona-demo"])
+    expect(missionStore.getSnapshot()).not.toBe(firstBarcelona)
+  })
   it("persists an accepted action and notifies subscribers", () => {
     const memory = memoryStorage()
     const store = createMissionStore({

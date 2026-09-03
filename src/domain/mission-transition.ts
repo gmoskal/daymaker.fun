@@ -4,6 +4,7 @@ import {
   AddMissionStopInputSchema,
   ReorderMissionConstraintsInputSchema,
   ReorderMissionStopsInputSchema,
+  RemoveMissionStopInputSchema,
   RenameMissionConstraintInputSchema,
   RenameMissionStopInputSchema,
   SetMissionStopLockInputSchema,
@@ -650,6 +651,42 @@ const applyRenameStop = ({
   })
 }
 
+const applyRemoveStop = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<Extract<MissionAction, { type: "RemoveStop" }>>): MissionMutation => {
+  const parsed = RemoveMissionStopInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The item removal is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can delete a board item directly.",
+    )
+
+  const stop = mission.stops.find((item) => item.id === parsed.data.stopId)
+  if (stop === undefined)
+    return rejected(mission, "STOP_NOT_FOUND", "That item is not in this board.")
+
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      stopId: stop.id,
+      summary: `Deleted ${stop.title}`,
+      type: "stop_removed",
+    },
+    id,
+    mission,
+    patch: { stops: mission.stops.filter((item) => item.id !== stop.id) },
+  })
+}
+
 const applyRenameConstraint = ({
   action,
   id,
@@ -735,6 +772,8 @@ export const applyMissionAction = ({
       return applyAddItem({ action, id, mission })
     case "RenameStop":
       return applyRenameStop({ action, id, mission })
+    case "RemoveStop":
+      return applyRemoveStop({ action, id, mission })
     case "RenameConstraint":
       return applyRenameConstraint({ action, id, mission })
   }

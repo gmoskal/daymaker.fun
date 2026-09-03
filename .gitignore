@@ -7,3 +7,4 @@ coverage
 .vscode/
 *.local
 .vercel
+bugs/assets/

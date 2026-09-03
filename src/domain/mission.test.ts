@@ -113,6 +113,26 @@ describe("mission", () => {
     )
   })
 
+  it("lets a person delete an item through the transition gate", () => {
+    const value = expectApplied(
+      apply({
+        type: "RemoveStop",
+        value: {
+          actor: "human",
+          input: { expectedRevision: 6, stopId: "biokovo-hike" },
+        },
+      } as unknown as MissionAction),
+    )
+
+    expect(value.mission.stops.map((stop) => stop.id)).not.toContain(
+      "biokovo-hike",
+    )
+    expect(value.mission.events[0]).toMatchObject({
+      actor: "human",
+      type: "stop_removed",
+    })
+  })
+
   it("edits an ordered constraint checklist", () => {
     const added = expectApplied(
       apply({

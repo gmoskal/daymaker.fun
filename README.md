@@ -4,7 +4,7 @@
 
 Sidequest is a local-first live plan shared by people and their browser agent. A person can mark what happened; an agent can read that same mission, adapt it to new constraints, research replacements, and write the result back to the visible board.
 
-This repository implements the Baška Voda demo for [The WebMCP Challenge](https://webmcp.devpost.com/).
+This repository implements the Baška Voda killer flow plus San Francisco and Barcelona sample missions for [The WebMCP Challenge](https://webmcp.devpost.com/).
 
 ## Submission status
 
@@ -36,9 +36,9 @@ Sidequest is not a chat client and it does not run a remote MCP server. The conv
 2. Rename `Untitled plan` inline.
 3. Either add the first item manually with `+`, or click **Copy prompt for ChatGPT** and paste it into ChatGPT. The copied prompt includes the production URL and asks ChatGPT to open the page and use its Site Tools.
 4. Tell ChatGPT the goal, location, available time, energy, and hard constraints. It can update context, research options, add items, and reorder the board through the five tools.
-5. Use the lock icon for commitments the agent must preserve. Manual controls continue to work in a normal browser without WebMCP.
+5. Open an item with its chevron, use `…` to reveal the shared horizontal action tray, and lock commitments the agent must preserve. Manual controls continue to work in a normal browser without WebMCP.
 
-The hidden menu contains **New plan** and **Load demo**. The demo remains available for judging and the deterministic video flow, but it is no longer the default user state.
+**Load demo** opens a compact catalog: Baška Voda demonstrates live replanning, San Francisco demonstrates errands with opening windows, and Barcelona demonstrates source-backed specialty coffee, beach, and timed-ticket planning. A loaded sample changes the action to **New plan**.
 
 ## The five tools
 
@@ -54,7 +54,7 @@ All inputs are strict Zod schemas. Every write requires `expectedRevision`; stal
 
 ## Demo flow
 
-1. Open the menu and choose **Load demo** to load the seeded mission at revision 6.
+1. Choose **Load demo**, then **Baška Voda · plan disruption**, to load the seeded mission at revision 6.
 2. Use the visible **Done** control on “Forest gravel loop” — revision 7 proves the human path.
 3. Give the browser agent this prompt:
 
@@ -96,9 +96,9 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL. A first visit starts with a blank plan, and subsequent changes persist in `localStorage`. Use **Load demo** for the deterministic revision 6 fixture or **New plan** to return to a fresh board.
+Open the printed local URL. A first visit starts with a blank plan, and subsequent changes persist in `localStorage`. Use **Load demo** to choose one of the three samples or **New plan** to return to a fresh board.
 
-The route view renders a Google Maps preview without adding a map library to the bundle. Set `VITE_GOOGLE_MAPS_EMBED_KEY` to use the official Google Maps Embed API endpoint; otherwise the preview uses Google's public embed URL. Clicking the preview opens the selected item in Google Maps, and the adjacent action can open it in Apple Maps instead.
+The route view renders a Google Maps preview without adding a map library to the bundle. Set `VITE_GOOGLE_MAPS_EMBED_KEY` to use the official Google Maps Embed API endpoint; otherwise the preview uses Google's public embed URL. Clicking the preview opens the selected item in Google Maps; adjacent actions open that item in Apple Maps or the entire ordered plan in Google Maps.
 
 ## Verification
 
@@ -145,7 +145,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 
 ## Limitations
 
-Sidequest is intentionally a focused hackathon prototype: one local plan, an optional deterministic demo, browser persistence, English UI, a Google Maps location preview, and no authentication or multi-user sync. It does not provide live GPS, live weather, turn-by-turn directions, reservations, automatic web research, or a custom chat interface. Google and Apple Maps require network access and open outside Sidequest for full map interaction.
+Sidequest is intentionally a focused hackathon prototype: one local plan, three optional sample missions, browser persistence, English UI, a Google Maps location preview, and no authentication or multi-user sync. It does not provide live GPS, live weather, turn-by-turn directions, reservations, automatic web research, or a custom chat interface. Google and Apple Maps require network access and open outside Sidequest for full map interaction.
 
 WebMCP remains progressive enhancement. Actual discovery in ChatGPT/Chrome, the demo video, and Devpost submission are manual release steps.
 

@@ -1,7 +1,11 @@
-import { COPY } from "./copy"
+import { COPY, DEMO_PROMPTS } from "./copy"
 import type { Mission, MissionConstraint, MissionStop } from "./domain/mission"
 import { futureStops } from "./domain/mission-transition"
-import { BLANK_LOCATION_LABEL, DEMO_MISSION_ID } from "./domain/seed"
+import {
+  BLANK_LOCATION_LABEL,
+  isDemoMissionId,
+  type DemoMissionId,
+} from "./domain/seed"
 
 export type WebMcpState =
   | { type: "checking" }
@@ -10,20 +14,27 @@ export type WebMcpState =
   | { type: "error" }
 
 export const MISSION_PANELS = [
-  { id: "plan", label: COPY.planTitle },
-  { id: "context", label: COPY.contextTitle },
-  { id: "route", label: COPY.mapTitle },
-  { id: "history", label: COPY.activityTitle },
+  { id: "plan", label: COPY.planTitle, path: "/plan" },
+  { id: "context", label: COPY.contextTitle, path: "/context" },
+  { id: "route", label: COPY.mapTitle, path: "/route" },
 ] as const
 
 export type MissionPanel = (typeof MISSION_PANELS)[number]["id"]
 
+export const missionPanelForPath = (pathname: string): MissionPanel =>
+  MISSION_PANELS.find((panel) => panel.path === pathname)?.id ?? "plan"
+
+export const missionPathFor = (panel: MissionPanel) =>
+  MISSION_PANELS.find((item) => item.id === panel)?.path ?? "/plan"
+
 export type ViewAction =
   | { prompt: string; type: "CopyPrompt" }
-  | { type: "LoadDemo" }
+  | { demoId?: DemoMissionId; type: "LoadDemo" }
   | { type: "NewPlan" }
   | { panel: MissionPanel; type: "SelectPanel" }
   | { stopId: string; type: "SelectStop" }
+  | { stopId: string; type: "ToggleStopActions" }
+  | { stopId: string; type: "DeleteStop" }
   | { stopId: string; type: "ShowStopOnMap" }
   | {
       status: "completed" | "planned" | "skipped"
@@ -88,26 +99,18 @@ type ContextWorkspace = {
 }
 
 type RouteWorkspace = {
+  origin: {
+    coordinates: [number, number]
+    label: string
+  }
   route: RouteStopScreen[]
   type: "route"
-}
-
-type HistoryWorkspace = {
-  events: Array<{
-    actor: string
-    at: string
-    id: string
-    summary: string
-    type: string
-  }>
-  type: "history"
 }
 
 export type MissionWorkspaceScreen =
   | PlanWorkspace
   | ContextWorkspace
   | RouteWorkspace
-  | HistoryWorkspace
 
 export type MissionScreen = {
   date: {
@@ -121,7 +124,12 @@ export type MissionScreen = {
     active: boolean
     id: MissionPanel
     label: string
+    path: string
   }>
+  primaryAction: {
+    label: string
+    type: "LoadDemo" | "NewPlan"
+  }
   revision: string
   webMcp: { label: string; tone: "neutral" | "positive" | "warning" }
   workspace: MissionWorkspaceScreen
@@ -148,12 +156,7 @@ const titleCase = (value: string) =>
 const focusedStopId = (mission: Mission, selectedStopId: string | null) => {
   if (mission.stops.some((stop) => stop.id === selectedStopId))
     return selectedStopId
-  return (
-    mission.stops.find((stop) => stop.status === "active")?.id ??
-    mission.stops.find((stop) => stop.status === "planned")?.id ??
-    mission.stops[0]?.id ??
-    null
-  )
+  return null
 }
 
 const routeFor = (
@@ -195,7 +198,7 @@ const timelineFor = (
       ? {}
       : { source: { title: stop.source.title, url: stop.source.url } }),
     status: stop.status,
-    statusLabel: titleCase(stop.status),
+    statusLabel: `${titleCase(stop.status)}${stop.locked ? ` · ${COPY.locked}` : ""}`,
     time: clock(stop.startsAt, mission.timezone),
     title: stop.title,
   }))
@@ -233,7 +236,9 @@ const workspaceFor = (
   timeline: TimelineStopScreen[],
   route: RouteStopScreen[],
 ): MissionWorkspaceScreen => {
-  const prompt = mission.id === DEMO_MISSION_ID ? COPY.demoPrompt : COPY.freshPrompt
+  const prompt = isDemoMissionId(mission.id)
+    ? DEMO_PROMPTS[mission.id]
+    : COPY.freshPrompt
   switch (panel) {
     case "plan":
       return {
@@ -255,17 +260,16 @@ const workspaceFor = (
         type: "context",
       }
     case "route":
-      return { route, type: "route" }
-    case "history":
       return {
-        events: mission.events.map((event) => ({
-          actor: titleCase(event.actor),
-          at: clock(event.at, mission.timezone),
-          id: event.id,
-          summary: event.summary,
-          type: event.type.replaceAll("_", " "),
-        })),
-        type: "history",
+        origin: {
+          coordinates: [
+            mission.context.currentLocation.lat,
+            mission.context.currentLocation.lng,
+          ],
+          label: mission.context.currentLocation.label,
+        },
+        route,
+        type: "route",
       }
   }
 }
@@ -288,6 +292,10 @@ export const presentMission = ({
       active: item.id === panel,
       ...item,
     })),
+    primaryAction:
+      isDemoMissionId(mission.id)
+        ? { label: COPY.newPlan, type: "NewPlan" }
+        : { label: COPY.loadDemo, type: "LoadDemo" },
     revision: `REV ${String(mission.revision).padStart(2, "0")}`,
     webMcp: webMcpBadge(webMcp),
     workspace: workspaceFor(panel, copied, mission, timeline, route),

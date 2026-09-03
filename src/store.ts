@@ -5,7 +5,12 @@ import {
   type MissionMutation,
 } from "./domain/mission"
 import { applyMissionAction } from "./domain/mission-transition"
-import { SEED_MISSION, createBlankMission } from "./domain/seed"
+import {
+  DEMO_MISSION_ID,
+  createBlankMission,
+  createDemoMission,
+  type DemoMissionId,
+} from "./domain/seed"
 
 export const MISSION_STORAGE_KEY = "sidequest:mission:v1"
 
@@ -14,7 +19,7 @@ export type StoragePort = Pick<Storage, "getItem" | "removeItem" | "setItem">
 export type MissionStore = {
   dispatch: (action: MissionAction) => MissionMutation
   getSnapshot: () => Mission
-  loadDemo: () => void
+  loadDemo: (id?: DemoMissionId) => void
   newPlan: () => void
   subscribe: (listener: () => void) => () => void
 }
@@ -24,8 +29,6 @@ type CreateMissionStoreParams = {
   mission: Mission
   storage: StoragePort
 }
-
-const demo = (): Mission => structuredClone(SEED_MISSION)
 
 export const loadMission = (
   storage: StoragePort,
@@ -67,7 +70,7 @@ export const createMissionStore = ({
       return mutation
     },
     getSnapshot: () => snapshot,
-    loadDemo: () => publish(demo()),
+    loadDemo: (demoId = DEMO_MISSION_ID) => publish(createDemoMission(demoId)),
     newPlan: () => publish(createBlankMission()),
     subscribe: (listener) => {
       listeners.add(listener)

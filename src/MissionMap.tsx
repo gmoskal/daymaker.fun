@@ -3,6 +3,10 @@ import type { RouteStopScreen } from "./view-model"
 
 type MissionMapProps = {
   onSelect: (stopId: string) => void
+  origin: {
+    coordinates: [number, number]
+    label: string
+  }
   route: RouteStopScreen[]
 }
 
@@ -23,6 +27,22 @@ const appleMapsUrl = (stop: RouteStopScreen) => {
   return url.toString()
 }
 
+const googlePlanUrl = (
+  origin: MissionMapProps["origin"],
+  route: RouteStopScreen[],
+) => {
+  const destination = route.at(-1)
+  if (destination === undefined) return null
+  const coordinate = (value: [number, number]) => `${value[0]},${value[1]}`
+  const url = new URL("https://www.google.com/maps/dir/")
+  url.searchParams.set("api", "1")
+  url.searchParams.set("origin", coordinate(origin.coordinates))
+  url.searchParams.set("destination", coordinate(destination.coordinates))
+  const waypoints = route.slice(0, -1).map((stop) => coordinate(stop.coordinates))
+  if (waypoints.length > 0) url.searchParams.set("waypoints", waypoints.join("|"))
+  return url.toString()
+}
+
 const googleEmbedUrl = (stop: RouteStopScreen, apiKey: string) => {
   const url = new URL("https://www.google.com/maps/embed/v1/place")
   url.searchParams.set("key", apiKey)
@@ -38,11 +58,12 @@ const googlePreviewUrl = (stop: RouteStopScreen) => {
   return url.toString()
 }
 
-export const MissionMap = ({ onSelect, route }: MissionMapProps) => {
+export const MissionMap = ({ onSelect, origin, route }: MissionMapProps) => {
   const selected = route.find((stop) => stop.selected) ?? route[0]
   if (selected === undefined) return <p className="empty-log">{COPY.noMapItems}</p>
 
   const googleUrl = googleMapsUrl(selected)
+  const planUrl = googlePlanUrl(origin, route)
   const embedKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY
 
   return (
@@ -71,6 +92,11 @@ export const MissionMap = ({ onSelect, route }: MissionMapProps) => {
       </div>
 
       <div className="map-provider-actions">
+        {planUrl === null ? null : (
+          <a href={planUrl} rel="noopener noreferrer" target="_blank">
+            {COPY.openPlanInGoogleMaps}
+          </a>
+        )}
         <a href={googleUrl} rel="noopener noreferrer" target="_blank">
           {COPY.openInGoogleMaps}
         </a>

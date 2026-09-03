@@ -5,6 +5,8 @@ import { BLANK_MISSION_TITLE } from "./domain/seed"
 import type { MissionStore } from "./store"
 import {
   presentMission,
+  missionPanelForPath,
+  missionPathFor,
   toHumanStopOrder,
   type MissionPanel,
   type ViewAction,
@@ -38,7 +40,9 @@ export const useMissionViewModel = ({
   )
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-  const [panel, setPanel] = useState<MissionPanel>("plan")
+  const [panel, setPanel] = useState<MissionPanel>(() =>
+    missionPanelForPath(window.location.pathname),
+  )
   const [webMcp, setWebMcp] = useState<WebMcpState>({ type: "checking" })
 
   useEffect(() => {
@@ -58,18 +62,55 @@ export const useMissionViewModel = ({
     }
   }, [registration])
 
+  useEffect(() => {
+    const syncPanel = () => setPanel(missionPanelForPath(window.location.pathname))
+    const canonicalPath = missionPathFor(missionPanelForPath(window.location.pathname))
+    if (window.location.pathname !== canonicalPath)
+      window.history.replaceState(null, "", canonicalPath)
+    window.addEventListener("popstate", syncPanel)
+    return () => window.removeEventListener("popstate", syncPanel)
+  }, [])
+
+  const navigate = useCallback((nextPanel: MissionPanel, replace = false) => {
+    const path = missionPathFor(nextPanel)
+    if (window.location.pathname !== path)
+      window.history[replace ? "replaceState" : "pushState"](null, "", path)
+    setPanel(nextPanel)
+  }, [])
+
   const dispatch = useCallback(
     (action: ViewAction) => {
       switch (action.type) {
         case "SelectPanel":
-          setPanel(action.panel)
+          navigate(action.panel)
           return
         case "SelectStop":
           setSelectedStopId(action.stopId)
           return
+        case "ToggleStopActions":
+          setSelectedStopId((selected) =>
+            selected === action.stopId ? null : action.stopId,
+          )
+          return
+        case "DeleteStop":
+          if (!window.confirm(COPY.deleteItemConfirm)) return
+          if (
+            store.dispatch({
+              type: "RemoveStop",
+              value: {
+                actor: "human",
+                input: {
+                  expectedRevision: store.getSnapshot().revision,
+                  stopId: action.stopId,
+                },
+              },
+            }).type === "applied"
+          )
+            setSelectedStopId(null)
+          return
         case "ShowStopOnMap":
           setSelectedStopId(action.stopId)
-          setPanel("route")
+          navigate("route")
           return
         case "SetStopStatus":
           if (
@@ -207,17 +248,17 @@ export const useMissionViewModel = ({
           if (hasPlanContent(store) && !window.confirm(COPY.newPlanConfirm)) return
           store.newPlan()
           setSelectedStopId(null)
-          setPanel("plan")
+          navigate("plan", true)
           return
         case "LoadDemo":
           if (hasPlanContent(store) && !window.confirm(COPY.loadDemoConfirm)) return
-          store.loadDemo()
+          store.loadDemo(action.demoId)
           setSelectedStopId(null)
-          setPanel("plan")
+          navigate("plan", true)
           return
       }
     },
-    [store],
+    [navigate, store],
   )
 
   return {

@@ -23,7 +23,7 @@ describe("mission presenter", () => {
       "Active",
       "Planned",
       "Planned",
-      "Planned",
+      "Planned · Locked",
     ])
     expect(screen.workspace.stops.filter((stop) => stop.selected)).toHaveLength(1)
     expect(

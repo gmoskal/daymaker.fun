@@ -25,6 +25,7 @@ describe("delivery repository", () => {
     expect(hosting).toContain("Permissions-Policy")
     expect(vercel).toContain('"framework": "vite"')
     expect(vercel).toContain('"outputDirectory": "dist"')
+    expect(vercel).toContain('"rewrites"')
     expect(vercel).toContain('"key": "Content-Security-Policy"')
     expect(vercel).toContain('"key": "Permissions-Policy"')
   })

@@ -47,9 +47,23 @@ const executeTool = (page: Page, name: string, input: unknown) =>
   ) as Promise<ToolOutcome>
 
 const loadDemo = async (page: Page) => {
-  await page.getByRole("button", { name: "Open menu" }).click()
   await page.getByRole("button", { name: "Load demo" }).click()
+  await page.getByRole("menuitem", { name: /Baška Voda/ }).click()
 }
+
+test("opens the flat demo catalog without viewport overflow", async ({ page }) => {
+  await page.setViewportSize({ height: 844, width: 390 })
+  await page.goto("/")
+  await page.getByRole("button", { name: "Load demo" }).click()
+
+  await expect(page.getByRole("menu", { name: "Sample plans" })).toBeVisible()
+  await expect(page.getByRole("menuitem", { name: /San Francisco/ })).toBeVisible()
+  await expect(page.getByRole("menuitem", { name: /Barcelona/ })).toBeVisible()
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(390)
+  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-demo-menu.png" })
+})
 
 const dragTo = async (page: Page, handle: Locator, target: Locator) => {
   const sourceBox = await handle.boundingBox()
@@ -70,23 +84,84 @@ const dragTo = async (page: Page, handle: Locator, target: Locator) => {
   await page.mouse.up()
 }
 
+test("preserves readable schedule hierarchy and one item menu", async ({ page }) => {
+  await installWebMcpHarness(page)
+  await page.setViewportSize({ height: 720, width: 780 })
+  await page.goto("/")
+  await loadDemo(page)
+
+  const day = page.locator(".date-block > strong")
+  const firstItem = page.getByTestId("stop-gravel-loop")
+  await page.getByRole("button", { name: "Actions for Forest gravel loop" }).click()
+  await page.getByRole("button", { name: "Show item actions" }).click()
+  const time = firstItem.locator("time")
+  const daySize = await day.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).fontSize),
+  )
+  const timeStyle = await time.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      color: style.color,
+      letterSpacing: Number.parseFloat(style.letterSpacing),
+      size: Number.parseFloat(style.fontSize),
+    }
+  })
+  const timeline = await page.locator(".stop-list").evaluate((element) => {
+    const axis = getComputedStyle(element, "::before")
+    const row = getComputedStyle(element.querySelector(".stop-row")!, "::after")
+    const status = getComputedStyle(element.querySelector(".status")!)
+    const time = getComputedStyle(element.querySelector("time")!)
+    return {
+      axisContent: axis.content,
+      axisWidth: axis.width,
+      rowContent: row.content,
+      statusColumn: status.gridColumnStart,
+      timeAlign: time.textAlign,
+    }
+  })
+
+  expect(daySize).toBeLessThanOrEqual(72)
+  expect(timeStyle).toMatchObject({ color: "rgb(210, 31, 43)" })
+  expect(timeStyle.size).toBeGreaterThanOrEqual(16)
+  expect(timeStyle.letterSpacing).toBeGreaterThanOrEqual(0.5)
+  expect(timeline).toEqual({
+    axisContent: '""',
+    axisWidth: "1px",
+    rowContent: "none",
+    statusColumn: "2",
+    timeAlign: "right",
+  })
+  await expect(page.getByRole("tablist", { name: "Mission views" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Open menu" })).toHaveCount(0)
+  await expect(page.getByText(/Manual mode/)).toHaveCount(0)
+  await expect(page.getByText(/REV 06/)).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "Delete item" })).toBeVisible()
+  expect(
+    await page
+      .getByRole("button", { name: "Mark Forest gravel loop done" })
+      .evaluate((element) => getComputedStyle(element).color),
+  ).toBe("rgb(146, 146, 151)")
+  await page.screenshot({
+    fullPage: true,
+    path: "artifacts/sidequest-item-menu.png",
+  })
+})
+
 test("completes and captures the Sidequest killer flow", async ({ page }) => {
   await installWebMcpHarness(page)
   await page.setViewportSize({ height: 900, width: 1440 })
   await page.goto("/")
 
-  await expect(page.getByText(/Copy the prompt below into ChatGPT/)).toBeVisible()
+  await expect(page.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
   await loadDemo(page)
-  await page.getByRole("button", { name: "Open menu" }).click()
-  await expect(page.getByText("REV 06")).toBeVisible()
-  await expect(page.getByText("Site tools connected")).toBeVisible()
   await expect(page.getByRole("tab", { name: "Plan" })).toHaveAttribute(
     "aria-selected",
     "true",
   )
-  await expect(
-    page.getByRole("button", { name: "Mark Forest gravel loop done" }),
-  ).toHaveText("Mark done")
+  await page.getByRole("button", { name: "Actions for Forest gravel loop" }).click()
+  await page.getByRole("button", { name: "Show item actions" }).click()
+  await expect(page.getByRole("button", { name: "Mark Forest gravel loop done" }))
+    .toHaveText("Mark done")
   await expect(page.getByTestId("stop-biokovo-hike")).toHaveAttribute(
     "data-draggable",
     "true",
@@ -101,12 +176,7 @@ test("completes and captures the Sidequest killer flow", async ({ page }) => {
       ),
     )
     .toBe(5)
-  await page.getByRole("button", { name: "Close menu" }).click()
-
   await page.getByRole("button", { name: "Mark Forest gravel loop done" }).click()
-  await page.getByRole("button", { name: "Open menu" }).click()
-  await expect(page.getByText("REV 07")).toBeVisible()
-  await page.getByRole("button", { name: "Close menu" }).click()
 
   expect(
     await executeTool(page, "update_day_context", {
@@ -188,22 +258,19 @@ test("completes and captures the Sidequest killer flow", async ({ page }) => {
     }),
   ).toMatchObject({ ok: true, revision: 12 })
 
-  await page.getByRole("button", { name: "Open menu" }).click()
-  await expect(page.getByText("REV 12")).toBeVisible()
-  await page.getByRole("button", { name: "Close menu" }).click()
   await expect(page.getByTestId("stop-biokovo-hike")).toContainText("Skipped")
   await expect(
-    page.getByRole("textbox", {
-      name: "Edit item title: Punta Rata swim & snorkel",
-    }),
+    page.getByRole("button", { name: "Punta Rata swim & snorkel", exact: true }),
   ).toBeVisible()
   await expect(page.getByText("Fuel stop · INA").first()).toBeVisible()
   await expect(page.getByTestId("stop-dinner")).toContainText("18:30")
-  await page.getByRole("button", { name: "Open menu" }).click()
-  await page.getByRole("tab", { name: "History" }).click()
-  await expect(page.getByLabel("Activity log")).toContainText("Agent")
-  await page.getByRole("button", { name: "Open menu" }).click()
-  await page.getByRole("tab", { name: "Plan" }).click()
+  await page.getByRole("tab", { name: "Route" }).click()
+  await expect(page).toHaveURL(/\/route$/)
+  await expect(
+    page.getByRole("link", { name: "Open full plan in Google Maps" }),
+  ).toBeVisible()
+  await page.goBack()
+  await expect(page).toHaveURL(/\/plan$/)
 
   await page.screenshot({ fullPage: true, path: "artifacts/sidequest-desktop.png" })
   await page.setViewportSize({ height: 844, width: 390 })
@@ -219,15 +286,18 @@ test("edits and reorders the human operational lists", async ({ page }) => {
   await page.goto("/")
   await loadDemo(page)
 
+  expect(
+    await page
+      .getByRole("button", { name: "Return & shower", exact: true })
+      .evaluate((element) => getComputedStyle(element).cursor),
+  ).toBe("grab")
+
   await dragTo(
     page,
-    page.getByTestId("stop-return-shower"),
-    page.getByTestId("stop-biokovo-hike"),
+    page.getByRole("button", { name: "Return & shower", exact: true }),
+    page.getByRole("button", { name: "Biokovo sunset hike", exact: true }),
   )
 
-  await page.getByRole("button", { name: "Open menu" }).click()
-  await expect(page.getByText("REV 07")).toBeVisible()
-  await page.getByRole("button", { name: "Close menu" }).click()
   await expect
     .poll(() =>
       page
@@ -246,8 +316,8 @@ test("edits and reorders the human operational lists", async ({ page }) => {
   )
   await expect(page.getByTestId("stop-dinner")).toContainText("18:30")
 
-  await page.getByRole("button", { name: "Open menu" }).click()
   await page.getByRole("tab", { name: "Context" }).click()
+  await page.getByRole("button", { name: "Add requirement" }).click()
   await page.getByRole("textbox", { name: "New requirement" }).fill(
     "avoid steep climbs",
   )

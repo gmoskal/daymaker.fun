@@ -32,7 +32,10 @@ const blankStore = () =>
 const registration = (supported: boolean): Promise<WebMcpRegistration> =>
   Promise.resolve({ dispose: () => undefined, supported })
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  window.history.replaceState(null, "", "/")
+})
 
 describe("Sidequest app", () => {
   it("starts as a blank plan and keeps the demo optional", () => {
@@ -40,25 +43,201 @@ describe("Sidequest app", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true)
     render(<App registration={registration(false)} store={missionStore} />)
 
-    expect(screen.getByText(/Copy the prompt below into ChatGPT/)).toBeVisible()
+    expect(screen.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
     expect(screen.getByRole("button", { name: "Copy prompt for ChatGPT" }))
       .toBeVisible()
 
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
     fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
-    expect(screen.getByDisplayValue("Forest gravel loop")).toBeVisible()
+    fireEvent.click(screen.getByRole("menuitem", { name: /Baška Voda/ }))
+    expect(screen.getByRole("button", { name: "Forest gravel loop" })).toBeVisible()
 
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
     fireEvent.click(screen.getByRole("button", { name: "New plan" }))
     expect(missionStore.getSnapshot().stops).toEqual([])
-    expect(screen.getByText(/Copy the prompt below into ChatGPT/)).toBeVisible()
+    expect(screen.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
+  })
+
+  it("loads a selected sample from the demo menu", () => {
+    const missionStore = blankStore()
+    render(<App registration={registration(false)} store={missionStore} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
+    expect(screen.getByRole("menu", { name: "Sample plans" })).toBeVisible()
+    expect(screen.getAllByRole("menuitem")).toHaveLength(3)
+    fireEvent.click(screen.getByRole("menuitem", { name: /Barcelona/ }))
+
+    expect(missionStore.getSnapshot().title).toBe("Barcelona Swim & Coffee")
+    expect(screen.getByText("NOMAD specialty coffee")).toBeVisible()
+    expect(screen.queryByRole("menu", { name: "Sample plans" }))
+      .not.toBeInTheDocument()
+  })
+
+  it("exposes persistent side tabs without technical state", async () => {
+    render(<App registration={registration(false)} store={store()} />)
+
+    expect(screen.getByRole("tablist", { name: "Mission views" }))
+      .toHaveClass("side-tabs")
+    expect(screen.getByRole("tab", { name: "Plan" })).toBeVisible()
+    expect(screen.getAllByRole("tab")).toHaveLength(3)
+    expect(screen.queryByRole("tab", { name: "History" })).not.toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Plan" })).toHaveAttribute(
+      "href",
+      "/plan",
+    )
+    expect(screen.queryByRole("button", { name: "Open menu" }))
+      .not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Manual mode · open in ChatGPT or enable Chrome WebMCP"),
+      ).not.toBeInTheDocument(),
+    )
+    expect(screen.queryByText("REV 06")).not.toBeInTheDocument()
+  })
+
+  it("keeps the selected workspace in the browser route", async () => {
+    window.history.replaceState(null, "", "/context")
+    render(<App registration={registration(false)} store={store()} />)
+
+    expect(screen.getByRole("tab", { name: "Context" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    )
+
+    fireEvent.click(screen.getByRole("tab", { name: "Route" }))
+    expect(window.location.pathname).toBe("/route")
+    expect(screen.getByTestId("mission-map")).toBeInTheDocument()
+
+    window.history.back()
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Context" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      ),
+    )
+  })
+
+  it("explains the plan interaction in the blank state", () => {
+    render(<App registration={registration(false)} store={blankStore()} />)
+
+    expect(screen.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
+    expect(screen.getByText(/Route opens the whole plan in Google Maps/))
+      .toBeVisible()
+  })
+
+  it("reveals one add field from its contextual plus", () => {
+    const missionStore = blankStore()
+    render(<App registration={registration(false)} store={missionStore} />)
+
+    expect(
+      screen.queryByRole("textbox", { name: "Add item" }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Add item" }))
+    const addItem = screen.getByRole("textbox", { name: "Add item" })
+    expect(addItem).toHaveFocus()
+
+    fireEvent.change(addItem, { target: { value: "Call the hotel" } })
+    fireEvent.keyDown(addItem, { key: "Enter" })
+
+    expect(missionStore.getSnapshot().stops).toContainEqual(
+      expect.objectContaining({ title: "Call the hotel" }),
+    )
+    expect(
+      screen.queryByRole("textbox", { name: "Add item" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("opens one complete item action menu", async () => {
+    render(<App registration={registration(false)} store={store()} />)
+
+    expect(
+      screen.queryByRole("button", { name: "Delete item" }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole("button", { name: "Actions for Forest gravel loop" }),
+    )
+    expect(
+      screen.queryByRole("button", { name: "Mark Forest gravel loop done" }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Show item actions" }))
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Mark Forest gravel loop done" }))
+        .toBeVisible(),
+    )
+    expect(screen.getByRole("button", { name: "Skip Forest gravel loop" }))
+      .toBeVisible()
+    expect(screen.getByRole("button", { name: "Lock Forest gravel loop" }))
+      .toBeVisible()
+    expect(screen.getByRole("button", { name: "Delete item" })).toBeVisible()
+    expect(
+      screen.queryByRole("button", { name: "Unlock Dinner reservation" }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Actions for Dinner reservation" }),
+    )
+    expect(screen.getByRole("button", { name: "Hide item actions" })).toBeVisible()
+    expect(
+      screen.queryByRole("button", { name: "Lock Forest gravel loop" }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Unlock Dinner reservation" }))
+      .toBeVisible()
+  })
+
+  it("opens inline editing from the collapsed title", () => {
+    render(<App registration={registration(false)} store={store()} />)
+
+    expect(
+      screen.queryByRole("textbox", {
+        name: "Edit item title: Forest gravel loop",
+      }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Forest gravel loop" }))
+
+    expect(
+      screen.getByRole("button", { name: "Actions for Forest gravel loop" }),
+    ).toHaveAttribute("aria-expanded", "true")
+    expect(
+      screen.getByRole("textbox", {
+        name: "Edit item title: Forest gravel loop",
+      }),
+    ).toHaveFocus()
+
+    fireEvent.click(screen.getByRole("button", { name: "Biokovo sunset hike" }))
+    expect(
+      screen.queryByRole("textbox", {
+        name: "Edit item title: Forest gravel loop",
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("textbox", {
+        name: "Edit item title: Biokovo sunset hike",
+      }),
+    ).toBeVisible()
+  })
+
+  it("deletes an item from its action menu", () => {
+    const missionStore = store()
+    vi.spyOn(window, "confirm").mockReturnValue(true)
+    render(<App registration={registration(false)} store={missionStore} />)
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Actions for Biokovo sunset hike" }),
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Show item actions" }))
+    fireEvent.click(screen.getByRole("button", { name: "Delete item" }))
+
+    expect(
+      missionStore.getSnapshot().stops.some((stop) => stop.id === "biokovo-hike"),
+    ).toBe(false)
+    expect(screen.queryByTestId("stop-biokovo-hike")).not.toBeInTheDocument()
   })
 
   it("keeps one focused workspace with explicit controls", () => {
     const missionStore = store()
     render(<App registration={registration(false)} store={missionStore} />)
 
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
     expect(screen.getByRole("tab", { name: "Plan" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -68,8 +247,14 @@ describe("Sidequest app", () => {
     const activeStop = within(screen.getByTestId("stop-gravel-loop"))
     const plannedStop = within(screen.getByTestId("stop-biokovo-hike"))
     expect(
-      activeStop.getByRole("button", { name: "Mark Forest gravel loop done" }),
-    ).toHaveTextContent("Mark done")
+      activeStop.queryByRole("button", { name: "Mark Forest gravel loop done" }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(
+      activeStop.getByRole("button", { name: "Actions for Forest gravel loop" }),
+    )
+    fireEvent.click(activeStop.getByRole("button", { name: "Show item actions" }))
+    expect(activeStop.getByRole("button", { name: "Mark Forest gravel loop done" }))
+      .toHaveTextContent("Mark done")
     expect(
       activeStop.getByRole("button", {
         name: "Show Forest gravel loop on map",
@@ -82,7 +267,7 @@ describe("Sidequest app", () => {
     ).not.toBeInTheDocument()
 
     fireEvent.click(
-      plannedStop.getByRole("button", { name: "View Biokovo sunset hike" }),
+      plannedStop.getByRole("button", { name: "Actions for Biokovo sunset hike" }),
     )
 
     expect(
@@ -115,7 +300,6 @@ describe("Sidequest app", () => {
       "false",
     )
 
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
     fireEvent.click(screen.getByRole("tab", { name: "Context" }))
 
     expect(
@@ -127,13 +311,17 @@ describe("Sidequest app", () => {
     const missionStore = store()
     render(<App registration={registration(false)} store={missionStore} />)
 
-    expect(
-      screen.getByRole("button", { name: "Unlock Dinner reservation" }),
-    ).toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole("button", { name: "Actions for Dinner reservation" }),
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Show item actions" }))
+    expect(screen.getByRole("button", { name: "Unlock Dinner reservation" }))
+      .toBeInTheDocument()
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Lock Biokovo sunset hike" }),
+      screen.getByRole("button", { name: "Actions for Biokovo sunset hike" }),
     )
+    fireEvent.click(screen.getByRole("button", { name: "Lock Biokovo sunset hike" }))
 
     expect(
       missionStore.getSnapshot().stops.find((stop) => stop.id === "biokovo-hike"),
@@ -157,8 +345,8 @@ describe("Sidequest app", () => {
     const missionStore = store()
     render(<App registration={registration(false)} store={missionStore} />)
 
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
     fireEvent.click(screen.getByRole("tab", { name: "Context" }))
+    fireEvent.click(screen.getByRole("button", { name: "Add requirement" }))
     fireEvent.change(screen.getByRole("textbox", { name: "New requirement" }), {
       target: { value: "avoid steep climbs" },
     })
@@ -182,6 +370,7 @@ describe("Sidequest app", () => {
     const missionStore = store()
     render(<App registration={registration(false)} store={missionStore} />)
 
+    fireEvent.click(screen.getByRole("button", { name: "Forest gravel loop" }))
     const title = screen.getByRole("textbox", {
       name: "Edit item title: Forest gravel loop",
     })
@@ -192,6 +381,7 @@ describe("Sidequest app", () => {
       "Coastal gravel loop",
     )
 
+    fireEvent.click(screen.getByRole("button", { name: "Add item" }))
     const addItem = screen.getByRole("textbox", { name: "Add item" })
     fireEvent.change(addItem, { target: { value: "Call the hotel" } })
     fireEvent.keyDown(addItem, { key: "Enter" })
@@ -205,25 +395,22 @@ describe("Sidequest app", () => {
     const missionStore = store()
     render(<App registration={registration(false)} store={missionStore} />)
 
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
     await waitFor(() =>
       expect(
-        screen.getByText("Manual mode · open in ChatGPT or enable Chrome WebMCP"),
-      ).toBeInTheDocument(),
+        screen.queryByText("Manual mode · open in ChatGPT or enable Chrome WebMCP"),
+      ).not.toBeInTheDocument(),
     )
-    fireEvent.click(screen.getByRole("button", { name: "Close menu" }))
+    fireEvent.click(
+      screen.getByRole("button", { name: "Actions for Forest gravel loop" }),
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Show item actions" }))
     fireEvent.click(
       screen.getByRole("button", { name: "Mark Forest gravel loop done" }),
     )
 
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
-    expect(screen.getByText("REV 07")).toBeInTheDocument()
-    fireEvent.click(screen.getByRole("button", { name: "Close menu" }))
+    expect(missionStore.getSnapshot().revision).toBe(7)
     expect(screen.getByTestId("stop-gravel-loop")).toHaveTextContent("Completed")
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
-    fireEvent.click(screen.getByRole("tab", { name: "History" }))
-    expect(screen.getByLabelText("Activity log")).toHaveTextContent("Human")
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
+    expect(missionStore.getSnapshot().events[0]?.actor).toBe("human")
     fireEvent.click(screen.getByRole("tab", { name: "Route" }))
     expect(screen.getByTestId("mission-map")).not.toHaveTextContent("gravel-loop")
   })
@@ -254,7 +441,7 @@ describe("Sidequest app", () => {
 
     render(<App registration={registration(true)} store={missionStore} />)
     fireEvent.click(
-      screen.getByRole("button", { name: "View Punta Rata swim & snorkel" }),
+      screen.getByRole("button", { name: "Actions for Punta Rata swim & snorkel" }),
     )
     const source = screen.getByRole("link", { name: /Punta Rata — TZ Brela/ })
 
@@ -283,13 +470,11 @@ describe("Sidequest app", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true)
     render(<App registration={registration(false)} store={missionStore} />)
 
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
     fireEvent.click(screen.getByRole("button", { name: "New plan" }))
 
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
     fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
-    fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
-    expect(screen.getByText("REV 06")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("menuitem", { name: /Baška Voda/ }))
+    expect(missionStore.getSnapshot().revision).toBe(6)
     expect(screen.getByTestId("stop-gravel-loop")).toHaveTextContent("Active")
     expect(window.confirm).toHaveBeenCalledOnce()
   })

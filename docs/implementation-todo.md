@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: fresh-start revision in progress; production redeploy pending; Git integration pending
+> Status: item-interaction and schedule-hierarchy revision in progress; Git integration pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -26,16 +26,18 @@
 - [x] 5. Complete delivery files, full gates, visual QA, and simplification rounds
 - [ ] 6. Connect the public repository to the deployed Vercel project
 - [x] 7. Make first use and every interactive control unmistakable
-- [~] 8. Make a fresh personal plan the default and explain the chat boundary
+- [x] 8. Make a fresh personal plan the default and explain the chat boundary
+- [~] 9. Clarify schedule hierarchy, adding, and item actions
+- [x] 10. Add a typed sample-plan catalog and loader menu
 
 ## Blocking decisions accepted in this plan
 
 - One `Mission` aggregate and one external `MissionStore` are the only source of domain truth.
-- A small direct `MissionAction` discriminated union is sufficient; event sourcing, a backend, router, custom chat, and additional state libraries are out of scope.
+- A small direct `MissionAction` discriminated union is sufficient; event sourcing, a backend, custom chat, and additional state libraries are out of scope. Three stable workspace URLs use the native History API without a router dependency.
 - Zod strict schemas are the runtime boundary and the source for inferred input types plus WebMCP JSON Schema.
 - View state (selected stop, copy feedback, WebMCP availability) remains separate from mission state.
 - The page registers tools once from the top-level composition root and passes `{ signal }` as the current second argument to `registerTool`.
-- The usability revision replaces the field-console density with strict Bauhaus minimalism: a white canvas, black geometric typography, one soft-coral accent, large date numerals, generous negative space, one active workspace panel, and one expanded stop. The final feedback explicitly removes decorative shadows, gradients, and neumorphic surfaces.
+- The usability revision uses strict Bauhaus minimalism: a white canvas, black geometric typography, one high-contrast red accent, restrained date context, readable schedule times, generous negative space, one active workspace panel, and at most one expanded stop. Decorative shadows, gradients, neumorphic surfaces, and container borders are prohibited.
 - Motion for React is the interaction adapter for draggable operational lists. The mission store remains authoritative; drag previews are renderer-local and commit one declared action at drag end.
 - Schedule order and constraint order are editable. People explicitly control stop locks; agents must respect them. The route is derived from schedule order, and history remains an immutable audit instead of becoming a second editable list.
 - The map is a Google Maps location preview with explicit Google Maps and Apple Maps launch actions, never a straight-line route or turn-by-turn navigation claim.
@@ -329,6 +331,84 @@ Implementation result:
 - Full green: `npm run check` passed 38/38 unit, integration, and contract tests, the strict TypeScript/Vite production build, and both Chromium flows 2/2.
 - Browser inspection at desktop and 390px confirmed the blank current-day hierarchy, unclipped title, single active workspace, and frameless actions.
 
+### 9 [~] Clarify schedule hierarchy, adding, and item actions
+
+Description: Make the plan itself—not the decorative date—the dominant information. Replace competing and unexplained controls with one add flow and one expandable action menu per item, following the supplied screenshot and subsequent feedback.
+
+Acceptance criteria:
+
+- AC-1: the date numeral uses normal readable tracking and a restrained scale, while every schedule time is at least 16px with deliberate positive tracking and remains visually stronger than its status label.
+- AC-2: the single accent is a saturated, high-contrast Bauhaus red rather than salmon; no border, card, shadow, gradient, or new decorative surface is introduced.
+- AC-3: there is no global hamburger menu. `Plan`, `Context`, and `Route` are persistent vertical edge tabs inspired by the supplied reference; WebMCP mode and internal revision are not rendered as static navigation items. Each tab owns `/plan`, `/context`, or `/route`, and browser Back/Forward restores the selected workspace.
+- AC-4: the inline add field is absent until the contextual `+` beside its list is invoked, receives focus when opened, closes after a successful addition or Escape, and is never duplicated by a second persistent add control. The single black floating action says `Load demo` on a fresh plan and becomes `New plan` for the loaded demo.
+- AC-5: every item has one frameless accordion chevron. At most one item menu is expanded, and it contains the applicable `Done`/`Restore`, `Skip`, `Lock`/`Unlock`, `Delete`, and map actions without a dedicated lock button.
+- AC-6: `Delete` removes the item through a typed human `MissionAction`, persists the mutation, and records it; exactly five WebMCP tools remain unchanged.
+- AC-7: unlocked item names are always inline-editable; focus uses the same underline pattern as the board title without a field border or color change.
+- AC-8: one thin dotted editorial axis belongs to the entire schedule; times align to its left and titles/statuses to its right without the line crossing any label or expanded content.
+- AC-9: the blank plan gives one concise usage instruction covering `+`, drag, the chevron menu, the full-plan Google Maps route, and the shared ChatGPT Site Tools state.
+- AC-10: Route previews one selected item and provides a separate action that opens the entire ordered route in Google Maps; individual Google and Apple launch actions remain available.
+- AC-11: History is retained as immutable domain audit data but is not a visible workspace. Desktop and 390px browser evidence confirms readable hierarchy, no clipping/overflow/occlusion, a closed default item menu, and the expanded action state. English remains the only supported UI language and all changed copy stays in `src/copy.ts`.
+
+Tests:
+
+- AC-3/4/5/7/11 -> `App.test.tsx > exposes persistent side tabs without technical state`, `App.test.tsx > keeps the selected workspace in the browser route`, `App.test.tsx > reveals one add field from its contextual plus`, and `App.test.tsx > opens one complete item action menu`.
+- AC-6 -> `mission.test.ts > lets a person delete an item through the transition gate` plus `App.test.tsx > deletes an item from its action menu`; the existing WebMCP catalog test continues to assert exactly five tools.
+- AC-1/2/8/11 -> `sidequest.spec.ts > preserves readable schedule hierarchy and one item menu` with computed-style assertions and captured `artifacts/sidequest-item-menu.png`; visual inspection remains required because numeric style assertions cannot prove composition quality.
+- AC-9 -> `copy.test.ts > keeps the exact demo prompt and mission positioning` and `App.test.tsx > explains the plan interaction in the blank state`.
+- AC-10 -> `MissionMap.test.tsx > previews Google Maps and offers both map providers` plus the killer-flow Route assertion.
+- AC-11 copy gate -> `npm run test -- src/copy.test.ts src/App.test.tsx`; no locale/codegen command exists because this repository intentionally supports English only.
+
+Before implementation gate:
+
+- [x] User screenshot `/Users/gmm/Desktop/Screenshot 2026-09-03 at 03.30.28.png` inspected at original resolution.
+- [x] Existing `MissionAction`, transition gate, presenter, `MissionWorkspace`, floating controls, CSS, App tests, and Playwright flow inspected at commit `46959e5`.
+- [x] Decisions resolved: one chevron menu, one conditional global add composer, high-contrast red, smaller date, larger tracked times, inline-edit underline, and a functional timeline line.
+- [x] Behavioral red recorded for every named regression test before production changes.
+
+Implementation result:
+
+- Behavioral red: `npm run test -- src/domain/mission.test.ts src/App.test.tsx` ran 26 tests and failed the five intended behaviors: no `RemoveStop` transition, visible revision, persistent add field, missing item chevron menu, and missing Delete action.
+- Visual red: `npx playwright test -g "preserves readable schedule hierarchy"` failed because the date numeral measured 124.8px against the 72px maximum before reaching the time, accent, timeline, and menu assertions.
+- Pending implementation, full gate, browser evidence, and production deployment.
+
+### 10 [x] Add a typed sample-plan catalog and loader menu
+
+Description: Replace the one opaque demo action with a compact loader for three meaningfully different missions: the existing Baška Voda disruption, a time-windowed San Francisco errands day, and a Barcelona coffee/swim day. Each sample must exercise the same mission store, routing, locks, constraints, sources, map projection, and WebMCP boundary as a personal plan.
+
+Acceptance criteria:
+
+- AC-1: one typed demo catalog is the source of truth for the three IDs and immutable mission snapshots; loading always publishes a clone and never shares mutable sample state.
+- AC-2: the San Francisco sample includes a postal return, Ferry Plaza errand, Main Library return, noon camera pickup, and a locked evening commitment with realistic locations, time windows, constraints, and official sources.
+- AC-3: the Barcelona sample includes NOMAD specialty coffee, a Bogatell swim, a later city activity, and a locked timed commitment, with realistic route coordinates, constraints, and official sources.
+- AC-4: `Load demo` opens one flat, accessible menu; selecting a sample replaces the current mission through `MissionStore`, closes the menu, returns to `/plan`, and `New plan` restores the blank state.
+- AC-5: the menu is usable at desktop and 390 px, has no card border, frame, shadow, or gradient, does not occlude its trigger, and captures visual evidence in `artifacts/sidequest-demo-menu.png`.
+- AC-6: all new visible English labels and descriptions live in `src/copy.ts`; this P0 deliberately supports English only, so there is no locale generator to run.
+- AC-7: the sample catalog does not add a second domain store, change persistence format, or alter the exactly-five WebMCP tool catalog.
+
+Tests:
+
+- AC-1/2/3 -> unit/integration: `store.test.ts > loads each named demo from the typed catalog`; UI reinforcement: `App.test.tsx > loads a selected sample from the demo menu`.
+- AC-4/6 -> integration: `App.test.tsx > loads a selected sample from the demo menu`; copy gate: `npm run test -- src/copy.test.ts src/App.test.tsx`.
+- AC-5 -> E2E: `sidequest.spec.ts > opens the flat demo catalog without viewport overflow` plus `artifacts/sidequest-demo-menu.png`; unit testing is intentionally skipped because final composition and occlusion require the real browser.
+- AC-7 -> existing `webmcp.test.ts > registers exactly five definitions` and full `npm run check`.
+
+Sources/References: `src/domain/seed.ts`, `src/store.ts`, `src/view-model.ts`, `src/useMissionViewModel.ts`, `src/App.tsx`, `src/copy.ts`, `src/app.css`, official SFPL/USPS/Glass Key/Ferry Plaza/NOMAD/Barcelona beach pages.
+
+Before implementation gate:
+
+- [x] Current `SEED_MISSION`, `MissionStore.loadDemo`, `ViewAction`, primary action, persistence, and focused UI/store tests inspected.
+- [x] User-visible sample places checked against official or first-party sources; live opening hours remain illustrative data and source links let the user re-check them.
+- [x] Source of truth fixed as a typed catalog in `src/domain/seed.ts`; the UI stores only menu visibility and dispatches the selected catalog ID through the existing store.
+- [x] Behavioral UI/store tests named above are written before production changes and must be observed red.
+
+Implementation result:
+
+- Behavioral red: `npm run test -- src/store.test.ts -t "loads each named demo"` failed because the only loader ignored `san-francisco-demo` and returned `Baška Voda Adventure`; `npm run test -- src/App.test.tsx -t "loads a selected sample"` and `npx playwright test -g "opens the flat demo catalog"` failed because no sample menu existed.
+- Green: `npm run check` passed 48/48 Vitest tests, the strict TypeScript/Vite production build, and 4/4 Chromium E2E tests.
+- Source of truth: `DEMO_MISSIONS` and its derived `DemoMissionId` own the three immutable snapshots; `MissionStore.loadDemo` clones the selected mission and publishes through the existing persistence/subscription path.
+- Copy gate: sample labels, descriptions, confirmation text, and scenario prompts live in `src/copy.ts`; `npm run test -- src/copy.test.ts src/App.test.tsx` passed as part of the 48-test gate. English remains the only intentional P0 locale, so there is no codegen command.
+- Visual evidence inspected: `artifacts/sidequest-demo-menu.png`, `artifacts/sidequest-san-francisco.png`, and `artifacts/sidequest-barcelona.png` at 390 px show no clipping, trigger occlusion, border/card/shadow, or horizontal overflow.
+
 ## Risks and dependencies
 
 - Google/Apple map content depends on their network services; the timeline remains complete when external maps are unavailable.
@@ -349,4 +429,4 @@ Implementation result:
 
 ## Out of scope for this iteration
 
-- Backend, authentication, custom chat/LLM, directions, live GPS/weather, reservations, multi-user sync, multiple missions, declarative WebMCP, iframe tools, automatic research, P1 sharing/presentation modes, Devpost submission, and video recording.
+- Backend, authentication, custom chat/LLM, in-app turn-by-turn directions, live GPS/weather, reservations, multi-user sync, multiple missions, declarative WebMCP, iframe tools, automatic research, P1 sharing/presentation modes, Devpost submission, and video recording.

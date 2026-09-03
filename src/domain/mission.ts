@@ -22,6 +22,7 @@ export const EVENT_TYPES = [
   "stop_updated",
   "stop_lock_updated",
   "stop_added",
+  "stop_removed",
   "stops_reordered",
 ] as const
 
@@ -222,6 +223,10 @@ export const RenameMissionStopInputSchema = ExpectedRevisionSchema.extend({
   title: text(80),
 })
 
+export const RemoveMissionStopInputSchema = ExpectedRevisionSchema.extend({
+  stopId: text(80),
+})
+
 export const RenameMissionConstraintInputSchema = ExpectedRevisionSchema.extend({
   constraintId: text(80),
   label: text(80),
@@ -258,6 +263,9 @@ export type AddBoardItemInput = z.infer<typeof AddBoardItemInputSchema>
 export type RenameMissionStopInput = z.infer<
   typeof RenameMissionStopInputSchema
 >
+export type RemoveMissionStopInput = z.infer<
+  typeof RemoveMissionStopInputSchema
+>
 export type RenameMissionConstraintInput = z.infer<
   typeof RenameMissionConstraintInputSchema
 >
@@ -282,6 +290,7 @@ export type MissionAction =
   | { type: "SetTitle"; value: ActionValue<SetMissionTitleInput> }
   | { type: "AddItem"; value: ActionValue<AddBoardItemInput> }
   | { type: "RenameStop"; value: ActionValue<RenameMissionStopInput> }
+  | { type: "RemoveStop"; value: ActionValue<RemoveMissionStopInput> }
   | {
       type: "RenameConstraint"
       value: ActionValue<RenameMissionConstraintInput>

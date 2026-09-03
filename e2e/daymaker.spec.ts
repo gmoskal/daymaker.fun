@@ -192,9 +192,16 @@ test("opens the concise About explanation", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "How daymaker.fun works" }))
     .toBeVisible()
   const video = page.getByTitle("daymaker.fun demo video")
+  const stepList = page.locator(".about-page ol")
   await expect(video).toBeVisible()
+  await expect(stepList).toHaveCSS("column-count", "2")
   await expect.poll(async () => (await video.boundingBox())?.width ?? 0)
     .toBeGreaterThanOrEqual(900)
+  await expect.poll(async () => {
+    const listWidth = (await stepList.boundingBox())?.width ?? 0
+    const videoWidth = (await video.boundingBox())?.width ?? 0
+    return Math.abs(listWidth - videoWidth)
+  }).toBeLessThan(1)
   await expect(page.getByRole("listitem")).toHaveCount(4)
   await expect(page.getByRole("link", { name: "Back to Needs" })).toBeVisible()
 })

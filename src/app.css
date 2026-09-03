@@ -1029,6 +1029,18 @@ textarea:focus-visible {
   }
 }
 
+@media (min-width: 800px) {
+  .about-page ol {
+    max-width: none;
+    column-count: 2;
+    column-gap: 80px;
+  }
+
+  .about-page li {
+    break-inside: avoid;
+  }
+}
+
 @media (max-width: 560px) {
   .app-shell {
     padding: 0 26px 130px 54px;

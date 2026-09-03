@@ -896,7 +896,7 @@ textarea:focus-visible {
 }
 
 .about-page {
-  width: min(100%, 620px);
+  width: min(100%, 1100px);
   min-height: 100vh;
   margin: 0 auto;
   padding: clamp(42px, 9vh, 90px) clamp(30px, 7vw, 70px) 100px;

@@ -3,8 +3,8 @@
 | Pole | Wartość |
 |---|---|
 | Start pracy | 2026-09-03 18:54 CEST |
-| Koniec pracy | — |
-| Status | test czerwony |
+| Koniec pracy | 2026-09-03 19:05 CEST |
+| Status | zweryfikowany |
 | Klasyfikacja | kontrakt/codegen |
 | Rodzaj dowodu | niewizualny |
 | Baza analizy | `5f6a9255e1d0` |
@@ -111,6 +111,68 @@ An earlier invocation failed with `vitest: command not found` before the shared
 `node_modules` symlink was created. It was a setup failure and is not counted as
 RED.
 
+Implemented in `d401a307a8985d7fe966a224fdbe0ecbba062dd6`:
+
+- The copied protocol now permits the live board to supply only its current
+  revision and requires the reset command before research, questions, or
+  progress narration.
+- `replacePlan: true` clears the complete previous proposal. A fixed requirement
+  from the copied snapshot is recreated from that input rather than inherited
+  from an unrelated browser board.
+- The tool description, public instructions, unit tests, integration test, and
+  browser expectation use the same new-plan meaning.
+- Release markers advanced from `v0.2.7` to `v0.2.8`.
+
+GREEN:
+
+```text
+$ npm run test -- src/mission-prompt.test.ts src/domain/mission.test.ts
+Test Files  2 passed (2)
+Tests  26 passed (26)
+
+$ npm run check
+Test Files  10 passed (10)
+Tests  77 passed (77)
+TypeScript build and Vite production build passed
+Playwright  5 passed (5.4s)
+```
+
+Production verification:
+
+```text
+Deployment: dpl_47svwJx9SbAWx3tWh9yXDVY4SpFJ (READY, production)
+Alias: https://daymaker.fun
+Asset: /assets/index-wvYQhI_6.js
+https://daymaker.fun/needs: HTTP 200
+https://www.daymaker.fun/needs: HTTP 200
+```
+
+The fetched production asset contains `v0.2.8`, the new-plan instruction, the
+revision-only read rule, the immediate reset ordering, and the populated-board
+replacement rule.
+
+### Kryteria — mapa dowodów
+
+- AC-1/2: frozen prompt test plus the production asset phrases.
+- AC-3: the real reducer test removes the fixture's previously locked dinner;
+  the WebMCP integration test confirms the next added stop is the only proposal
+  item.
+- AC-4: the existing language, session-link, feedback, schema, and stale-revision
+  suites remain green within the 77-test run.
+- AC-5: deployment `dpl_47svwJx9SbAWx3tWh9yXDVY4SpFJ` is READY and both public
+  hostnames return HTTP 200.
+
+### Mature TypeScript simplification rounds
+
+1. Truth: the copied snapshot is the planning source; the live board contributes
+   only the concurrency revision.
+2. Flow: read revision, reset context and proposal, then research and add stops.
+3. Boundaries: prompt policy stays in `copy.ts`; replacement behavior stays in
+   the pure domain reducer. No second policy or state model was introduced.
+4. Functions: direct `stops: []` expresses a complete replacement without a
+   helper, flag map, or compatibility branch.
+5. React: no component, hook, route, or local view-state change was needed.
+
 ### Cleanup
 
 - Task worktree: `/Users/gmm/tmp/codex/bug-004-prompt-reuses-unrelated-board`
@@ -122,3 +184,28 @@ RED.
 Not applicable: the defect is a non-visual prompt contract.
 
 ## Protokół weryfikacji
+
+RED from a clean worktree:
+
+```bash
+git worktree add /tmp/daymaker-red 5f6a9255e1d0
+git diff 5f6a9255e1d0 d401a307 -- src/mission-prompt.test.ts src/domain/mission.test.ts | git -C /tmp/daymaker-red apply
+cd /tmp/daymaker-red
+npm install
+npm run test -- src/mission-prompt.test.ts src/domain/mission.test.ts
+```
+
+GREEN and production:
+
+```bash
+git switch main
+git pull --ff-only
+npm run check
+curl -fsSI https://daymaker.fun/needs
+```
+
+Then fetch the JavaScript asset named by the production HTML and confirm it
+contains `v0.2.8`, `Use the live board only to obtain the current revision`, and
+`replace it even when that board is populated`.
+
+Dostarczenie: commit `d401a307a8985d7fe966a224fdbe0ecbba062dd6` na `main`.

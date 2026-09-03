@@ -230,7 +230,7 @@ describe("Sidequest app", () => {
     expect(marker?.textContent).toContain("15:42 CEST")
   })
 
-  it("copies a complete session link from the footer", async () => {
+  it("copies the current iteration link from the top of Proposed schedule", async () => {
     const missionStore = store()
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, "clipboard", {
@@ -239,7 +239,8 @@ describe("Sidequest app", () => {
     })
     render(<App registration={registration(true)} store={missionStore} />)
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy session link" }))
+    expect(screen.getByText("Iteration 1")).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }))
 
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
     const link = writeText.mock.calls[0]?.[0] as string
@@ -249,8 +250,9 @@ describe("Sidequest app", () => {
       type: "loaded",
     })
     expect(
-      screen.getByRole("button", { name: "Session link copied" }),
+      screen.getByRole("button", { name: "Link copied" }),
     ).toBeVisible()
+    expect(document.querySelector("footer button")).not.toBeInTheDocument()
   })
 
   it("starts with Proposed schedule disabled and keeps the demo optional", () => {

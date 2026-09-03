@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  MissionSchema,
   type Mission,
   type MissionAction,
   type MissionMutation,
   type UpdateDayContextInput,
 } from "./mission"
 import { applyMissionAction, futureStops } from "./mission-transition"
-import { SEED_MISSION } from "./seed"
+import { SEED_MISSION, createBlankMission } from "./seed"
 
 const nextId = () => "test-id"
 const mission = (fields: Partial<Mission> = {}): Mission => ({
@@ -71,6 +72,80 @@ const replacementAction = (
 })
 
 describe("mission", () => {
+  it("counts complete plan replacements separately from technical revisions", () => {
+    const blank = createBlankMission(new Date("2026-09-03T10:00:00Z"), "UTC")
+    const first = expectApplied(
+      apply(replacementAction({ expectedRevision: 0 }), blank),
+    ).mission
+    expect(first.planIteration).toBe(1)
+
+    const stopWrite = expectApplied(
+      apply(
+        {
+          type: "AddStop",
+          value: {
+            actor: "agent",
+            input: {
+              durationMinutes: 45,
+              expectedRevision: first.revision,
+              kind: "activity",
+              location: { label: "Warsaw riverside", lat: 52.24, lng: 21.03 },
+              rationale: "A calm stop before the fixed finish time.",
+              source: {
+                checkedAt: "2026-09-03T12:20:00+02:00",
+                title: "Warsaw tourism",
+                url: "https://warsawtour.pl/",
+              },
+              startsAt: "2026-09-03T14:00:00+02:00",
+              title: "Riverside walk",
+              travelMinutesFromPrevious: 15,
+            },
+          },
+        },
+        first,
+      ),
+    ).mission
+    expect(stopWrite.planIteration).toBe(1)
+    expect(stopWrite.revision).toBe(2)
+
+    const needsWrite = expectApplied(
+      apply(
+        {
+          type: "AddConstraint",
+          value: {
+            actor: "human",
+            input: {
+              expectedRevision: stopWrite.revision,
+              label: "stay near the river",
+            },
+          },
+        },
+        stopWrite,
+      ),
+    ).mission
+    expect(needsWrite.planIteration).toBe(1)
+
+    const second = expectApplied(
+      apply(
+        replacementAction({ expectedRevision: needsWrite.revision }),
+        needsWrite,
+      ),
+    ).mission
+    expect(second.planIteration).toBe(2)
+    expect(second.revision).toBe(4)
+  })
+
+  it("normalizes a legacy generated plan to its first iteration", () => {
+    const legacy = structuredClone(SEED_MISSION) as unknown as Record<string, unknown>
+    delete legacy.planIteration
+
+    const parsed = MissionSchema.safeParse(legacy)
+
+    expect(parsed.success).toBe(true)
+    if (!parsed.success) throw new Error("Expected legacy mission to parse")
+    expect(parsed.data.planIteration).toBe(1)
+  })
+
   it("applies a valid action through the single transition gate", () => {
     const value = expectApplied(apply(stopAction()))
 

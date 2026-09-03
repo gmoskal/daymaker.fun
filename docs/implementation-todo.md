@@ -1397,6 +1397,77 @@ Implementation result:
 - The same production deployment serves `index-7lP8ynr_.css` with the 561px
   breakpoint and 18px desktop root scale on both custom hosts.
 
+### 23 [x] Make plan iteration and two-way feedback explicit
+
+Description: Make the Proposed schedule a portable two-way collaboration
+artifact. A person can revise Needs on the board and paste the copied update
+back into ChatGPT, or give feedback directly in ChatGPT and receive a newly
+generated shareable plan link.
+
+Acceptance criteria:
+
+- AC-1: the copied protocol tells ChatGPT to offer both feedback paths after a
+  plan update: edit Needs on Daymaker and paste `Copy changes to ChatGPT` back,
+  or describe changes directly in the current chat and receive a new link.
+- AC-2: the final response says the returned session link can be shared with
+  friends.
+- AC-3: a plan iteration increments once when `update_day_context` replaces the
+  proposal, never for individual stop writes or human Needs edits; technical
+  `revision` remains independent.
+- AC-4: Proposed schedule shows a quiet, borderless `Iteration N · Copy link`
+  utility above the date at desktop and mobile sizes.
+- AC-5: the top action copies the complete gzip/base64url session link and gives
+  inline copied feedback; the old duplicate footer link is removed while the
+  footer update marker remains.
+- AC-6: old persisted/shared missions without an iteration remain valid and a
+  legacy generated proposal is presented as iteration 1.
+
+Tests:
+
+- AC-1/2 -> unit: `mission-prompt.test.ts > explains both feedback directions
+  after every generated plan` and the central copy assertions.
+- AC-3/6 -> domain/store: `mission.test.ts > counts complete plan replacements
+  separately from technical revisions` plus legacy schema parsing.
+- AC-4/5 -> presenter/integration: `view-model.test.ts` exposes the human
+  iteration label; `App.test.tsx > copies the current iteration link from the
+  top of Proposed schedule` verifies placement, clipboard payload, and no
+  duplicate footer action.
+- AC-4 -> browser: the generated-proposal flow asserts the utility at iteration
+  1, no horizontal overflow, and captures desktop/mobile screenshots.
+
+Before implementation gate:
+
+- [x] Domain decision: persisted `planIteration` owns human generation count;
+  `revision` remains the concurrency token and is never repurposed for UI.
+- [x] UI decision: reuse the existing portable-link action and copy feedback;
+  add no parallel clipboard state or second codec.
+- [x] Named unit/integration assertions observed red before production edits.
+
+Implementation result:
+
+- Behavioral red: the focused 53-test run failed exactly the six new prompt,
+  domain, presenter, and rendered-placement assertions before production edits.
+- `planIteration` is now canonical Mission state. A full `replacePlan` advances
+  it once; stop writes and human Needs edits only advance the independent
+  optimistic-concurrency revision. Legacy generated missions normalize to
+  iteration 1 at the schema boundary.
+- The copied handoff now requires ChatGPT to explain both feedback paths and
+  that the portable link can be shared with friends. The first-position
+  response-language rule continues to govern that explanation.
+- Proposed schedule renders one borderless `Iteration N · Copy link` utility
+  above its date. It reuses the existing gzip/base64url encoder, action, and
+  transient copied state; the duplicate footer action was removed.
+- Full local gate: 77/77 Vitest tests, strict TypeScript/Vite build, and 5/5
+  Chromium flows passed. `artifacts/sidequest-needs-schedule.png` and its mobile
+  counterpart show the utility without overlap or horizontal overflow.
+- Mature-TypeScript round 1 confirmed that iteration cannot be derived from the
+  event list because a replacement intentionally clears prior events. Round 2
+  kept revision and human iteration as distinct domain facts. Round 3 placed
+  backward compatibility in `MissionSchema` instead of the store or React.
+  Round 4 reused `CopySessionLink` and removed the obsolete footer copy path.
+  Round 5 removed the dead technical revision projection and all temporary test
+  casts; no new component, hook, context, effect, or service was introduced.
+
 ## Risks and dependencies
 
 - Google/Apple map content depends on their network services; the timeline remains complete when external maps are unavailable.

@@ -105,6 +105,17 @@ describe("mission prompt", () => {
     expect(prompt).toContain("Do not translate the exact session link")
   })
 
+  it("explains both feedback directions after every generated plan", () => {
+    const prompt = toMissionPrompt(SEED_MISSION)
+
+    expect(prompt).toContain("two ways to iterate")
+    expect(prompt).toContain("Copy changes to ChatGPT")
+    expect(prompt).toContain("paste the copied prompt back into this chat")
+    expect(prompt).toContain("feedback directly in this chat")
+    expect(prompt).toContain("return another updated session link")
+    expect(prompt).toContain("share the link with friends")
+  })
+
   it("copies planning input according to its stage", () => {
     const blank = createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC")
     blank.context.brief = "Find a quiet swim."

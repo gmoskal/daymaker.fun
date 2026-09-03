@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [daymaker.fun](https://daymaker.fun)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.6
-- Production deployment: v0.2.6 live
+- Local release: v0.2.7
+- Production deployment: v0.2.6 live; v0.2.7 deployment pending
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -24,9 +24,9 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 4. ChatGPT asks concise questions if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** to the page it opened with Site Tools. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated Sidequest plan** link.
    Questions, progress updates, and the final answer use the language of your request; Sidequest keeps proper names, sources, tool values, and the session link unchanged.
 5. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Must keep** / **Can adapt**.
-6. A human Needs edit unlocks **Copy changes to ChatGPT**. Paste it to regenerate the proposal. ChatGPT returns a fresh link after that iteration as well.
+6. There are two ways to iterate. Edit Needs on the board, choose **Copy changes to ChatGPT**, and paste the update back into the chat; or describe what should change directly in ChatGPT. Either path regenerates the proposal and returns a fresh link.
 7. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it to review the generated title, date, primary city/area, and items. The proposal is read-only for people: click anywhere on one or more rows to expand details and map links. The complete proposal also has one Google Maps route.
-8. Use the small **Copy session link** action in the footer whenever you want to move the exact current board to another device or send a copy to another person.
+8. The top of Proposed schedule shows its human generation count as **Iteration N** and a borderless **Copy link** action. Use that self-contained link on another device or share it with friends. Individual tool writes do not inflate the iteration count.
 
 **Load demo** contains two input examples, not prebuilt schedules:
 
@@ -41,6 +41,7 @@ A normal assistant can return an itinerary as chat text. Sidequest makes the inp
 - the agent can read the latest brief, fixed needs, stop IDs, locks, places, sources, and revision;
 - every accepted tool write appears immediately in the page opened by Work, persists locally there, and updates the real footer timestamp;
 - every successful read or write returns a gzip-compressed session link representing that exact revision;
+- complete proposal replacements advance a separate human-facing iteration number exactly once;
 - every write uses optimistic concurrency, so stale agents cannot silently overwrite newer human changes;
 - the Needs editor and proposal review still work without WebMCP.
 
@@ -145,6 +146,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - [x] Deploy v0.2.4 and verify portable session transfer in a separate browser context.
 - [x] Deploy v0.2.5 and verify the response-language contract in the public asset.
 - [x] Deploy v0.2.6 and verify `daymaker.fun` over HTTPS.
+- [ ] Deploy v0.2.7 and verify the two-way feedback handoff plus plan iteration utility.
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and survives reload.

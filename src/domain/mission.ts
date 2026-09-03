@@ -156,11 +156,12 @@ export const MissionEventSchema = z.strictObject({
   type: z.enum(EVENT_TYPES),
 })
 
-export const MissionSchema = z.strictObject({
+const MissionRecordSchema = z.strictObject({
   context: DayContextSchema,
   date: z.iso.date(),
   events: z.array(MissionEventSchema).max(20),
   id: text(80),
+  planIteration: z.number().int().nonnegative().optional(),
   revision: z.number().int().nonnegative(),
   schemaVersion: z.literal(1),
   stops: z.array(MissionStopSchema).max(8),
@@ -168,6 +169,12 @@ export const MissionSchema = z.strictObject({
   title: text(80),
   updatedAt: dateTime,
 })
+
+export const MissionSchema = MissionRecordSchema.transform((mission) => ({
+  ...mission,
+  planIteration:
+    mission.planIteration ?? (mission.context.stage === "brief" ? 0 : 1),
+}))
 
 const ExpectedRevisionSchema = z.strictObject({
   expectedRevision: z

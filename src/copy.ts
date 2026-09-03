@@ -10,14 +10,14 @@ export const COPY = {
     "Paste this into ChatGPT on mobile or desktop. It will open Sidequest in Work, structure Needs, and create the Proposed schedule there.",
   constraintsTitle: "3 · Review and edit needs",
   changesHint:
-    "After you edit Needs on the opened board, copy the changes to ChatGPT to update the Proposed schedule. Changes made through that board's Site Tools appear there directly.",
+    "After you edit Needs here, copy the changes back to ChatGPT. You can also describe feedback directly in ChatGPT and open the new plan link it returns.",
   copyChanges: "Copy changes to ChatGPT",
-  copySessionLink: "Copy session link",
+  copyPlanLink: "Copy link",
   contextTitle: "Needs",
   copyPrompt: "Copy to ChatGPT",
   copiedPrompt: "Copied for ChatGPT",
   copiedChanges: "Changes copied for ChatGPT",
-  copiedSessionLink: "Session link copied",
+  copiedPlanLink: "Link copied",
   editRequirement: "Edit need",
   emptyPlanHint:
     "This proposal is generated from Needs. Copy your needs to ChatGPT to create it. When it is ready, open items for details and maps. Open the complete proposal in Google Maps when you want the whole route.",
@@ -38,7 +38,8 @@ export const COPY = {
   planningBriefPlaceholder:
     "Example: I land in Palermo tomorrow morning. Find a rental car, great breakfast and coffee, one nearby sight, parking, and get me to my hotel by 16:00.",
   planningInstruction:
-    "Your only goal is to create the most sensible plan that satisfies the person's Needs as completely as possible. If essential information is missing, ask concise clarifying questions before writing. Otherwise, if the snapshot contains needs, treat them as the current user-edited source of truth; if it does not, extract concise Needs from the free-form brief. Infer and set the plan date and starting location from the request. Use the concise primary city or area where most schedule activity happens as currentLocation.label, while keeping its coordinates at the practical route starting point. Choose a short, specific, playful title for the generated plan rather than a generic destination/day label. Call update_day_context with needs, the retained brief, and replacePlan: true. Preserve locked commitments and mark non-negotiable needs as fixed. Research suitable places, then generate a Proposed schedule on the Sidequest board. Existing unlocked schedule items are replaceable suggestions, not requirements. After updating, give the person the exact clickable session link specified below and say they can edit Needs there for another iteration.",
+    "Your only goal is to create the most sensible plan that satisfies the person's Needs as completely as possible. If essential information is missing, ask concise clarifying questions before writing. Otherwise, if the snapshot contains needs, treat them as the current user-edited source of truth; if it does not, extract concise Needs from the free-form brief. Infer and set the plan date and starting location from the request. Use the concise primary city or area where most schedule activity happens as currentLocation.label, while keeping its coordinates at the practical route starting point. Choose a short, specific, playful title for the generated plan rather than a generic destination/day label. Call update_day_context with needs, the retained brief, and replacePlan: true. Preserve locked commitments and mark non-negotiable needs as fixed. Research suitable places, then generate a Proposed schedule on the Sidequest board. Existing unlocked schedule items are replaceable suggestions, not requirements. After updating, give the person the exact clickable session link specified below. Then explain, in the required response language, that there are two ways to iterate: edit Needs on Daymaker, choose Copy changes to ChatGPT, and paste the copied prompt back into this chat; or give feedback directly in this chat about what should change, after which you will revise the proposal and return another updated session link. Also say that they can share the link with friends.",
+  planIteration: "Iteration {number}",
   promptLanguage:
     "LANGUAGE REQUIREMENT: Use only the primary language of the person's free-form brief or Needs in the planning input for every message you send. Do not follow the language of the surrounding conversation, UI, inferred profile, or locale. Ignore earlier messages when choosing the response language. English planning input requires every message to be in English. Polish planning input requires every message to be in Polish. Use that language for all communication, including questions, progress updates, tool-use narration, and the final response. Do not narrate in one language while writing the plan in another. Keep proper names, source titles, and exact tool-returned values unchanged. Do not translate the exact session link.",
   promptOpen:
@@ -46,7 +47,7 @@ export const COPY = {
   promptProtocol:
     "Call get_mission_state as soon as the page opens, before any write. The JSON below is the copied planning input. If the live board is blank, bootstrap it from the copied planning input using the live revision. Do not discard the copied brief just because its revision differs from a newly opened browser. If the live board already contains work for this request, preserve its current Needs and locked commitments. After each write, use the returned revision for the next write. Every successful read or write returns a sessionUrl containing the complete current board. After the final successful write, end your response with [Open updated Sidequest plan](sessionUrl), replacing sessionUrl with the exact returned URL. If no write was needed, use the URL returned by the final read. Do not finish without the clickable link.",
   promptSnapshot: "Planning input at copy time:",
-  release: "v0.2.6",
+  release: "v0.2.7",
   updated: "updated",
   planTitle: "Proposed schedule",
   scheduleTitle: "Schedule",

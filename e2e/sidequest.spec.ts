@@ -364,6 +364,17 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
 
   await page.getByRole("tab", { name: "Proposed schedule" }).click()
   await expect(page).toHaveURL(/\/schedule$/)
+  await expect(page.getByText("Iteration 1")).toBeVisible()
+  const copyLink = page.getByRole("button", { name: "Copy link" })
+  await expect(copyLink).toBeVisible()
+  await copyLink.click()
+  await expect(page.getByRole("button", { name: "Link copied" })).toBeVisible()
+  expect(
+    await page.evaluate(
+      () => (window as typeof window & { __copiedText: string }).__copiedText,
+    ),
+  ).toContain("/schedule#session=")
+  await expect(page.locator("footer button")).toHaveCount(0)
   const day = page.getByRole("region", { name: "Friday, 04 September 2026" })
   await expect(day.getByText("Baška Voda")).toBeVisible()
   await expect(day.getByText("06:30")).toHaveCount(0)

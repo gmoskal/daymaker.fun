@@ -92,19 +92,31 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
       </div>
 
       {screen.workspace.type === "plan" ? (
-        <section
-          aria-label={`${screen.date.weekday}, ${screen.date.day} ${screen.date.month} ${screen.date.year}`}
-          className="date-block"
-        >
-          <strong>{screen.date.day}</strong>
-          <span className="date-details">
-            <b>{screen.date.weekday}</b>
-            <span>{screen.date.month} {screen.date.year}</span>
-            {screen.situation.currentLocation === null ? null : (
-              <span className="date-context">{screen.situation.currentLocation}</span>
-            )}
-          </span>
-        </section>
+        <>
+          <div className="plan-meta">
+            <span>{screen.planIteration}</span>
+            <span aria-hidden="true">·</span>
+            <button
+              onClick={() => dispatch({ type: "CopySessionLink" })}
+              type="button"
+            >
+              {screen.planLinkLabel}
+            </button>
+          </div>
+          <section
+            aria-label={`${screen.date.weekday}, ${screen.date.day} ${screen.date.month} ${screen.date.year}`}
+            className="date-block"
+          >
+            <strong>{screen.date.day}</strong>
+            <span className="date-details">
+              <b>{screen.date.weekday}</b>
+              <span>{screen.date.month} {screen.date.year}</span>
+              {screen.situation.currentLocation === null ? null : (
+                <span className="date-context">{screen.situation.currentLocation}</span>
+              )}
+            </span>
+          </section>
+        </>
       ) : null}
 
       <MissionWorkspace
@@ -119,13 +131,6 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
       />
 
       <footer className="app-footer">
-        <button
-          className="session-link"
-          onClick={() => dispatch({ type: "CopySessionLink" })}
-          type="button"
-        >
-          {screen.sessionLinkLabel}
-        </button>
         <small className="release-marker">{screen.updateMarker}</small>
       </footer>
     </main>

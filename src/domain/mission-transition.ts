@@ -37,7 +37,10 @@ type ApplyParams<TAction extends MissionAction> = {
   mission: Mission
 }
 
-type MissionPatch = Pick<Mission, "context" | "stops" | "timezone" | "title">
+type MissionPatch = Pick<
+  Mission,
+  "context" | "planIteration" | "stops" | "timezone" | "title"
+>
 
 type CommitParams = {
   actor: Actor
@@ -149,6 +152,9 @@ const applyContext = ({
         })),
         stage: "needs",
       },
+      ...(replacePlan
+        ? { planIteration: mission.planIteration + 1 }
+        : {}),
       timezone,
       title,
     },

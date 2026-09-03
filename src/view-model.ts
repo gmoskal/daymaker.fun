@@ -111,8 +111,8 @@ export type MissionScreen = {
     label: string
     type: "LoadDemo" | "NewPlan"
   }
-  revision: string
-  sessionLinkLabel: string
+  planIteration: string
+  planLinkLabel: string
   updateMarker: string
   webMcp: { label: string; tone: "neutral" | "positive" | "warning" }
   workspace: MissionWorkspaceScreen
@@ -340,10 +340,11 @@ export const presentMission = ({
       isDemoMissionId(mission.id)
         ? { label: COPY.newPlan, type: "NewPlan" }
         : { label: COPY.loadDemo, type: "LoadDemo" },
-    revision: `REV ${String(mission.revision).padStart(2, "0")}`,
-    sessionLinkLabel: sessionLinkCopied
-      ? COPY.copiedSessionLink
-      : COPY.copySessionLink,
+    planIteration: COPY.planIteration.replace(
+      "{number}",
+      String(Math.max(1, mission.planIteration)),
+    ),
+    planLinkLabel: sessionLinkCopied ? COPY.copiedPlanLink : COPY.copyPlanLink,
     updateMarker: formatUpdateMarker({
       timezone: viewerTimeZone,
       updatedAt: mission.updatedAt,

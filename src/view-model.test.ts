@@ -44,7 +44,7 @@ describe("mission presenter", () => {
     const screen = presentMission(input)
 
     expect(screen.updateMarker).toBe(
-      "v0.2.6 · updated 3 Sep 2026 · 15:42 CEST",
+      "v0.2.7 · updated 3 Sep 2026 · 15:42 CEST",
     )
   })
 
@@ -58,7 +58,7 @@ describe("mission presenter", () => {
     })
 
     expect(screen.missionTitle).toBe("Gravel, Grub & a Dip")
-    expect(screen.revision).toBe("REV 06")
+    expect(screen.planIteration).toBe("Iteration 1")
     expect(screen.navigation.find((item) => item.active)?.id).toBe("plan")
     expect(screen.workspace.type).toBe("plan")
     if (screen.workspace.type !== "plan") throw new Error("Expected plan screen")

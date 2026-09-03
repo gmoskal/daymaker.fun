@@ -37,6 +37,10 @@ describe("English product copy", () => {
     expect(COPY.planningInstruction).toContain("generate a Proposed schedule")
     expect(COPY.planningInstruction).toContain("primary city or area")
     expect(COPY.planningInstruction).toContain("short, specific, playful title")
+    expect(COPY.planningInstruction).toContain("two ways to iterate")
+    expect(COPY.planningInstruction).toContain("Copy changes to ChatGPT")
+    expect(COPY.planningInstruction).toContain("feedback directly in this chat")
+    expect(COPY.planningInstruction).toContain("share the link with friends")
     expect(COPY.copyPrompt).toBe("Copy to ChatGPT")
     expect(COPY.copyChanges).toBe("Copy changes to ChatGPT")
     expect(COPY.agentHint).toContain("mobile or desktop")
@@ -53,5 +57,7 @@ describe("English product copy", () => {
     expect(COPY.emptyPlanHint).toContain(
       "Open the complete proposal in Google Maps",
     )
+    expect(COPY.planIteration).toBe("Iteration {number}")
+    expect(COPY.copyPlanLink).toBe("Copy link")
   })
 })

@@ -24,11 +24,14 @@ describe("mission prompt", () => {
         expect.objectContaining({ locked: true, title: "Dinner reservation" }),
       ],
       missionId: "generated-schedule-fixture",
-      pace: "balanced",
+      needs: expect.arrayContaining([
+        { fixed: true, label: "keep dinner at 18:30" },
+      ]),
       revision: 6,
     })
     expect(snapshot).not.toContain('"stops"')
     expect(snapshot).not.toContain('"events"')
+    expect(snapshot).not.toContain('"mustHaves"')
     expect(prompt).toContain("generate a Proposed schedule")
   })
 
@@ -40,13 +43,27 @@ describe("mission prompt", () => {
     expect(prompt).toContain("generate a Proposed schedule")
     expect(prompt).toContain("get_mission_state")
     expect(prompt).toContain('"missionId": "personal-plan"')
+    expect(prompt).not.toContain("Untitled plan")
   })
 
   it("asks the agent to structure Needs and regenerate every time", () => {
     const prompt = toMissionPrompt(SEED_MISSION)
 
-    expect(prompt).toContain("turn the free-form brief into the editable Needs list")
+    expect(prompt).toContain("extract concise Needs from the free-form brief")
     expect(prompt).toContain("replacePlan: true")
-    expect(prompt).toContain("on every handoff")
+    expect(prompt).toContain("only goal")
+    expect(prompt).toContain("ask concise clarifying questions")
+    expect(prompt).toContain("set the plan date and starting location")
+    expect(prompt).toContain("open Proposed schedule")
+  })
+
+  it("copies planning input according to its stage", () => {
+    const blank = createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC")
+    blank.context.brief = "Find a quiet swim."
+    expect(toMissionPrompt(blank)).not.toContain('"needs"')
+
+    const structured = structuredClone(blank)
+    structured.context.stage = "needs"
+    expect(toMissionPrompt(structured)).toContain('"needs": []')
   })
 })

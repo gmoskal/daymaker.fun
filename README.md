@@ -10,21 +10,20 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.0
-- Production deployment: v0.2.0 live
+- Local release: v0.2.1
+- Production deployment: v0.2.0 live; v0.2.1 pending deployment
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
 
 ## How to use it
 
-1. Open **Needs**. A new browser profile starts with an empty planning brief.
-2. Write naturally in **What you need**. The placeholder shows an example. You do not need to build the checklist manually.
-3. Optionally refine **Must-haves** in the page: add, rename, cross out, remove, reorder, or mark a need **Fixed**.
-4. Choose **Copy needs for ChatGPT** and paste the result into a ChatGPT conversation that can open the Sidequest page with Site Tools.
-5. ChatGPT reads the live revision, turns the brief into the editable Needs list, preserves fixed or locked commitments, researches places, and generates a new **Proposed schedule** on the page.
-6. Open a schedule item to edit it, use its shared action menu, or launch that place in Google Maps or Apple Maps. The schedule also has one complete Google Maps route.
-7. Whenever Needs change, copy them again. Every handoff instructs the agent to replace the unlocked proposal, so the schedule is always derived from the current Needs.
+1. Open **Needs** and describe what the plan must accomplish. This initial description is required; the placeholder shows a complete example.
+2. Choose **Copy to ChatGPT** and paste the result into a conversation that can open Sidequest with Site Tools.
+3. ChatGPT asks concise questions if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** back to the page.
+4. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Fixed**.
+5. A human Needs edit unlocks **Copy changes to ChatGPT**. Paste it to regenerate the proposal. Changes made directly by ChatGPT already appear on the page and do not require another copy.
+6. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it to review the plan date, starting location, and generated items. Each item opens its place in Google Maps or Apple Maps; the schedule also has one complete Google Maps route.
 
 **Load demo** contains two input examples, not prebuilt schedules:
 
@@ -67,7 +66,7 @@ WebMCP tools ────┘                                  │
                                                                           └─> Google / Apple Maps
 ```
 
-`Mission` is the only domain source of truth. React owns only transient view state. Human controls and WebMCP tools dispatch the same action union through the same transition gate.
+`Mission` is the only domain source of truth, including the persisted `brief` or `needs` planning stage. React owns only transient view state. Human controls and WebMCP tools dispatch the same action union through the same transition gate.
 
 Key files:
 
@@ -99,7 +98,7 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL. Use **Load demo** for either sample brief or start typing directly in **Needs**.
+Open the printed local URL. Use the small **Load demo** control above the day for either sample brief, or start typing directly in **Needs**.
 
 ## Verification
 
@@ -120,6 +119,8 @@ The browser tests cover the two-example menu, free-form and structured Needs edi
 
 Visual evidence:
 
+- `artifacts/sidequest-brief.png`
+- `artifacts/sidequest-brief-mobile.png`
 - `artifacts/sidequest-needs.png`
 - `artifacts/sidequest-needs-schedule.png`
 - `artifacts/sidequest-needs-schedule-mobile.png`

@@ -94,10 +94,12 @@ const addStop = async (
 
 const generateCroatiaProposal = async (page: Page) => {
   await selectExample(page, /South Croatia gravel day/)
-  const brief = await page.getByRole("textbox", { name: "What you need" }).inputValue()
+  const brief = await page
+    .getByRole("textbox", { name: "1 · Describe your needs" })
+    .inputValue()
   const context = await executeTool(page, "update_day_context", {
     brief,
-    constraints: [
+    needs: [
       { fixed: false, label: "20 km gravel ride" },
       { fixed: true, label: "finish before 10:00" },
       { fixed: false, label: "maximum one hour by car" },
@@ -193,31 +195,132 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   await page.setViewportSize({ height: 900, width: 1100 })
   await page.goto("/")
   await waitForTools(page)
+  await expect(page.getByRole("tab", { name: "Proposed schedule" }))
+    .toHaveAttribute("aria-disabled", "true")
   await selectExample(page, /Palermo arrival/)
 
-  const brief = page.getByRole("textbox", { name: "What you need" })
+  const brief = page.getByRole("textbox", {
+    name: "1 · Describe your needs",
+  })
   await expect(brief).toContainText("Palermo Airport")
-  await brief.fill(
-    "I land in Palermo tomorrow at 08:00. Keep the 16:00 hotel check-in fixed and find parking at every stop.",
+  const editedBrief = `${await brief.inputValue()} Keep the 16:00 hotel check-in fixed.`
+  await brief.fill(editedBrief)
+  expect(
+    await brief.evaluate((element) => element.scrollHeight > element.clientHeight),
+  ).toBe(true)
+  expect(
+    await brief.evaluate((element) => getComputedStyle(element).scrollbarColor),
+  ).toContain("rgb(210, 31, 43)")
+  const scrollThumb = page.locator(".needs-scrollbar > span")
+  await expect(scrollThumb).toBeVisible()
+  const thumbAtTop = await scrollThumb.evaluate(
+    (element) => getComputedStyle(element).transform,
   )
-  await brief.blur()
+  await brief.evaluate((element) => {
+    element.scrollTop = element.scrollHeight
+    element.dispatchEvent(new Event("scroll"))
+  })
+  await expect
+    .poll(() =>
+      scrollThumb.evaluate((element) => getComputedStyle(element).transform),
+    )
+    .not.toBe(thumbAtTop)
+  await brief.evaluate((element) => {
+    element.scrollTop = 0
+    element.dispatchEvent(new Event("scroll"))
+  })
+  await expect(
+    page.getByRole("textbox", {
+      name: "Edit need: rent a car at Palermo Airport",
+    }),
+  ).toHaveCount(0)
+
+  const initialCopyButton = page.getByRole("button", {
+    name: "Copy to ChatGPT",
+  })
+  const initialCopyButtonStyle = await initialCopyButton.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      backgroundColor: style.backgroundColor,
+      height: element.getBoundingClientRect().height,
+    }
+  })
+  expect(initialCopyButtonStyle.backgroundColor).toBe("rgb(210, 31, 43)")
+  expect(initialCopyButtonStyle.height).toBeGreaterThanOrEqual(44)
+  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-brief.png" })
+  await page.setViewportSize({ height: 844, width: 390 })
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(390)
+  await page.screenshot({
+    fullPage: true,
+    path: "artifacts/sidequest-brief-mobile.png",
+  })
+  await page.setViewportSize({ height: 900, width: 1100 })
+  await initialCopyButton.click()
+  const initialCopied = await page.evaluate(
+    () => (window as typeof window & { __copiedText: string }).__copiedText,
+  )
+  expect(initialCopied).toContain("Keep the 16:00 hotel check-in fixed")
+  expect(initialCopied).not.toContain('"needs"')
+
+  const extracted = await executeTool(page, "update_day_context", {
+    brief: editedBrief,
+    currentLocation: { label: "Palermo Airport", lat: 38.1759, lng: 13.091 },
+    currentTime: "2026-09-04T08:00:00+02:00",
+    energy: "medium",
+    expectedRevision: 1,
+    needs: [
+      { fixed: false, label: "rent a car at Palermo Airport" },
+      { fixed: false, label: "excellent breakfast and coffee first" },
+      { fixed: false, label: "one worthwhile sight nearby" },
+      { fixed: true, label: "Hotel Trinacria check-in at 16:00" },
+      { fixed: false, label: "practical parking at every stop" },
+    ],
+    reason: "Extracted the person's free-form brief into editable Needs.",
+    replacePlan: true,
+    timezone: "Europe/Rome",
+    title: "Palermo arrival",
+  })
+  expect(extracted).toMatchObject({ ok: true, revision: 2 })
+  await expect(page.getByRole("tab", { name: "Proposed schedule" }))
+    .toHaveAttribute("aria-disabled", "false")
+  await expect(brief).toHaveCount(0)
+  await expect(
+    page.getByRole("textbox", {
+      name: "Edit need: rent a car at Palermo Airport",
+    }),
+  ).toBeVisible()
+  const copyChanges = page.getByRole("button", {
+    name: "Copy changes to ChatGPT",
+  })
+  await expect(copyChanges).toBeDisabled()
   await page.getByRole("button", { name: "Cross out one worthwhile sight nearby" }).click()
+  await expect(copyChanges).toBeEnabled()
   await page.getByRole("button", { name: "Add need" }).click()
   await page.getByRole("textbox", { name: "New need" }).fill("quiet lunch")
   await page.getByRole("textbox", { name: "New need" }).press("Enter")
   await page.getByRole("button", { name: "Mark quiet lunch as fixed" }).click()
   await page.getByRole("button", { name: "Remove practical parking at every stop" }).click()
-  await page.getByRole("button", { name: "Copy needs for ChatGPT" }).click()
+  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-needs.png" })
+  await copyChanges.click()
 
   const copied = await page.evaluate(
     () => (window as typeof window & { __copiedText: string }).__copiedText,
   )
-  expect(copied).toContain("I land in Palermo tomorrow at 08:00")
+  expect(copied).toContain("I land at Palermo Airport tomorrow morning")
   expect(copied).toContain('"label": "quiet lunch"')
   expect(copied).toContain('"fixed": true')
   expect(copied).toContain("replacePlan: true")
   expect(copied).not.toContain("one worthwhile sight nearby")
-  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-needs.png" })
+  await page.setViewportSize({ height: 844, width: 390 })
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(390)
+  await page.screenshot({
+    fullPage: true,
+    path: "artifacts/sidequest-needs-mobile.png",
+  })
 })
 
 test("agent generates a proposal with item and whole-schedule maps", async ({ page }) => {
@@ -229,6 +332,9 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
 
   await page.getByRole("tab", { name: "Proposed schedule" }).click()
   await expect(page).toHaveURL(/\/schedule$/)
+  const day = page.getByRole("region", { name: "Friday, 04 September 2026" })
+  await expect(day.getByText("Grand Hotel Slavia, Baška Voda")).toBeVisible()
+  await expect(day.getByText("06:30")).toHaveCount(0)
   await expect(page.getByRole("button", { name: "20 km shaded gravel loop", exact: true }))
     .toBeVisible()
   await page.getByRole("button", { name: "20 km shaded gravel loop", exact: true }).click()

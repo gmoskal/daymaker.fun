@@ -172,9 +172,10 @@ describe("WebMCP", () => {
       mission: {
         context: {
           brief: expect.stringContaining("Biokovo"),
-          limits: expect.arrayContaining([
+          needs: expect.arrayContaining([
             { fixed: true, label: "keep dinner at 18:30" },
           ]),
+          stage: "needs",
         },
         title: "Baška Voda Adventure",
       },
@@ -187,7 +188,7 @@ describe("WebMCP", () => {
       "update_day_context",
       {
         brief: "Plan a quiet Warsaw afternoon with one calm walk.",
-        constraints: [
+        needs: [
           { fixed: false, label: "quiet place" },
           { fixed: true, label: "finish before 18:00" },
         ],
@@ -202,6 +203,7 @@ describe("WebMCP", () => {
       },
     )
     expect(contextResult).toMatchObject({ ok: true, revision: 7 })
+    expect(missionStore.getSnapshot().context.stage).toBe("needs")
     const added = await execute<ToolMutationResult>(
       context,
       "add_mission_stop",
@@ -257,7 +259,7 @@ describe("WebMCP", () => {
 
     const contextResult = await execute<ToolMutationResult>(context, "update_day_context", {
       brief: "Replace the steep hike with a relaxed swim and fuel stop.",
-      constraints: [
+      needs: [
         { fixed: false, label: "car available" },
         { fixed: false, label: "dog with us" },
         { fixed: false, label: "max 20 min drive" },

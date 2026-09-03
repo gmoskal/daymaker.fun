@@ -2,7 +2,7 @@ import { PERSONAL_MISSION_ID, type Mission } from "./mission"
 
 export const DEMO_MISSION_ID = "palermo-arrival-demo"
 export const BLANK_MISSION_TITLE = "Untitled plan"
-export const BLANK_LOCATION_LABEL = "Set your location"
+export const BLANK_LOCATION_LABEL = "Unknown"
 
 const localDate = (now: Date, timezone: string) => {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -26,6 +26,7 @@ export const createBlankMission = (
     currentLocation: { label: BLANK_LOCATION_LABEL, lat: 0, lng: 0 },
     currentTime: now.toISOString(),
     energy: "medium",
+    stage: "brief",
   },
   date: localDate(now, timezone),
   events: [],
@@ -66,6 +67,7 @@ export const SEED_MISSION: Mission = {
     },
     currentTime: "2026-08-30T15:10:00+02:00",
     energy: "medium",
+    stage: "needs",
   },
   date: "2026-08-30",
   events: [],
@@ -147,13 +149,7 @@ export const PALERMO_ARRIVAL_MISSION: Mission = {
   context: {
     brief:
       "I land at Palermo Airport tomorrow morning. I want to rent a car at the airport, drive straight to an excellent breakfast and coffee, see something worthwhile nearby, and check in at [Hotel Trinacria](https://www.booking.com/hotel/it/trinacria-palermo1.html) at 16:00. Find practical parking for every stop.",
-    constraints: [
-      { fixed: false, id: "palermo-car", label: "rent a car at Palermo Airport", status: "active" },
-      { fixed: false, id: "palermo-breakfast", label: "excellent breakfast and coffee first", status: "active" },
-      { fixed: false, id: "palermo-sight", label: "one worthwhile sight nearby", status: "active" },
-      { fixed: true, id: "palermo-hotel", label: "Hotel Trinacria check-in at 16:00", status: "active" },
-      { fixed: false, id: "palermo-parking", label: "practical parking at every stop", status: "active" },
-    ],
+    constraints: [],
     currentLocation: {
       label: "Palermo Airport",
       lat: 38.1759,
@@ -161,6 +157,7 @@ export const PALERMO_ARRIVAL_MISSION: Mission = {
     },
     currentTime: "2026-09-04T08:00:00+02:00",
     energy: "medium",
+    stage: "brief",
   },
   date: "2026-09-04",
   events: [],
@@ -176,17 +173,7 @@ export const CROATIA_GRAVEL_MISSION: Mission = {
   context: {
     brief:
       "I am staying at [Grand Hotel Slavia](https://www.booking.com/hotel/hr/slavija-baska-voda.html) in Baška Voda. Tomorrow morning I want a 20 km gravel ride and to finish before 10:00. I will drive no more than one hour. Find a shaded route with some asphalt but no main roads. On the way back I want an excellent restaurant, then a snorkeling beach with an interesting seabed. Include designated parking everywhere and tell me when I will return.",
-    constraints: [
-      { fixed: false, id: "croatia-distance", label: "20 km gravel ride", status: "active" },
-      { fixed: true, id: "croatia-finish", label: "finish before 10:00", status: "active" },
-      { fixed: false, id: "croatia-drive", label: "maximum one hour by car", status: "active" },
-      { fixed: false, id: "croatia-shade", label: "shaded route with some asphalt", status: "active" },
-      { fixed: true, id: "croatia-roads", label: "avoid main roads", status: "active" },
-      { fixed: false, id: "croatia-food", label: "excellent restaurant on the return", status: "active" },
-      { fixed: false, id: "croatia-swim", label: "snorkeling beach with an interesting seabed", status: "active" },
-      { fixed: true, id: "croatia-parking", label: "designated parking at every stop", status: "active" },
-      { fixed: false, id: "croatia-return", label: "calculate the return time", status: "active" },
-    ],
+    constraints: [],
     currentLocation: {
       label: "Grand Hotel Slavia, Baška Voda",
       lat: 43.3565,
@@ -194,6 +181,7 @@ export const CROATIA_GRAVEL_MISSION: Mission = {
     },
     currentTime: "2026-09-04T06:30:00+02:00",
     energy: "high",
+    stage: "brief",
   },
   date: "2026-09-04",
   events: [],

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 
 import { COPY } from "./copy"
 import { BLANK_MISSION_TITLE } from "./domain/seed"
+import { toMissionPrompt } from "./mission-prompt"
 import type { MissionStore } from "./store"
 import {
   presentMission,
@@ -42,7 +43,10 @@ export const useMissionViewModel = ({
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [panel, setPanel] = useState<MissionPanel>(() =>
-    missionPanelForPath(window.location.pathname),
+    mission.context.stage === "brief" &&
+    missionPanelForPath(window.location.pathname) === "plan"
+      ? "context"
+      : missionPanelForPath(window.location.pathname),
   )
   const [webMcp, setWebMcp] = useState<WebMcpState>({ type: "checking" })
 
@@ -66,13 +70,21 @@ export const useMissionViewModel = ({
   }, [registration])
 
   useEffect(() => {
-    const syncPanel = () => setPanel(missionPanelForPath(window.location.pathname))
-    const canonicalPath = missionPathFor(missionPanelForPath(window.location.pathname))
-    if (window.location.pathname !== canonicalPath)
-      window.history.replaceState(null, "", canonicalPath)
+    const syncPanel = () => {
+      const requested = missionPanelForPath(window.location.pathname)
+      const available =
+        store.getSnapshot().context.stage === "brief" && requested === "plan"
+          ? "context"
+          : requested
+      const canonicalPath = missionPathFor(available)
+      if (window.location.pathname !== canonicalPath)
+        window.history.replaceState(null, "", canonicalPath)
+      setPanel(available)
+    }
+    syncPanel()
     window.addEventListener("popstate", syncPanel)
     return () => window.removeEventListener("popstate", syncPanel)
-  }, [])
+  }, [store])
 
   const navigate = useCallback((nextPanel: MissionPanel, replace = false) => {
     const path = missionPathFor(nextPanel)
@@ -85,6 +97,11 @@ export const useMissionViewModel = ({
     (action: ViewAction) => {
       switch (action.type) {
         case "SelectPanel":
+          if (
+            action.panel === "plan" &&
+            store.getSnapshot().context.stage === "brief"
+          )
+            return
           navigate(action.panel)
           return
         case "ToggleStopActions":
@@ -272,8 +289,26 @@ export const useMissionViewModel = ({
           return
         case "CopyPrompt":
           if (navigator.clipboard === undefined) return
+          if (
+            action.brief !== undefined &&
+            action.brief.trim() !== store.getSnapshot().context.brief
+          )
+            store.dispatch({
+              type: "SetBrief",
+              value: {
+                actor: "human",
+                input: {
+                  brief: action.brief,
+                  expectedRevision: store.getSnapshot().revision,
+                },
+              },
+            })
+          const prompt =
+            action.brief === undefined
+              ? action.prompt
+              : toMissionPrompt(store.getSnapshot())
           void navigator.clipboard
-            .writeText(action.prompt)
+            .writeText(prompt)
             .then(() => setCopied(true))
             .catch(() => setCopied(false))
           return

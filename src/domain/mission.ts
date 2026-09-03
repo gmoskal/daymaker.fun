@@ -13,6 +13,7 @@ export const STOP_KINDS = [
   "transition",
 ] as const
 export const ENERGY_LEVELS = ["high", "medium", "low"] as const
+export const PLANNING_STAGES = ["brief", "needs"] as const
 export const CONSTRAINT_STATUSES = ["active", "crossed"] as const
 export const ACTORS = ["human", "agent", "system"] as const
 export const EVENT_TYPES = [
@@ -143,6 +144,7 @@ export const DayContextSchema = z.strictObject({
   currentLocation: GeoPointSchema,
   currentTime: dateTime,
   energy: z.enum(ENERGY_LEVELS),
+  stage: z.enum(PLANNING_STAGES).default("brief"),
 })
 
 export const MissionEventSchema = z.strictObject({
@@ -177,7 +179,7 @@ export const UpdateDayContextInputSchema = ExpectedRevisionSchema.extend({
   brief: briefText.describe(
     "What the person needs the proposed schedule to accomplish.",
   ),
-  constraints: needInputList.describe(
+  needs: needInputList.describe(
     "Editable planning needs parsed from the person's brief.",
   ),
   currentLocation: GeoPointSchema.describe("Where the group is now."),

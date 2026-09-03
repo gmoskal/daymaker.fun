@@ -27,6 +27,12 @@ const blankStore = () =>
     mission: createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"),
     storage,
   })
+const readyEmptyPlanStore = () => {
+  const mission = createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC")
+  mission.context.stage = "needs"
+  mission.title = "Draft plan"
+  return createMissionStore({ id: () => "ui-id", mission, storage })
+}
 const registration = (supported: boolean): Promise<WebMcpRegistration> =>
   Promise.resolve({ dispose: () => undefined, supported })
 const originalClipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard")
@@ -59,14 +65,19 @@ describe("Sidequest app", () => {
       "true",
     )
     expect(window.location.pathname).toBe("/needs")
+    expect(screen.queryByText("Untitled plan")).not.toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: "Route" })).not.toBeInTheDocument()
-    expect(screen.getByText("Preferred pace")).toBeVisible()
-    expect(screen.getByText("Balanced")).toBeVisible()
+    const proposed = screen.getByRole("tab", { name: "Proposed schedule" })
+    expect(proposed).toHaveAttribute("aria-disabled", "true")
+    fireEvent.click(proposed)
+    expect(window.location.pathname).toBe("/needs")
+    expect(screen.queryByRole("region")).not.toBeInTheDocument()
+    expect(screen.queryByText("Unknown")).not.toBeInTheDocument()
   })
 
   it("copies editable Needs for the agent", async () => {
     window.history.replaceState(null, "", "/needs")
-    const missionStore = store()
+    const missionStore = blankStore()
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
@@ -74,17 +85,23 @@ describe("Sidequest app", () => {
     })
     render(<App registration={registration(true)} store={missionStore} />)
 
-    const brief = screen.getByRole("textbox", { name: "What you need" })
+    const brief = screen.getByRole("textbox", {
+      name: "1 · Describe your needs",
+    })
+    expect(brief).toBeRequired()
+    expect(screen.getByRole("button", { name: "Copy to ChatGPT" }))
+      .toBeDisabled()
     fireEvent.change(brief, {
       target: { value: "Find a calm swim and keep dinner fixed." },
     })
     fireEvent.blur(brief)
-    fireEvent.click(screen.getByRole("button", { name: "Copy needs for ChatGPT" }))
+    fireEvent.click(screen.getByRole("button", { name: "Copy to ChatGPT" }))
 
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
     const prompt = writeText.mock.calls[0]?.[0]
     expect(prompt).toContain("Find a calm swim and keep dinner fixed.")
     expect(prompt).toContain('"lockedCommitments"')
+    expect(prompt).not.toContain('"needs"')
     expect(prompt).not.toContain('"stops"')
   })
 
@@ -93,8 +110,10 @@ describe("Sidequest app", () => {
     const missionStore = store()
     render(<App registration={registration(false)} store={missionStore} />)
 
-    expect(screen.getByRole("textbox", { name: "What you need" }))
-      .toHaveAttribute("placeholder", expect.stringContaining("Example:"))
+    expect(screen.queryByRole("textbox", { name: "1 · Describe your needs" }))
+      .not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Copy changes to ChatGPT" }))
+      .toBeDisabled()
     fireEvent.click(
       screen.getByRole("button", { name: "Mark dog with us as fixed" }),
     )
@@ -103,6 +122,8 @@ describe("Sidequest app", () => {
         (need) => need.id === "constraint-dog",
       ),
     ).toMatchObject({ fixed: true })
+    expect(screen.getByRole("button", { name: "Copy changes to ChatGPT" }))
+      .toBeEnabled()
 
     fireEvent.click(screen.getByRole("button", { name: "Remove dog with us" }))
     expect(
@@ -144,36 +165,45 @@ describe("Sidequest app", () => {
     expect(
       screen.getByRole("link", { name: "Open proposed schedule in Google Maps" }),
     ).toBeVisible()
+    const date = screen.getByRole("region", {
+      name: "Sunday, 30 August 2026",
+    })
+    expect(within(date).getByText("Bike parking, Baška Voda")).toBeVisible()
+    expect(within(date).queryByText("15:10")).not.toBeInTheDocument()
   })
 
   it("shows the latest release at the page bottom", () => {
     render(<App registration={registration(false)} store={blankStore()} />)
 
-    expect(screen.getByText("v0.2.0 · updated 3 Sep 2026")).toBeVisible()
+    expect(
+      screen.getByText("v0.2.1 · updated 3 Sep 2026 · 15:23 CEST"),
+    ).toBeVisible()
   })
 
-  it("starts as a blank plan and keeps the demo optional", () => {
+  it("starts with Proposed schedule disabled and keeps the demo optional", () => {
     const missionStore = blankStore()
     vi.spyOn(window, "confirm").mockReturnValue(true)
     render(<App registration={registration(false)} store={missionStore} />)
 
-    expect(screen.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
-    expect(screen.getByRole("button", { name: "Copy needs for ChatGPT" }))
-      .toBeVisible()
+    expect(window.location.pathname).toBe("/needs")
+    expect(screen.getByRole("tab", { name: "Proposed schedule" }))
+      .toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("button", { name: "Copy to ChatGPT" }))
+      .toBeDisabled()
 
     fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
     fireEvent.click(screen.getByRole("menuitem", { name: /Palermo arrival/ }))
-    expect(screen.getByRole("textbox", { name: "What you need" }))
-      .toHaveValue(PALERMO_ARRIVAL_MISSION.context.brief)
     expect(
-      screen.getByRole("textbox", {
-        name: "Edit need: Hotel Trinacria check-in at 16:00",
-      }),
-    ).toBeVisible()
+      screen.getByRole("textbox", { name: "1 · Describe your needs" }),
+    )
+      .toHaveValue(PALERMO_ARRIVAL_MISSION.context.brief)
+    expect(missionStore.getSnapshot().context.constraints).toEqual([])
 
     fireEvent.click(screen.getByRole("button", { name: "New plan" }))
     expect(missionStore.getSnapshot().stops).toEqual([])
-    expect(screen.getByRole("textbox", { name: "What you need" })).toHaveValue("")
+    expect(
+      screen.getByRole("textbox", { name: "1 · Describe your needs" }),
+    ).toHaveValue("")
   })
 
   it("loads a selected sample from the demo menu", () => {
@@ -186,7 +216,9 @@ describe("Sidequest app", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: /Palermo arrival/ }))
 
     expect(missionStore.getSnapshot().title).toBe("Palermo arrival")
-    expect(screen.getByRole("textbox", { name: "What you need" }))
+    expect(
+      screen.getByRole("textbox", { name: "1 · Describe your needs" }),
+    )
       .toHaveValue(PALERMO_ARRIVAL_MISSION.context.brief)
     expect(screen.queryByRole("menu", { name: "Sample plans" }))
       .not.toBeInTheDocument()
@@ -237,7 +269,7 @@ describe("Sidequest app", () => {
   })
 
   it("explains the plan interaction in the blank state", () => {
-    render(<App registration={registration(false)} store={blankStore()} />)
+    render(<App registration={registration(false)} store={readyEmptyPlanStore()} />)
 
     expect(screen.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
     expect(screen.getByText(/Open the complete proposal in Google Maps/))
@@ -245,7 +277,7 @@ describe("Sidequest app", () => {
   })
 
   it("reveals one add field from its contextual plus", () => {
-    const missionStore = blankStore()
+    const missionStore = readyEmptyPlanStore()
     render(<App registration={registration(false)} store={missionStore} />)
 
     expect(
@@ -590,7 +622,9 @@ describe("Sidequest app", () => {
     fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
     fireEvent.click(screen.getByRole("menuitem", { name: /Palermo arrival/ }))
     expect(missionStore.getSnapshot().revision).toBe(0)
-    expect(screen.getByRole("textbox", { name: "What you need" }))
+    expect(
+      screen.getByRole("textbox", { name: "1 · Describe your needs" }),
+    )
       .toHaveValue(PALERMO_ARRIVAL_MISSION.context.brief)
     expect(window.confirm).not.toHaveBeenCalled()
   })
@@ -634,7 +668,7 @@ describe("Sidequest app", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Needs" }))
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Copy needs for ChatGPT",
+        name: "Copy to ChatGPT",
       }),
     )
 

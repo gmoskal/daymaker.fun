@@ -112,8 +112,8 @@ const applyContext = ({
   if (conflict !== null) return conflict
 
   const {
-    constraints,
     expectedRevision: _expectedRevision,
+    needs,
     reason,
     replacePlan,
     timezone,
@@ -141,12 +141,13 @@ const applyContext = ({
     patch: {
       context: {
         ...context,
-        constraints: constraints.map((need, index) => ({
+        constraints: needs.map((need, index) => ({
           fixed: need.fixed,
           id: `constraint-${slug(need.label)}-${index + 1}`,
           label: need.label,
           status: "active",
         })),
+        stage: "needs",
       },
       timezone,
       title,

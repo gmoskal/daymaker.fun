@@ -1,8 +1,9 @@
-import { COPY, PACE_LABELS } from "./copy"
+import { COPY } from "./copy"
 import type { Mission, MissionConstraint, MissionStop } from "./domain/mission"
 import { futureStops } from "./domain/mission-transition"
 import {
   BLANK_LOCATION_LABEL,
+  BLANK_MISSION_TITLE,
   isDemoMissionId,
   type DemoMissionId,
 } from "./domain/seed"
@@ -34,7 +35,7 @@ export const missionPathFor = (panel: MissionPanel) =>
   MISSION_PANELS.find((item) => item.id === panel)?.path ?? "/needs"
 
 export type ViewAction =
-  | { prompt: string; type: "CopyPrompt" }
+  | { brief?: string; prompt: string; type: "CopyPrompt" }
   | { demoId?: DemoMissionId; type: "LoadDemo" }
   | { type: "NewPlan" }
   | { panel: MissionPanel; type: "SelectPanel" }
@@ -81,6 +82,7 @@ export type ConstraintScreen = Pick<
 >
 
 type PlanWorkspace = {
+  canCopy: boolean
   copyLabel: string
   emptyHint: string
   heading: string
@@ -92,12 +94,11 @@ type PlanWorkspace = {
 
 type ContextWorkspace = {
   brief: string
+  canCopy: boolean
   constraints: ConstraintScreen[]
   copyLabel: string
-  currentLocation: string
-  currentTime: string
-  pace: string
   prompt: string
+  stage: Mission["context"]["stage"]
   type: "context"
 }
 
@@ -111,8 +112,12 @@ export type MissionScreen = {
     year: string
   }
   missionTitle: string
+  situation: {
+    currentLocation: string | null
+  }
   navigation: Array<{
     active: boolean
+    disabled: boolean
     id: MissionPanel
     label: string
     path: string
@@ -237,9 +242,15 @@ const workspaceFor = (
   route: ScheduleMapPoint[],
 ): MissionWorkspaceScreen => {
   const prompt = toMissionPrompt(mission)
+  const latestNeedsEvent = mission.events.find(
+    (event) =>
+      event.type === "constraints_updated" || event.type === "context_updated",
+  )
+  const needsChanged = latestNeedsEvent?.type === "constraints_updated"
   switch (panel) {
     case "plan":
       return {
+        canCopy: mission.context.brief.trim() !== "",
         copyLabel: copied ? COPY.copiedPrompt : COPY.copyPrompt,
         emptyHint: COPY.emptyPlanHint,
         heading: COPY.scheduleTitle,
@@ -260,12 +271,21 @@ const workspaceFor = (
     case "context":
       return {
         brief: mission.context.brief,
+        canCopy:
+          mission.context.stage === "brief"
+            ? mission.context.brief.trim() !== ""
+            : needsChanged,
         constraints: mission.context.constraints,
-        copyLabel: copied ? COPY.copiedPrompt : COPY.copyPrompt,
-        currentLocation: mission.context.currentLocation.label,
-        currentTime: clock(mission.context.currentTime, mission.timezone),
-        pace: PACE_LABELS[mission.context.energy],
+        copyLabel:
+          mission.context.stage === "brief"
+            ? copied
+              ? COPY.copiedPrompt
+              : COPY.copyPrompt
+            : copied
+              ? COPY.copiedChanges
+              : COPY.copyChanges,
         prompt,
+        stage: mission.context.stage,
         type: "context",
       }
   }
@@ -284,9 +304,16 @@ export const presentMission = ({
 
   return {
     date: dateParts(mission.date),
-    missionTitle: mission.title,
+    missionTitle: mission.title === BLANK_MISSION_TITLE ? "" : mission.title,
+    situation: {
+      currentLocation:
+        mission.context.currentLocation.label === BLANK_LOCATION_LABEL
+          ? null
+          : mission.context.currentLocation.label,
+    },
     navigation: MISSION_PANELS.map((item) => ({
       active: item.id === panel,
+      disabled: item.id === "plan" && mission.context.stage === "brief",
       ...item,
     })),
     primaryAction:

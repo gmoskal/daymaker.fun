@@ -10,6 +10,7 @@ import {
   type MissionError,
   type MissionMutation,
 } from "./domain/mission"
+import { BLANK_LOCATION_LABEL, BLANK_MISSION_TITLE } from "./domain/seed"
 import type { MissionStore } from "./store"
 
 const EmptyInputSchema = z.strictObject({})
@@ -32,16 +33,17 @@ type AgentMission = {
   context: {
     brief: string
     energy: string
-    limits: Array<{ fixed: boolean; label: string }>
+    needs: Array<{ fixed: boolean; label: string }>
     now: string
-    place: [string, number, number]
+    place: [string, number, number] | null
+    stage: Mission["context"]["stage"]
   }
   date: string
   id: string
   offset: string
   stops: AgentStop[]
   tz: string
-  title: string
+  title: string | null
 }
 
 export type ToolMutationResult =
@@ -147,17 +149,21 @@ const toMissionState = (mission: Mission): MissionStateResult => ({
     context: {
       brief: mission.context.brief,
       energy: mission.context.energy,
-      limits: mission.context.constraints
+      needs: mission.context.constraints
         .filter((constraint) => constraint.status === "active")
         .map(({ fixed, label }) => ({ fixed, label })),
       now: clock(mission.context.currentTime),
-      place: toAgentPlace(mission.context.currentLocation),
+      place:
+        mission.context.currentLocation.label === BLANK_LOCATION_LABEL
+          ? null
+          : toAgentPlace(mission.context.currentLocation),
+      stage: mission.context.stage,
     },
     date: mission.date,
     id: mission.id,
     offset: offset(mission.context.currentTime),
     stops: mission.stops.map(toAgentStop),
-    title: mission.title,
+    title: mission.title === BLANK_MISSION_TITLE ? null : mission.title,
     tz: mission.timezone,
   },
   ok: true,
@@ -184,14 +190,14 @@ const TOOL_CATALOG = [
   tool({
     annotations: { readOnlyHint: true, untrustedContentHint: true },
     description:
-      "Read the current Sidequest needs and proposed schedule: revision, brief, limits, stable stop IDs, times, places, locks, and sources. Use before changing it.",
+      "Read the current Sidequest needs and proposed schedule: revision, brief, needs, stable stop IDs, times, places, locks, and sources. Use before changing it.",
     execute: (store) => toMissionState(store.getSnapshot()),
     name: "get_mission_state",
     schema: EmptyInputSchema,
   }),
   tool({
     description:
-      "Set the planning brief, title, timezone, time, location, pace, and must-haves. Can replace the proposal atomically. Returns the new revision.",
+      "Extract and set Needs plus the planning brief, title, timezone, time, location, and pace. Can replace the proposal atomically. Returns the new revision.",
     execute: (store, input) =>
       toToolResult(
         store.dispatch({

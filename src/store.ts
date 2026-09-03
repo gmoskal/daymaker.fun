@@ -30,6 +30,20 @@ type CreateMissionStoreParams = {
   storage: StoragePort
 }
 
+const withPlanningStage = (value: unknown) => {
+  if (typeof value !== "object" || value === null) return value
+  const mission = value as Record<string, unknown>
+  const context = mission.context
+  if (typeof context !== "object" || context === null) return value
+  const storedContext = context as Record<string, unknown>
+  if (storedContext.stage !== undefined) return value
+  const hasNeeds =
+    Array.isArray(storedContext.constraints) && storedContext.constraints.length > 0
+  const hasSchedule = Array.isArray(mission.stops) && mission.stops.length > 0
+  storedContext.stage = hasNeeds || hasSchedule ? "needs" : "brief"
+  return value
+}
+
 export const loadMission = (
   storage: StoragePort,
   now = new Date(),
@@ -39,7 +53,7 @@ export const loadMission = (
   if (stored === null) return createBlankMission(now, timezone)
 
   try {
-    const parsed = MissionSchema.safeParse(JSON.parse(stored))
+    const parsed = MissionSchema.safeParse(withPlanningStage(JSON.parse(stored)))
     if (parsed.success) return parsed.data
   } catch {
     // Invalid local data falls through to the one-key recovery below.

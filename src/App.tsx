@@ -67,16 +67,19 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
       <nav aria-label={COPY.missionViews} className="side-tabs" role="tablist">
         {screen.navigation.map((item) => (
           <a
+            aria-disabled={item.disabled}
             aria-selected={item.active}
             className={item.active ? "is-active" : ""}
             href={item.path}
             key={item.id}
             onClick={(event) => {
               event.preventDefault()
+              if (item.disabled) return
               setAddTarget(null)
               dispatch({ panel: item.id, type: "SelectPanel" })
             }}
             role="tab"
+            tabIndex={item.disabled ? -1 : undefined}
           >
             {item.label}
           </a>
@@ -84,32 +87,10 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
       </nav>
 
       <header className="board-title">
-        <TitleEditor dispatch={dispatch} title={screen.missionTitle} />
+        {screen.missionTitle === "" ? null : (
+          <TitleEditor dispatch={dispatch} title={screen.missionTitle} />
+        )}
       </header>
-
-      <section
-        aria-label={`${screen.date.weekday}, ${screen.date.day} ${screen.date.month} ${screen.date.year}`}
-        className="date-block"
-      >
-        <strong>{screen.date.day}</strong>
-        <span>
-          <b>{screen.date.weekday}</b>
-          {screen.date.month} {screen.date.year}
-        </span>
-      </section>
-
-      <MissionWorkspace
-        actionsOpen={actionsOpen}
-        addTarget={addTarget}
-        closeAdd={() => setAddTarget(null)}
-        dispatch={dispatch}
-        key={`${screen.revision}-${screen.workspace.type}`}
-        openAdd={(target) =>
-          setAddTarget((current) => (current === target ? null : target))
-        }
-        toggleActions={() => setActionsOpen((open) => !open)}
-        workspace={screen.workspace}
-      />
 
       <div className="primary-control">
         {demoMenuOpen && screen.primaryAction.type === "LoadDemo" ? (
@@ -150,6 +131,36 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
           {screen.primaryAction.label}
         </button>
       </div>
+
+      {screen.workspace.type === "plan" ? (
+        <section
+          aria-label={`${screen.date.weekday}, ${screen.date.day} ${screen.date.month} ${screen.date.year}`}
+          className="date-block"
+        >
+          <strong>{screen.date.day}</strong>
+          <span className="date-details">
+            <b>{screen.date.weekday}</b>
+            <span>{screen.date.month} {screen.date.year}</span>
+            {screen.situation.currentLocation === null ? null : (
+              <span className="date-context">{screen.situation.currentLocation}</span>
+            )}
+          </span>
+        </section>
+      ) : null}
+
+      <MissionWorkspace
+        actionsOpen={actionsOpen}
+        addTarget={addTarget}
+        closeAdd={() => setAddTarget(null)}
+        dispatch={dispatch}
+        key={screen.workspace.type}
+        openAdd={(target) =>
+          setAddTarget((current) => (current === target ? null : target))
+        }
+        toggleActions={() => setActionsOpen((open) => !open)}
+        workspace={screen.workspace}
+      />
+
       <small className="release-marker">{COPY.release}</small>
     </main>
   )

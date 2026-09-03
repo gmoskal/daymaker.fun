@@ -1,5 +1,13 @@
 import { AnimatePresence, Reorder, motion } from "motion/react"
-import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react"
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react"
 
 import { COPY } from "./copy"
 import type {
@@ -41,14 +49,14 @@ const InlineEditor = ({
     }
     onCommit(next)
   }
-  const handleKey = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleKey = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key !== "Enter") return
     event.preventDefault()
     event.currentTarget.blur()
   }
 
   return (
-    <input
+    <textarea
       aria-label={ariaLabel}
       autoFocus={autoFocus}
       className="inline-editor"
@@ -57,6 +65,7 @@ const InlineEditor = ({
       onBlur={commit}
       onChange={(event) => setDraft(event.target.value)}
       onKeyDown={handleKey}
+      rows={1}
       value={draft}
     />
   )
@@ -381,7 +390,8 @@ const PlanPanel = ({
         <div className="empty-plan">
           <p>{workspace.emptyHint}</p>
           <button
-            className="control control--primary"
+            className="control copy-action"
+            disabled={!workspace.canCopy}
             onClick={() =>
               dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
             }
@@ -559,6 +569,113 @@ const InlineAdd = ({
   )
 }
 
+type BriefEditorProps = {
+  copyLabel: string
+  dispatch: (action: ViewAction) => void
+  prompt: string
+  value: string
+}
+
+type BriefScroll = {
+  offset: number
+  size: number
+  visible: boolean
+}
+
+const BriefEditor = ({
+  copyLabel,
+  dispatch,
+  prompt,
+  value,
+}: BriefEditorProps) => {
+  const field = useRef<HTMLTextAreaElement>(null)
+  const [brief, setBrief] = useState(value)
+  const [scroll, setScroll] = useState<BriefScroll>({
+    offset: 0,
+    size: 0,
+    visible: false,
+  })
+  useEffect(() => setBrief(value), [value])
+
+  const readScroll = useCallback(() => {
+    const textarea = field.current
+    if (textarea === null) return
+    const range = textarea.scrollHeight - textarea.clientHeight
+    if (range <= 1) {
+      setScroll({ offset: 0, size: textarea.clientHeight, visible: false })
+      return
+    }
+    const size = Math.max(
+      24,
+      (textarea.clientHeight * textarea.clientHeight) / textarea.scrollHeight,
+    )
+    setScroll({
+      offset: (textarea.scrollTop / range) * (textarea.clientHeight - size),
+      size,
+      visible: true,
+    })
+  }, [])
+
+  useLayoutEffect(() => {
+    readScroll()
+    window.addEventListener("resize", readScroll)
+    return () => window.removeEventListener("resize", readScroll)
+  }, [brief, readScroll])
+
+  const commit = () => {
+    const next = brief.trim()
+    if (next === value) return
+    dispatch({ brief: next, type: "SetBrief" })
+  }
+
+  return (
+    <div className="brief-stage">
+      <label className="needs-brief">
+        <span>{COPY.planningBrief}</span>
+        <span className="needs-brief-field">
+          <textarea
+            aria-label={COPY.planningBrief}
+            aria-required="true"
+            maxLength={600}
+            onBlur={commit}
+            onChange={(event) => setBrief(event.target.value)}
+            onScroll={readScroll}
+            placeholder={COPY.planningBriefPlaceholder}
+            ref={field}
+            required
+            rows={4}
+            value={brief}
+          />
+          {scroll.visible ? (
+            <span aria-hidden="true" className="needs-scrollbar">
+              <span
+                style={{
+                  height: `${scroll.size}px`,
+                  transform: `translateY(${scroll.offset}px)`,
+                }}
+              />
+            </span>
+          ) : null}
+        </span>
+      </label>
+      <aside className="agent-prompt">
+        <h3>{COPY.handoffTitle}</h3>
+        <button
+          className="control copy-action"
+          disabled={brief.trim() === ""}
+          onClick={() =>
+            dispatch({ brief, prompt, type: "CopyPrompt" })
+          }
+          type="button"
+        >
+          {copyLabel}
+        </button>
+        <p>{COPY.agentHint}</p>
+      </aside>
+    </div>
+  )
+}
+
 const ContextPanel = ({
   adding,
   closeAdd,
@@ -586,89 +703,75 @@ const ContextPanel = ({
     const constraint = constraintsById.get(id)
     return constraint === undefined ? [] : [constraint]
   })
-  const [brief, setBrief] = useState(workspace.brief)
-  useEffect(() => setBrief(workspace.brief), [workspace.brief])
-  const commitBrief = () => {
-    const next = brief.trim()
-    if (next === workspace.brief) return
-    dispatch({ brief: next, type: "SetBrief" })
-  }
   return (
     <section aria-labelledby="context-title" className="panel panel--context" id="panel-context" role="tabpanel">
       <div className="panel-heading">
         <h2 id="context-title">{COPY.contextTitle}</h2>
       </div>
-      <label className="needs-brief">
-        <span>{COPY.planningBrief}</span>
-        <textarea
-          aria-label={COPY.planningBrief}
-          maxLength={600}
-          onBlur={commitBrief}
-          onChange={(event) => setBrief(event.target.value)}
-          placeholder={COPY.planningBriefPlaceholder}
-          rows={4}
-          value={brief}
+      {workspace.stage === "brief" ? (
+        <BriefEditor
+          copyLabel={workspace.copyLabel}
+          dispatch={dispatch}
+          prompt={workspace.prompt}
+          value={workspace.brief}
         />
-      </label>
-      <dl className="context-facts">
-        <div><dt>{COPY.currentTime}</dt><dd>{workspace.currentTime}</dd></div>
-        <div><dt>{COPY.currentLocation}</dt><dd>{workspace.currentLocation}</dd></div>
-        <div><dt>{COPY.energy}</dt><dd>{workspace.pace}</dd></div>
-      </dl>
-
-      <div className="requirements-heading">
-        <h3>{COPY.constraintsTitle}</h3>
-        <span>{workspace.constraints.length}</span>
-      </div>
-      <Reorder.Group
-        as="ol"
-        axis="y"
-        className="constraint-list"
-        onReorder={setOrder}
-        values={order}
-      >
-        {orderedConstraints.map((constraint) => (
-          <ConstraintItem
-            commit={() =>
-              dispatch({ constraintIds: order, type: "ReorderConstraints" })
-            }
-            constraint={constraint}
-            dispatch={dispatch}
-            key={constraint.id}
-          />
-        ))}
-      </Reorder.Group>
-      <button
-        aria-expanded={adding}
-        aria-label={COPY.addRequirement}
-        className="add-trigger"
-        onClick={openAdd}
-        type="button"
-      >
-        <span aria-hidden="true">+</span>
-      </button>
-      {adding ? (
-        <InlineAdd
-          ariaLabel={COPY.newRequirement}
-          id="add-requirement"
-          onAdd={(label) => dispatch({ label, type: "AddConstraint" })}
-          onClose={closeAdd}
-          placeholder={COPY.addRequirementHint}
-        />
-      ) : null}
-
-      <aside className="agent-prompt">
-        <p>{COPY.agentHint}</p>
-        <button
-          className="control"
-          onClick={() =>
-            dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
-          }
-          type="button"
-        >
-          {workspace.copyLabel}
-        </button>
-      </aside>
+      ) : (
+        <>
+          <div className="requirements-heading">
+            <h3>{COPY.constraintsTitle}</h3>
+            <span>{workspace.constraints.length}</span>
+          </div>
+          <Reorder.Group
+            as="ol"
+            axis="y"
+            className="constraint-list"
+            onReorder={setOrder}
+            values={order}
+          >
+            {orderedConstraints.map((constraint) => (
+              <ConstraintItem
+                commit={() =>
+                  dispatch({ constraintIds: order, type: "ReorderConstraints" })
+                }
+                constraint={constraint}
+                dispatch={dispatch}
+                key={constraint.id}
+              />
+            ))}
+          </Reorder.Group>
+          <button
+            aria-expanded={adding}
+            aria-label={COPY.addRequirement}
+            className="add-trigger"
+            onClick={openAdd}
+            type="button"
+          >
+            <span aria-hidden="true">+</span>
+          </button>
+          {adding ? (
+            <InlineAdd
+              ariaLabel={COPY.newRequirement}
+              id="add-requirement"
+              onAdd={(label) => dispatch({ label, type: "AddConstraint" })}
+              onClose={closeAdd}
+              placeholder={COPY.addRequirementHint}
+            />
+          ) : null}
+          <aside className="agent-prompt agent-prompt--changes">
+            <button
+              className="control copy-action"
+              disabled={!workspace.canCopy}
+              onClick={() =>
+                dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
+              }
+              type="button"
+            >
+              {workspace.copyLabel}
+            </button>
+            <p>{COPY.changesHint}</p>
+          </aside>
+        </>
+      )}
     </section>
   )
 }

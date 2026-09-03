@@ -52,7 +52,7 @@ const replacementAction = (
     actor: "agent",
     input: {
       brief: "Plan a quiet Warsaw afternoon.",
-      constraints: [{ fixed: true, label: "finish before 18:00" }],
+      needs: [{ fixed: true, label: "finish before 18:00" }],
       currentLocation: {
         label: "Warsaw",
         lat: 52.2297,
@@ -88,7 +88,7 @@ describe("mission", () => {
     const value = expectApplied(
       apply(
         replacementAction({
-          constraints: [{ fixed: true, label: "finish before 18:00" }],
+          needs: [{ fixed: true, label: "finish before 18:00" }],
         }),
       ),
     ).mission

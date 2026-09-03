@@ -56,9 +56,7 @@ describe("mission store", () => {
     Reflect.apply(missionStore.loadDemo, missionStore, ["croatia-gravel-demo"])
     expect(missionStore.getSnapshot().title).toBe("South Croatia gravel day")
     expect(missionStore.getSnapshot().context.brief).toContain("20 km gravel ride")
-    expect(missionStore.getSnapshot().context.constraints).toContainEqual(
-      expect.objectContaining({ fixed: true, label: "finish before 10:00" }),
-    )
+    expect(missionStore.getSnapshot().context.constraints).toEqual([])
     expect(missionStore.getSnapshot().stops).toEqual([])
   })
   it("persists an accepted action and notifies subscribers", () => {
@@ -160,6 +158,7 @@ describe("mission store", () => {
       .toBe("")
     expect(loaded.context.constraints.every((need) => need.fixed === false))
       .toBe(true)
+    expect(loaded.context.stage).toBe("needs")
     expect(memory.removals).toEqual([])
   })
 

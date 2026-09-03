@@ -31,6 +31,7 @@
 - [x] 10. Add a typed sample-plan catalog and loader menu
 - [x] 11. Let the agent create titled plans from complete copied context
 - [x] 12. Make Needs the human input and Proposed schedule the agent output
+- [x] 13. Make the Needs input and primary handoff action unmistakable
 
 ## Blocking decisions accepted in this plan
 
@@ -624,6 +625,133 @@ Implementation result:
   and 4/4 Chromium flows pass. Desktop and 390 px evidence is stored in
   `artifacts/sidequest-needs.png`, `artifacts/sidequest-needs-schedule.png`, and
   `artifacts/sidequest-needs-schedule-mobile.png`.
+
+### 13 [x] Make the Needs input and primary handoff action unmistakable
+
+Description: Make the handoff a two-stage persisted workflow. The initial screen
+requires one free-form description and makes copying it the only primary action.
+After the agent structures the request, the description disappears and the
+editable Needs list becomes the working surface. Preserve the borderless Bauhaus
+system.
+
+Acceptance criteria:
+
+- AC-1: a long initial description remains internally scrollable and exposes
+  a persistent thin high-contrast scrollbar without a textarea border, shadow,
+  gradient, or extra instructional icon.
+- AC-2: `Copy to ChatGPT` is a visually explicit minimum-44px filled primary
+  button and stays disabled until the required initial description is non-empty.
+  Clipboard behavior and feedback continue to come from `src/copy.ts`.
+- AC-3: the textarea scrollbar and copy action remain visible, unobstructed, and
+  within a 390px viewport; evidence updates `artifacts/sidequest-needs.png`.
+- AC-4: every handoff always contains the Sidequest instructions and retained
+  free-form description. It omits `needs` in the initial brief stage, then
+  includes the current post-edit active `needs` array in the structured stage;
+  no
+  `Must-haves`, `constraints`, or `limits` vocabulary leaks into the handoff or
+  WebMCP agent state.
+- AC-5: the persisted planning stage is `brief` or `needs`. In `brief`, the
+  required textarea and `Copy to ChatGPT` are visible while the structured list
+  is hidden. The first agent `update_day_context` moves to `needs`, hides the
+  textarea, and reveals only `3 · Review and edit needs`.
+- AC-6: in the structured stage, `Copy changes to ChatGPT` is disabled until a
+  human add/remove/rename/reorder/cross/fixed change. Agent changes are reflected
+  directly and leave the button disabled; a human change unlocks it.
+- AC-7: Needs contains no date, current time, location, or Preferred pace block.
+  Proposed schedule alone renders the plan date and a known starting location,
+  right-aligned and without labels; it never renders a redundant current time
+  below the date or an unavailable-location placeholder.
+- AC-8: a fresh plan renders no fake title. The real title appears only after a
+  demo or agent update supplies one.
+- AC-9: the smaller `Load demo` control sits above the workspace and, when the
+  schedule is open, above the day. Its white sample
+  menu opens downward with one restrained shadow and no border.
+- AC-10: the agent instruction makes plan quality and coverage of Needs its only
+  goal, asks concise clarifying questions when essential facts are missing, and
+  ends by directing the person to Proposed schedule or back to Needs.
+- AC-11: Proposed schedule is visibly and semantically disabled during the
+  initial brief stage. A direct `/schedule` visit canonicalizes to `/needs`; the
+  first successful agent context update unlocks the tab.
+- AC-12: the quiet footer release marker includes the release date and local
+  update time with an explicit timezone (`15:23 CEST`).
+
+Tests:
+
+- AC-1/2/3 -> browser: `sidequest.spec.ts > edits Needs and copies the current
+  handoff` verifies real textarea overflow, computed scrollbar color, filled CTA
+  geometry, clipboard output, and 390px overflow; unit-level CSS testing is
+  skipped because it would only assert implementation text rather than rendered
+  behavior. Evidence: `artifacts/sidequest-brief.png` and
+  `artifacts/sidequest-brief-mobile.png`.
+- AC-2 -> integration: existing `App.test.tsx > copies editable Needs for the
+  agent` verifies the real clipboard boundary and feedback state.
+- AC-4/5/6 -> unit: `mission-prompt.test.ts > copies planning input by stage`,
+  `view-model.test.ts > derives the handoff state from mission stage and actor`,
+  `webmcp.test.ts > starts a titled replacement plan`, and
+  `copy.test.ts > keeps the three-step handoff language consistent`; browser:
+  the same `edits Needs` flow verifies the required initial copy, agent stage
+  transition, hidden textarea, locked change CTA, and a later copy containing
+  human-edited Needs.
+- AC-7/8/11 -> integration: `App.test.tsx > starts in Needs with two tabs`
+  verifies the absent day metadata, pace, and fake title plus the disabled plan;
+  `exposes maps from every located schedule item` verifies the plan-only date
+  and location with no current-time line. Browser evidence covers both stages.
+- AC-9 -> browser: `sidequest.spec.ts > shows only the two free-form Needs
+  examples without overflow` verifies the downward white menu; desktop/mobile
+  evidence verifies its position above the day.
+- AC-10 -> unit: `mission-prompt.test.ts > asks the agent to structure Needs and
+  regenerate every time` locks the clarification, quality-goal, and handoff
+  language.
+- AC-12 -> integration: `App.test.tsx > shows the latest release at the page
+  bottom` locks the complete dated and timezone-qualified timestamp.
+- Copy gate -> `copy.test.ts > keeps Needs and Proposed schedule terminology`;
+  no copy key changes are planned and English remains the only supported locale.
+
+Sources/References: `src/domain/mission.ts`, `src/domain/mission-transition.ts`,
+`src/domain/seed.ts`, `src/store.ts`, `src/mission-prompt.ts`, `src/webmcp.ts`,
+`src/view-model.ts`, `src/useMissionViewModel.ts`, `src/App.tsx`,
+`src/MissionWorkspace.tsx`, `src/app.css`, their focused tests, and
+`e2e/sidequest.spec.ts`.
+
+Before implementation gate:
+
+- [x] Existing textarea overflow, primary action markup, fixed controls, mobile
+  spacing, and screenshot evidence inspected at `1701762`.
+- [x] Design decision: mirror the native scroll position with a minimal visible
+  thumb because overlay scrollbars disappear in screenshots; keep this as local
+  view state and never duplicate planning data.
+- [x] Named browser and focused contract regressions observed red before
+  production edits.
+
+Implementation result:
+
+- Red evidence covered the invisible overflow affordance, the old pseudo-button
+  copy action, absent planning stage, leaked structured input during the initial
+  handoff, and the blur/remount race that dropped a real browser copy.
+- `Mission.context.stage` now persists the `brief -> needs` transition. Agent
+  context updates enter the structured stage; the presenter derives human-only
+  dirty state from the latest Needs/context event without a second state model.
+- The required description has a synchronized high-contrast scrollbar and one
+  filled handoff action. After extraction it disappears, the full-width
+  draggable Needs list takes over, and only a human edit unlocks the change
+  handoff.
+- Copied input always includes the live instructions and retained brief, omits
+  structured Needs until extraction, omits fake title/location values, and asks
+  the agent to clarify missing facts, optimize exclusively for Need coverage,
+  set plan date/location, and direct the person to the next view.
+- Needs now contains no schedule metadata. Proposed schedule is disabled until
+  the agent sets context, then exclusively owns the date and known starting
+  location; the redundant current-time line is absent.
+- `Load demo` is smaller and sits above the workspace. Its borderless white menu
+  opens downward with one restrained shadow. The footer identifies
+  `v0.2.1 · updated 3 Sep 2026 · 15:23 CEST`.
+- Five mature-TypeScript simplification passes checked the schema-derived stage,
+  pure transition, migration, prompt projection, and React action lifecycle.
+  `npm run check` passes 68/68 Vitest tests, the strict TypeScript/Vite build,
+  and 4/4 Chromium flows. Desktop/mobile evidence is stored in
+  `artifacts/sidequest-brief*.png`, `artifacts/sidequest-needs*.png`, and
+  `artifacts/sidequest-demo-menu.png`; the final live local Needs DOM was also
+  inspected in the in-app browser.
 
 ## Risks and dependencies
 

@@ -26,9 +26,6 @@ describe("mission presenter", () => {
     expect(screen.workspace.type).toBe("context")
     if (screen.workspace.type !== "context")
       throw new Error("Expected Needs screen")
-    expect((screen.workspace as unknown as { pace: string }).pace).toBe(
-      "Balanced",
-    )
   })
 
   it("presents one focused plan and the true mission state", () => {
@@ -83,7 +80,9 @@ describe("mission presenter", () => {
     expect(contextScreen.workspace.type).toBe("context")
     if (contextScreen.workspace.type !== "context")
       throw new Error("Expected context screen")
-    expect(contextScreen.workspace.copyLabel).toBe("Needs copied")
+    expect(contextScreen.workspace.copyLabel).toBe("Changes copied for ChatGPT")
+    expect(contextScreen.workspace.canCopy).toBe(false)
+    expect(contextScreen.workspace.stage).toBe("needs")
     expect(contextScreen.workspace.prompt).toContain(
       '"missionId": "generated-schedule-fixture"',
     )
@@ -108,6 +107,54 @@ describe("mission presenter", () => {
       planScreen.workspace.stops.find((stop) => stop.id === "gravel-loop")
         ?.mapLinks,
     ).toBeDefined()
+  })
+
+  it("unlocks a structured handoff only for human Needs changes", () => {
+    const humanEdit = {
+      ...SEED_MISSION,
+      events: [
+        {
+          actor: "human" as const,
+          at: SEED_MISSION.context.currentTime,
+          id: "human-needs-edit",
+          summary: "Renamed a need.",
+          type: "constraints_updated" as const,
+        },
+      ],
+    }
+    const afterHuman = presentMission({
+      copied: false,
+      mission: humanEdit,
+      panel: "context",
+      selectedStopId: null,
+      webMcp: { type: "connected" },
+    })
+    if (afterHuman.workspace.type !== "context")
+      throw new Error("Expected context screen")
+    expect(afterHuman.workspace.canCopy).toBe(true)
+
+    const afterAgent = presentMission({
+      copied: false,
+      mission: {
+        ...humanEdit,
+        events: [
+          {
+            actor: "agent",
+            at: SEED_MISSION.context.currentTime,
+            id: "agent-needs-update",
+            summary: "Updated Needs from chat.",
+            type: "context_updated",
+          },
+          ...humanEdit.events,
+        ],
+      },
+      panel: "context",
+      selectedStopId: null,
+      webMcp: { type: "connected" },
+    })
+    if (afterAgent.workspace.type !== "context")
+      throw new Error("Expected context screen")
+    expect(afterAgent.workspace.canCopy).toBe(false)
   })
 
   it("maps human drag order into unlocked schedule slots", () => {

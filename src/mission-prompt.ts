@@ -1,17 +1,27 @@
-import { COPY, DEMO_INSTRUCTIONS, SIDEQUEST_URL } from "./copy"
+import { COPY, PACE_LABELS, SIDEQUEST_URL } from "./copy"
 import type { Mission } from "./domain/mission"
-import { isDemoMissionId } from "./domain/seed"
 
-const instructionFor = (mission: Mission) =>
-  isDemoMissionId(mission.id)
-    ? DEMO_INSTRUCTIONS[mission.id]
-    : COPY.freshInstruction
+const planningNeedsFor = (mission: Mission) => ({
+  brief: mission.context.brief,
+  currentLocation: mission.context.currentLocation,
+  currentTime: mission.context.currentTime,
+  date: mission.date,
+  lockedCommitments: mission.stops.filter((stop) => stop.locked),
+  missionId: mission.id,
+  mustHaves: mission.context.constraints
+    .filter((constraint) => constraint.status === "active")
+    .map(({ fixed, label }) => ({ fixed, label })),
+  pace: PACE_LABELS[mission.context.energy].toLowerCase(),
+  revision: mission.revision,
+  timezone: mission.timezone,
+  title: mission.title,
+})
 
 export const toMissionPrompt = (mission: Mission) =>
   [
     COPY.promptOpen.replace("{url}", SIDEQUEST_URL),
-    instructionFor(mission),
+    COPY.planningInstruction,
     COPY.promptProtocol,
     COPY.promptSnapshot,
-    JSON.stringify(mission, null, 2),
+    JSON.stringify(planningNeedsFor(mission), null, 2),
   ].join("\n\n")

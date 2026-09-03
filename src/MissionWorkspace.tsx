@@ -1,8 +1,7 @@
 import { AnimatePresence, Reorder, motion } from "motion/react"
-import { useState, type FormEvent, type KeyboardEvent } from "react"
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react"
 
 import { COPY } from "./copy"
-import { MissionMap } from "./MissionMap"
 import type {
   ConstraintScreen,
   MissionWorkspaceScreen,
@@ -63,13 +62,52 @@ const InlineEditor = ({
   )
 }
 
+const InlineTitleEditor = ({
+  disabled,
+  onCommit,
+  value,
+}: {
+  disabled: boolean
+  onCommit: (value: string) => void
+  value: string
+}) => {
+  const [draft, setDraft] = useState(value)
+  const commit = () => {
+    const next = draft.trim()
+    if (next === "" || next === value) {
+      setDraft(value)
+      return
+    }
+    onCommit(next)
+  }
+
+  return (
+    <textarea
+      aria-label={`${COPY.editItemTitle}: ${value}`}
+      autoFocus={!disabled}
+      className="inline-editor inline-title-editor"
+      disabled={disabled}
+      maxLength={80}
+      onBlur={commit}
+      onChange={(event) => setDraft(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter") return
+        event.preventDefault()
+        event.currentTarget.blur()
+      }}
+      rows={1}
+      value={draft}
+    />
+  )
+}
+
 const ChevronIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 20 20">
     <path d="m6.5 8 3.5 3.5L13.5 8" />
   </svg>
 )
 
-type ActionIconName = "action" | "delete" | "done" | "lock" | "map" | "restore" | "skip" | "unlock"
+type ActionIconName = "action" | "delete" | "done" | "lock" | "restore" | "skip" | "unlock"
 
 const ActionIcon = ({ name }: { name: ActionIconName }) => (
   <svg aria-hidden="true" viewBox="0 0 20 20">
@@ -83,8 +121,6 @@ const ActionIcon = ({ name }: { name: ActionIconName }) => (
       <><path d="M5.2 7.3A6 6 0 1 1 4 11" /><path d="M5.2 3.8v3.5H1.7" /></>
     ) : name === "skip" ? (
       <><path d="m5 5 7 5-7 5V5Z" /><path d="M14.5 5v10" /></>
-    ) : name === "map" ? (
-      <><path d="M10 17s5-4.8 5-9a5 5 0 0 0-10 0c0 4.2 5 9 5 9Z" /><circle cx="10" cy="8" r="1.5" /></>
     ) : (
       <><rect height="8" rx="1.4" width="10" x="5" y="8" /><path d={name === "lock" ? "M7 8V6a3 3 0 0 1 6 0v2" : "M13 8V6a3 3 0 0 0-5.7-1.3"} /></>
     )}
@@ -199,9 +235,7 @@ const StopItem = ({
             <time>{stop.time}</time>
             <span className="stop-title">
               {stop.selected ? (
-                <InlineEditor
-                  ariaLabel={`${COPY.editItemTitle}: ${stop.title}`}
-                  autoFocus={!stop.locked}
+                <InlineTitleEditor
                   disabled={stop.locked}
                   onCommit={(title) =>
                     dispatch({ stopId: stop.id, title, type: "RenameStop" })
@@ -245,6 +279,26 @@ const StopItem = ({
                 {stop.source.title} <span aria-hidden="true">↗</span>
               </a>
             )}
+            {stop.mapLinks === undefined ? null : (
+              <div className="item-map-links">
+                <a
+                  aria-label={`${COPY.openInGoogleMaps}: ${stop.title}`}
+                  href={stop.mapLinks.google}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Google Maps
+                </a>
+                <a
+                  aria-label={`${COPY.openInAppleMaps}: ${stop.title}`}
+                  href={stop.mapLinks.apple}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Apple Maps
+                </a>
+              </div>
+            )}
             <div className="detail-actions">
               <button
                 aria-expanded={actionsOpen}
@@ -265,17 +319,6 @@ const StopItem = ({
                     transition={{ duration: 0.16, ease: "easeOut" }}
                   >
                     <StopActions dispatch={dispatch} stop={stop} />
-                    {stop.routeIndex === null ? null : (
-                      <button
-                        aria-label={`Show ${stop.title} on map`}
-                        className="control action-control"
-                        onClick={() => dispatch({ stopId: stop.id, type: "ShowStopOnMap" })}
-                        type="button"
-                      >
-                        <ActionIcon name="map" />
-                        <span className="visually-hidden">{COPY.viewOnMap}</span>
-                      </button>
-                    )}
                   </motion.div>
                 ) : null}
               </AnimatePresence>
@@ -329,6 +372,7 @@ const PlanPanel = ({
       stopIds: order.filter((id) => stopsById.get(id)?.draggable === true),
       type: "ReorderStops",
     })
+  const openStopId = workspace.stops.find((stop) => stop.selected)?.id ?? "closed"
 
   return (
     <section aria-labelledby="schedule-title" className="panel panel--plan" id="panel-plan" role="tabpanel">
@@ -351,6 +395,7 @@ const PlanPanel = ({
           as="ol"
           axis="y"
           className="stop-list"
+          key={openStopId}
           onReorder={reorder}
           values={order}
         >
@@ -384,6 +429,16 @@ const PlanPanel = ({
           placeholder={COPY.addItemHint}
         />
       ) : null}
+      {workspace.mapUrl === null ? null : (
+        <a
+          className="schedule-map-link"
+          href={workspace.mapUrl}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          {COPY.openPlanInGoogleMaps}
+        </a>
+      )}
     </section>
   )
 }
@@ -423,6 +478,35 @@ const ConstraintItem = ({
         }
         value={constraint.label}
       />
+      <button
+        aria-label={
+          constraint.fixed
+            ? `Make ${constraint.label} flexible`
+            : `Mark ${constraint.label} as fixed`
+        }
+        aria-pressed={constraint.fixed}
+        className="need-fixed-control"
+        onClick={() =>
+          dispatch({
+            constraintId: constraint.id,
+            fixed: !constraint.fixed,
+            type: "SetConstraintFixed",
+          })
+        }
+        type="button"
+      >
+        {constraint.fixed ? COPY.fixed : COPY.flexible}
+      </button>
+      <button
+        aria-label={`${COPY.removeNeed} ${constraint.label}`}
+        className="need-remove-control"
+        onClick={() =>
+          dispatch({ constraintId: constraint.id, type: "RemoveConstraint" })
+        }
+        type="button"
+      >
+        <span aria-hidden="true">×</span>
+      </button>
     </Reorder.Item>
   )
 }
@@ -491,6 +575,10 @@ const ContextPanel = ({
   const [order, setOrder] = useState(
     workspace.constraints.map((constraint) => constraint.id),
   )
+  useEffect(
+    () => setOrder(workspace.constraints.map((constraint) => constraint.id)),
+    [workspace.constraints],
+  )
   const constraintsById = new Map(
     workspace.constraints.map((constraint) => [constraint.id, constraint]),
   )
@@ -498,15 +586,34 @@ const ContextPanel = ({
     const constraint = constraintsById.get(id)
     return constraint === undefined ? [] : [constraint]
   })
+  const [brief, setBrief] = useState(workspace.brief)
+  useEffect(() => setBrief(workspace.brief), [workspace.brief])
+  const commitBrief = () => {
+    const next = brief.trim()
+    if (next === workspace.brief) return
+    dispatch({ brief: next, type: "SetBrief" })
+  }
   return (
     <section aria-labelledby="context-title" className="panel panel--context" id="panel-context" role="tabpanel">
       <div className="panel-heading">
         <h2 id="context-title">{COPY.contextTitle}</h2>
       </div>
+      <label className="needs-brief">
+        <span>{COPY.planningBrief}</span>
+        <textarea
+          aria-label={COPY.planningBrief}
+          maxLength={600}
+          onBlur={commitBrief}
+          onChange={(event) => setBrief(event.target.value)}
+          placeholder={COPY.planningBriefPlaceholder}
+          rows={4}
+          value={brief}
+        />
+      </label>
       <dl className="context-facts">
         <div><dt>{COPY.currentTime}</dt><dd>{workspace.currentTime}</dd></div>
         <div><dt>{COPY.currentLocation}</dt><dd>{workspace.currentLocation}</dd></div>
-        <div><dt>{COPY.energy}</dt><dd>{workspace.energy}</dd></div>
+        <div><dt>{COPY.energy}</dt><dd>{workspace.pace}</dd></div>
       </dl>
 
       <div className="requirements-heading">
@@ -566,24 +673,6 @@ const ContextPanel = ({
   )
 }
 
-const RoutePanel = ({
-  dispatch,
-  workspace,
-}: {
-  dispatch: (action: ViewAction) => void
-  workspace: Extract<MissionWorkspaceScreen, { type: "route" }>
-}) => (
-  <section aria-labelledby="route-title" className="panel panel--route" id="panel-route" role="tabpanel">
-    <div className="panel-heading"><h2 id="route-title">{COPY.mapTitle}</h2></div>
-    <MissionMap
-      onSelect={(stopId) => dispatch({ stopId, type: "SelectStop" })}
-      origin={workspace.origin}
-      route={workspace.route}
-    />
-    <p className="map-caption">{COPY.mapCaption}</p>
-  </section>
-)
-
 export const MissionWorkspace = ({
   actionsOpen,
   addTarget,
@@ -616,7 +705,5 @@ export const MissionWorkspace = ({
           workspace={workspace}
         />
       )
-    case "route":
-      return <RoutePanel dispatch={dispatch} workspace={workspace} />
   }
 }

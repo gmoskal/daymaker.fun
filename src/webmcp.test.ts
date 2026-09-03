@@ -169,7 +169,15 @@ describe("WebMCP", () => {
       {},
     )
     expect(initial).toMatchObject({
-      mission: { title: "Baška Voda Adventure" },
+      mission: {
+        context: {
+          brief: expect.stringContaining("Biokovo"),
+          limits: expect.arrayContaining([
+            { fixed: true, label: "keep dinner at 18:30" },
+          ]),
+        },
+        title: "Baška Voda Adventure",
+      },
       ok: true,
       revision: 6,
     })
@@ -178,7 +186,11 @@ describe("WebMCP", () => {
       context,
       "update_day_context",
       {
-        constraints: ["quiet place", "finish before 18:00"],
+        brief: "Plan a quiet Warsaw afternoon with one calm walk.",
+        constraints: [
+          { fixed: false, label: "quiet place" },
+          { fixed: true, label: "finish before 18:00" },
+        ],
         currentLocation: { label: "Warsaw", lat: 52.2297, lng: 21.0122 },
         currentTime: "2026-09-03T12:15:00+02:00",
         energy: "medium",
@@ -216,7 +228,10 @@ describe("WebMCP", () => {
       revision: 8,
       title: "Quiet Warsaw afternoon",
     })
-    expect(missionStore.getSnapshot().stops).toHaveLength(1)
+    expect(missionStore.getSnapshot().stops).toHaveLength(2)
+    expect(missionStore.getSnapshot().stops).toContainEqual(
+      expect.objectContaining({ id: "dinner", locked: true }),
+    )
     expect(missionStore.getSnapshot().events).toHaveLength(2)
   })
 
@@ -241,11 +256,12 @@ describe("WebMCP", () => {
     expect(initial).toMatchObject({ ok: true, revision: 7 })
 
     const contextResult = await execute<ToolMutationResult>(context, "update_day_context", {
+      brief: "Replace the steep hike with a relaxed swim and fuel stop.",
       constraints: [
-        "car available",
-        "dog with us",
-        "max 20 min drive",
-        "keep dinner at 18:30",
+        { fixed: false, label: "car available" },
+        { fixed: false, label: "dog with us" },
+        { fixed: false, label: "max 20 min drive" },
+        { fixed: true, label: "keep dinner at 18:30" },
       ],
       currentLocation: {
         label: "Bike parking, Baška Voda",
@@ -334,7 +350,7 @@ describe("WebMCP", () => {
 
     expect(reordered).toMatchObject({ ok: true, revision: 12 })
     expect(final).toMatchObject({ ok: true, revision: 12 })
-    expect(JSON.stringify(final).length).toBeLessThanOrEqual(1_500)
+    expect(JSON.stringify(final).length).toBeLessThanOrEqual(1_800)
     expect(
       JSON.stringify([
         initial,

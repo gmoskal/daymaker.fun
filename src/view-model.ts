@@ -1,4 +1,4 @@
-import { COPY } from "./copy"
+import { COPY, PACE_LABELS } from "./copy"
 import type { Mission, MissionConstraint, MissionStop } from "./domain/mission"
 import { futureStops } from "./domain/mission-transition"
 import {
@@ -7,6 +7,12 @@ import {
   type DemoMissionId,
 } from "./domain/seed"
 import { toMissionPrompt } from "./mission-prompt"
+import {
+  appleMapsUrl,
+  googleMapsUrl,
+  googleScheduleUrl,
+  type MapPoint,
+} from "./map-links"
 
 export type WebMcpState =
   | { type: "checking" }
@@ -15,28 +21,25 @@ export type WebMcpState =
   | { type: "error" }
 
 export const MISSION_PANELS = [
-  { id: "plan", label: COPY.planTitle, path: "/plan" },
-  { id: "context", label: COPY.contextTitle, path: "/context" },
-  { id: "route", label: COPY.mapTitle, path: "/route" },
+  { id: "context", label: COPY.contextTitle, path: "/needs" },
+  { id: "plan", label: COPY.planTitle, path: "/schedule" },
 ] as const
 
 export type MissionPanel = (typeof MISSION_PANELS)[number]["id"]
 
 export const missionPanelForPath = (pathname: string): MissionPanel =>
-  MISSION_PANELS.find((panel) => panel.path === pathname)?.id ?? "plan"
+  MISSION_PANELS.find((panel) => panel.path === pathname)?.id ?? "context"
 
 export const missionPathFor = (panel: MissionPanel) =>
-  MISSION_PANELS.find((item) => item.id === panel)?.path ?? "/plan"
+  MISSION_PANELS.find((item) => item.id === panel)?.path ?? "/needs"
 
 export type ViewAction =
   | { prompt: string; type: "CopyPrompt" }
   | { demoId?: DemoMissionId; type: "LoadDemo" }
   | { type: "NewPlan" }
   | { panel: MissionPanel; type: "SelectPanel" }
-  | { stopId: string; type: "SelectStop" }
   | { stopId: string; type: "ToggleStopActions" }
   | { stopId: string; type: "DeleteStop" }
-  | { stopId: string; type: "ShowStopOnMap" }
   | {
       status: "completed" | "planned" | "skipped"
       stopId: string
@@ -47,19 +50,13 @@ export type ViewAction =
   | { label: string; type: "AddConstraint" }
   | { constraintId: string; type: "ToggleConstraint" }
   | { constraintIds: string[]; type: "ReorderConstraints" }
+  | { constraintId: string; fixed: boolean; type: "SetConstraintFixed" }
+  | { constraintId: string; type: "RemoveConstraint" }
+  | { brief: string; type: "SetBrief" }
   | { title: string; type: "SetTitle" }
   | { title: string; type: "AddItem" }
   | { stopId: string; title: string; type: "RenameStop" }
   | { constraintId: string; label: string; type: "RenameConstraint" }
-
-export type RouteStopScreen = {
-  coordinates: [number, number]
-  id: string
-  index: number
-  location: string
-  selected: boolean
-  title: string
-}
 
 export type TimelineStopScreen = {
   actionLabel: string
@@ -69,7 +66,7 @@ export type TimelineStopScreen = {
   lockLabel: string
   note?: string
   rationale: string
-  routeIndex: number | null
+  mapLinks?: { apple: string; google: string }
   selected: boolean
   source?: { title: string; url: string }
   status: MissionStop["status"]
@@ -78,40 +75,33 @@ export type TimelineStopScreen = {
   title: string
 }
 
-export type ConstraintScreen = Pick<MissionConstraint, "id" | "label" | "status">
+export type ConstraintScreen = Pick<
+  MissionConstraint,
+  "fixed" | "id" | "label" | "status"
+>
 
 type PlanWorkspace = {
   copyLabel: string
   emptyHint: string
   heading: string
+  mapUrl: string | null
   prompt: string
   stops: TimelineStopScreen[]
   type: "plan"
 }
 
 type ContextWorkspace = {
+  brief: string
   constraints: ConstraintScreen[]
   copyLabel: string
   currentLocation: string
   currentTime: string
-  energy: string
+  pace: string
   prompt: string
   type: "context"
 }
 
-type RouteWorkspace = {
-  origin: {
-    coordinates: [number, number]
-    label: string
-  }
-  route: RouteStopScreen[]
-  type: "route"
-}
-
-export type MissionWorkspaceScreen =
-  | PlanWorkspace
-  | ContextWorkspace
-  | RouteWorkspace
+export type MissionWorkspaceScreen = PlanWorkspace | ContextWorkspace
 
 export type MissionScreen = {
   date: {
@@ -160,49 +150,58 @@ const focusedStopId = (mission: Mission, selectedStopId: string | null) => {
   return null
 }
 
-const routeFor = (
-  mission: Mission,
-  selectedStopId: string | null,
-): RouteStopScreen[] =>
-  futureStops(mission)
+type ScheduleMapPoint = MapPoint & { id: string }
+
+const mapPointsFor = (stops: MissionStop[]): ScheduleMapPoint[] =>
+  stops
     .filter((stop) => stop.location.label !== BLANK_LOCATION_LABEL)
-    .map((stop, index) => ({
+    .map((stop) => ({
       coordinates: [stop.location.lat, stop.location.lng],
       id: stop.id,
-      index: index + 1,
-      location: stop.location.label,
-      selected: stop.id === selectedStopId,
       title: stop.title,
     }))
+
+const routeFor = (mission: Mission): ScheduleMapPoint[] =>
+  mapPointsFor(futureStops(mission))
 
 const timelineFor = (
   mission: Mission,
   selectedStopId: string | null,
-  route: RouteStopScreen[],
+  route: ScheduleMapPoint[],
 ): TimelineStopScreen[] => {
-  const routeIndices = new Map(route.map((stop) => [stop.id, stop.index]))
-  return mission.stops.map((stop) => ({
-    actionLabel:
-      stop.status === "completed" || stop.status === "skipped"
-        ? `Restore ${stop.title} to planned`
-        : `Mark ${stop.title}`,
-    draggable:
-      !stop.locked && (stop.status === "active" || stop.status === "planned"),
-    id: stop.id,
-    locked: stop.locked,
-    lockLabel: `${stop.locked ? COPY.unlock : COPY.lock} ${stop.title}`,
-    ...(stop.note === undefined ? {} : { note: stop.note }),
-    rationale: stop.rationale,
-    routeIndex: routeIndices.get(stop.id) ?? null,
-    selected: stop.id === selectedStopId,
-    ...(stop.source === undefined
-      ? {}
-      : { source: { title: stop.source.title, url: stop.source.url } }),
-    status: stop.status,
-    statusLabel: `${titleCase(stop.status)}${stop.locked ? ` · ${COPY.locked}` : ""}`,
-    time: clock(stop.startsAt, mission.timezone),
-    title: stop.title,
-  }))
+  const routeById = new Map(route.map((stop) => [stop.id, stop]))
+  return mission.stops.map((stop) => {
+    const mapPoint = routeById.get(stop.id)
+    return {
+      actionLabel:
+        stop.status === "completed" || stop.status === "skipped"
+          ? `Restore ${stop.title} to planned`
+          : `Mark ${stop.title}`,
+      draggable:
+        !stop.locked && (stop.status === "active" || stop.status === "planned"),
+      id: stop.id,
+      locked: stop.locked,
+      lockLabel: `${stop.locked ? COPY.unlock : COPY.lock} ${stop.title}`,
+      ...(stop.note === undefined ? {} : { note: stop.note }),
+      rationale: stop.rationale,
+      ...(mapPoint === undefined
+        ? {}
+        : {
+            mapLinks: {
+              apple: appleMapsUrl(mapPoint),
+              google: googleMapsUrl(mapPoint),
+            },
+          }),
+      selected: stop.id === selectedStopId,
+      ...(stop.source === undefined
+        ? {}
+        : { source: { title: stop.source.title, url: stop.source.url } }),
+      status: stop.status,
+      statusLabel: `${titleCase(stop.status)}${stop.locked ? ` · ${COPY.locked}` : ""}`,
+      time: clock(stop.startsAt, mission.timezone),
+      title: stop.title,
+    }
+  })
 }
 
 const webMcpBadge = (state: WebMcpState): MissionScreen["webMcp"] => {
@@ -235,7 +234,7 @@ const workspaceFor = (
   copied: boolean,
   mission: Mission,
   timeline: TimelineStopScreen[],
-  route: RouteStopScreen[],
+  route: ScheduleMapPoint[],
 ): MissionWorkspaceScreen => {
   const prompt = toMissionPrompt(mission)
   switch (panel) {
@@ -244,31 +243,30 @@ const workspaceFor = (
         copyLabel: copied ? COPY.copiedPrompt : COPY.copyPrompt,
         emptyHint: COPY.emptyPlanHint,
         heading: COPY.scheduleTitle,
+        mapUrl: googleScheduleUrl(
+          {
+            coordinates: [
+              mission.context.currentLocation.lat,
+              mission.context.currentLocation.lng,
+            ],
+            title: mission.context.currentLocation.label,
+          },
+          route,
+        ),
         prompt,
         stops: timeline,
         type: "plan",
       }
     case "context":
       return {
+        brief: mission.context.brief,
         constraints: mission.context.constraints,
         copyLabel: copied ? COPY.copiedPrompt : COPY.copyPrompt,
         currentLocation: mission.context.currentLocation.label,
         currentTime: clock(mission.context.currentTime, mission.timezone),
-        energy: titleCase(mission.context.energy),
+        pace: PACE_LABELS[mission.context.energy],
         prompt,
         type: "context",
-      }
-    case "route":
-      return {
-        origin: {
-          coordinates: [
-            mission.context.currentLocation.lat,
-            mission.context.currentLocation.lng,
-          ],
-          label: mission.context.currentLocation.label,
-        },
-        route,
-        type: "route",
       }
   }
 }
@@ -281,8 +279,8 @@ export const presentMission = ({
   webMcp,
 }: PresentMissionParams): MissionScreen => {
   const selected = focusedStopId(mission, selectedStopId)
-  const route = routeFor(mission, selected)
-  const timeline = timelineFor(mission, selected, route)
+  const route = routeFor(mission)
+  const timeline = timelineFor(mission, selected, mapPointsFor(mission.stops))
 
   return {
     date: dateParts(mission.date),

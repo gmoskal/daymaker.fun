@@ -10,7 +10,16 @@ const installWebMcpHarness = async (page: Page) => {
   await page.addInitScript(() => {
     localStorage.clear()
     const registered = new Map<string, { execute: (input: unknown) => unknown }>()
-    Object.assign(window, { __sidequestTools: registered })
+    Object.assign(window, { __copiedText: "", __sidequestTools: registered })
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: (value: string) => {
+          Object.assign(window, { __copiedText: value })
+          return Promise.resolve()
+        },
+      },
+    })
     Object.defineProperty(document, "modelContext", {
       configurable: true,
       value: {
@@ -46,126 +55,12 @@ const executeTool = (page: Page, name: string, input: unknown) =>
     { input, name },
   ) as Promise<ToolOutcome>
 
-const loadDemo = async (page: Page) => {
+const selectExample = async (page: Page, name: RegExp) => {
   await page.getByRole("button", { name: "Load demo" }).click()
-  await page.getByRole("menuitem", { name: /Baška Voda/ }).click()
+  await page.getByRole("menuitem", { name }).click()
 }
 
-test("opens the flat demo catalog without viewport overflow", async ({ page }) => {
-  await page.setViewportSize({ height: 844, width: 390 })
-  await page.goto("/")
-  await page.getByRole("button", { name: "Load demo" }).click()
-
-  await expect(page.getByRole("menu", { name: "Sample plans" })).toBeVisible()
-  await expect(page.getByRole("menuitem", { name: /San Francisco/ })).toBeVisible()
-  await expect(page.getByRole("menuitem", { name: /Barcelona/ })).toBeVisible()
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
-    .toBeLessThanOrEqual(390)
-  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-demo-menu.png" })
-})
-
-const dragTo = async (page: Page, handle: Locator, target: Locator) => {
-  const sourceBox = await handle.boundingBox()
-  const targetBox = await target.boundingBox()
-  if (sourceBox === null || targetBox === null)
-    throw new Error("Drag targets must be visible")
-
-  await page.mouse.move(
-    sourceBox.x + Math.min(12, sourceBox.width / 2),
-    sourceBox.y + sourceBox.height / 2,
-  )
-  await page.mouse.down()
-  await page.mouse.move(
-    targetBox.x + targetBox.width / 2,
-    targetBox.y + Math.min(10, targetBox.height / 2),
-    { steps: 18 },
-  )
-  await page.mouse.up()
-}
-
-test("preserves readable schedule hierarchy and one item menu", async ({ page }) => {
-  await installWebMcpHarness(page)
-  await page.setViewportSize({ height: 720, width: 780 })
-  await page.goto("/")
-  await loadDemo(page)
-
-  const day = page.locator(".date-block > strong")
-  const firstItem = page.getByTestId("stop-gravel-loop")
-  await page.getByRole("button", { name: "Actions for Forest gravel loop" }).click()
-  await page.getByRole("button", { name: "Show item actions" }).click()
-  const time = firstItem.locator("time")
-  const daySize = await day.evaluate((element) =>
-    Number.parseFloat(getComputedStyle(element).fontSize),
-  )
-  const timeStyle = await time.evaluate((element) => {
-    const style = getComputedStyle(element)
-    return {
-      color: style.color,
-      letterSpacing: Number.parseFloat(style.letterSpacing),
-      size: Number.parseFloat(style.fontSize),
-    }
-  })
-  const timeline = await page.locator(".stop-list").evaluate((element) => {
-    const axis = getComputedStyle(element, "::before")
-    const row = getComputedStyle(element.querySelector(".stop-row")!, "::after")
-    const status = getComputedStyle(element.querySelector(".status")!)
-    const time = getComputedStyle(element.querySelector("time")!)
-    return {
-      axisContent: axis.content,
-      axisWidth: axis.width,
-      rowContent: row.content,
-      statusColumn: status.gridColumnStart,
-      timeAlign: time.textAlign,
-    }
-  })
-
-  expect(daySize).toBeLessThanOrEqual(72)
-  expect(timeStyle).toMatchObject({ color: "rgb(210, 31, 43)" })
-  expect(timeStyle.size).toBeGreaterThanOrEqual(16)
-  expect(timeStyle.letterSpacing).toBeGreaterThanOrEqual(0.5)
-  expect(timeline).toEqual({
-    axisContent: '""',
-    axisWidth: "1px",
-    rowContent: "none",
-    statusColumn: "2",
-    timeAlign: "right",
-  })
-  await expect(page.getByRole("tablist", { name: "Mission views" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "Open menu" })).toHaveCount(0)
-  await expect(page.getByText(/Manual mode/)).toHaveCount(0)
-  await expect(page.getByText(/REV 06/)).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "Delete item" })).toBeVisible()
-  expect(
-    await page
-      .getByRole("button", { name: "Mark Forest gravel loop done" })
-      .evaluate((element) => getComputedStyle(element).color),
-  ).toBe("rgb(146, 146, 151)")
-  await page.screenshot({
-    fullPage: true,
-    path: "artifacts/sidequest-item-menu.png",
-  })
-})
-
-test("completes and captures the Sidequest killer flow", async ({ page }) => {
-  await installWebMcpHarness(page)
-  await page.setViewportSize({ height: 900, width: 1440 })
-  await page.goto("/")
-
-  await expect(page.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
-  await loadDemo(page)
-  await expect(page.getByRole("tab", { name: "Plan" })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  )
-  await page.getByRole("button", { name: "Actions for Forest gravel loop" }).click()
-  await page.getByRole("button", { name: "Show item actions" }).click()
-  await expect(page.getByRole("button", { name: "Mark Forest gravel loop done" }))
-    .toHaveText("Mark done")
-  await expect(page.getByTestId("stop-biokovo-hike")).toHaveAttribute(
-    "data-draggable",
-    "true",
-  )
+const waitForTools = async (page: Page) => {
   await expect
     .poll(() =>
       page.evaluate(
@@ -176,244 +71,284 @@ test("completes and captures the Sidequest killer flow", async ({ page }) => {
       ),
     )
     .toBe(5)
-  await page.getByRole("button", { name: "Mark Forest gravel loop done" }).click()
+}
 
-  expect(
-    await executeTool(page, "update_day_context", {
-      constraints: [
-        "car available",
-        "dog with us",
-        "max 20 min drive",
-        "keep dinner at 18:30",
-      ],
-      currentLocation: {
-        label: "Bike parking, Baška Voda",
-        lat: 43.3569,
-        lng: 16.9502,
-      },
-      currentTime: "2026-08-30T15:10:00+02:00",
-      energy: "low",
-      expectedRevision: 7,
-      reason: "The ride used more energy than expected.",
-      replacePlan: false,
-      timezone: "Europe/Zagreb",
-      title: "Baška Voda Adventure",
-    }),
-  ).toMatchObject({ ok: true, revision: 8 })
-
-  expect(
-    await executeTool(page, "update_mission_stop", {
-      expectedRevision: 8,
-      reason: "A steep hike no longer fits the group's energy.",
-      status: "skipped",
-      stopId: "biokovo-hike",
-    }),
-  ).toMatchObject({ ok: true, revision: 9 })
-
-  const swim = await executeTool(page, "add_mission_stop", {
-    durationMinutes: 65,
-    expectedRevision: 9,
+const addStop = async (
+  page: Page,
+  revision: number,
+  input: Record<string, unknown>,
+) =>
+  executeTool(page, "add_mission_stop", {
+    durationMinutes: 45,
+    expectedRevision: revision,
     kind: "activity",
-    location: { label: "Punta Rata Beach, Brela", lat: 43.3692, lng: 16.9221 },
-    rationale: "A relaxed swim fits low energy and keeps the drive short.",
+    rationale: "Fits the current Needs and verified timing.",
     source: {
-      checkedAt: "2026-08-30T15:11:00+02:00",
-      title: "Punta Rata — Brela Tourist Board",
-      url: "https://brela.hr/en/beaches/the-punta-rata-beach",
+      checkedAt: "2026-09-04T06:35:00+02:00",
+      title: "Croatia tourism",
+      url: "https://croatia.hr/en-gb",
     },
-    startsAt: "2026-08-30T15:30:00+02:00",
-    title: "Punta Rata swim & snorkel",
-    travelMinutesFromPrevious: 12,
-  })
-  expect(swim).toMatchObject({ ok: true, revision: 10 })
-
-  const fuel = await executeTool(page, "add_mission_stop", {
-    durationMinutes: 15,
-    expectedRevision: 10,
-    kind: "service",
-    location: { label: "INA Baška Voda", lat: 43.3586, lng: 16.9508 },
-    rationale: "A quick fuel stop is on the return path and protects dinner.",
-    source: {
-      checkedAt: "2026-08-30T15:12:00+02:00",
-      title: "INA station finder",
-      url: "https://www.ina.hr/en/station-search/",
-    },
-    startsAt: "2026-08-30T16:50:00+02:00",
-    title: "Fuel stop · INA",
     travelMinutesFromPrevious: 15,
+    ...input,
   })
-  expect(fuel).toMatchObject({ ok: true, revision: 11 })
 
-  const swimId = swim.changed?.stopId
-  const fuelId = fuel.changed?.stopId
-  expect(swimId).toBeTruthy()
-  expect(fuelId).toBeTruthy()
-  expect(
-    await executeTool(page, "reorder_mission_stops", {
-      expectedRevision: 11,
-      orderedStops: [
-        { startsAt: "2026-08-30T15:30:00+02:00", stopId: swimId },
-        { startsAt: "2026-08-30T16:50:00+02:00", stopId: fuelId },
-        { startsAt: "2026-08-30T17:15:00+02:00", stopId: "return-shower" },
-        { startsAt: "2026-08-30T18:30:00+02:00", stopId: "dinner" },
-      ],
-      reason: "Swim, fuel, reset, and keep the dinner reservation.",
+const generateCroatiaProposal = async (page: Page) => {
+  await selectExample(page, /South Croatia gravel day/)
+  const brief = await page.getByRole("textbox", { name: "What you need" }).inputValue()
+  const context = await executeTool(page, "update_day_context", {
+    brief,
+    constraints: [
+      { fixed: false, label: "20 km gravel ride" },
+      { fixed: true, label: "finish before 10:00" },
+      { fixed: false, label: "maximum one hour by car" },
+      { fixed: false, label: "shaded route with some asphalt" },
+      { fixed: true, label: "avoid main roads" },
+      { fixed: false, label: "excellent restaurant on the return" },
+      { fixed: false, label: "snorkeling beach with an interesting seabed" },
+      { fixed: true, label: "designated parking at every stop" },
+      { fixed: false, label: "calculate the return time" },
+    ],
+    currentLocation: {
+      label: "Grand Hotel Slavia, Baška Voda",
+      lat: 43.3565,
+      lng: 16.9494,
+    },
+    currentTime: "2026-09-04T06:30:00+02:00",
+    energy: "high",
+    expectedRevision: 0,
+    reason: "Structured the person's free-form Needs before generating.",
+    replacePlan: true,
+    timezone: "Europe/Zagreb",
+    title: "South Croatia gravel day",
+  })
+  expect(context).toMatchObject({ ok: true, revision: 1 })
+
+  const ride = await addStop(page, 1, {
+    durationMinutes: 120,
+    location: {
+      label: "Biokovo gravel route parking",
+      lat: 43.3266,
+      lng: 17.0098,
+    },
+    rationale: "A shaded 20 km mixed-surface loop that finishes before 10:00.",
+    startsAt: "2026-09-04T07:15:00+02:00",
+    title: "20 km shaded gravel loop",
+  })
+  const lunch = await addStop(page, ride.revision, {
+    durationMinutes: 75,
+    kind: "meal",
+    location: {
+      label: "Konoba Panorama parking, Baška Voda",
+      lat: 43.3501,
+      lng: 16.9582,
+    },
+    rationale: "A well-timed local lunch with practical parking on the return.",
+    startsAt: "2026-09-04T10:30:00+02:00",
+    title: "Lunch · Konoba Panorama",
+  })
+  const swim = await addStop(page, lunch.revision, {
+    durationMinutes: 90,
+    location: {
+      label: "Punta Rata Beach parking, Brela",
+      lat: 43.3692,
+      lng: 16.9221,
+    },
+    rationale: "Clear water and a varied seabed make this a practical snorkeling stop.",
+    startsAt: "2026-09-04T12:30:00+02:00",
+    title: "Snorkel · Punta Rata Beach",
+  })
+  expect(swim).toMatchObject({ ok: true, revision: 4 })
+}
+
+const dragTo = async (page: Page, handle: Locator, target: Locator) => {
+  const sourceBox = await handle.boundingBox()
+  const targetBox = await target.boundingBox()
+  if (sourceBox === null || targetBox === null)
+    throw new Error("Drag targets must be visible")
+
+  await page.mouse.move(sourceBox.x + 8, sourceBox.y + sourceBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(targetBox.x + 8, targetBox.y + 8, { steps: 18 })
+  await page.mouse.up()
+}
+
+test("shows only the two free-form Needs examples without overflow", async ({ page }) => {
+  await page.setViewportSize({ height: 844, width: 390 })
+  await page.goto("/")
+  await page.getByRole("button", { name: "Load demo" }).click()
+
+  await expect(page.getByRole("menuitem")).toHaveCount(2)
+  await expect(page.getByRole("menuitem", { name: /Palermo arrival/ })).toBeVisible()
+  await expect(
+    page.getByRole("menuitem", { name: /South Croatia gravel day/ }),
+  ).toBeVisible()
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(390)
+  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-demo-menu.png" })
+})
+
+test("edits Needs and copies the current handoff", async ({ page }) => {
+  await installWebMcpHarness(page)
+  await page.setViewportSize({ height: 900, width: 1100 })
+  await page.goto("/")
+  await waitForTools(page)
+  await selectExample(page, /Palermo arrival/)
+
+  const brief = page.getByRole("textbox", { name: "What you need" })
+  await expect(brief).toContainText("Palermo Airport")
+  await brief.fill(
+    "I land in Palermo tomorrow at 08:00. Keep the 16:00 hotel check-in fixed and find parking at every stop.",
+  )
+  await brief.blur()
+  await page.getByRole("button", { name: "Cross out one worthwhile sight nearby" }).click()
+  await page.getByRole("button", { name: "Add need" }).click()
+  await page.getByRole("textbox", { name: "New need" }).fill("quiet lunch")
+  await page.getByRole("textbox", { name: "New need" }).press("Enter")
+  await page.getByRole("button", { name: "Mark quiet lunch as fixed" }).click()
+  await page.getByRole("button", { name: "Remove practical parking at every stop" }).click()
+  await page.getByRole("button", { name: "Copy needs for ChatGPT" }).click()
+
+  const copied = await page.evaluate(
+    () => (window as typeof window & { __copiedText: string }).__copiedText,
+  )
+  expect(copied).toContain("I land in Palermo tomorrow at 08:00")
+  expect(copied).toContain('"label": "quiet lunch"')
+  expect(copied).toContain('"fixed": true')
+  expect(copied).toContain("replacePlan: true")
+  expect(copied).not.toContain("one worthwhile sight nearby")
+  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-needs.png" })
+})
+
+test("agent generates a proposal with item and whole-schedule maps", async ({ page }) => {
+  await installWebMcpHarness(page)
+  await page.setViewportSize({ height: 900, width: 1100 })
+  await page.goto("/")
+  await waitForTools(page)
+  await generateCroatiaProposal(page)
+
+  await page.getByRole("tab", { name: "Proposed schedule" }).click()
+  await expect(page).toHaveURL(/\/schedule$/)
+  await expect(page.getByRole("button", { name: "20 km shaded gravel loop", exact: true }))
+    .toBeVisible()
+  await page.getByRole("button", { name: "20 km shaded gravel loop", exact: true }).click()
+  await expect(
+    page.getByRole("link", {
+      name: "Open in Google Maps: 20 km shaded gravel loop",
     }),
-  ).toMatchObject({ ok: true, revision: 12 })
-
-  await expect(page.getByTestId("stop-biokovo-hike")).toContainText("Skipped")
-  await expect(
-    page.getByRole("button", { name: "Punta Rata swim & snorkel", exact: true }),
   ).toBeVisible()
-  await expect(page.getByText("Fuel stop · INA").first()).toBeVisible()
-  await expect(page.getByTestId("stop-dinner")).toContainText("18:30")
-  await page.getByRole("tab", { name: "Route" }).click()
-  await expect(page).toHaveURL(/\/route$/)
   await expect(
-    page.getByRole("link", { name: "Open full plan in Google Maps" }),
+    page.getByRole("link", {
+      name: "Open in Apple Maps: 20 km shaded gravel loop",
+    }),
   ).toBeVisible()
-  await page.goBack()
-  await expect(page).toHaveURL(/\/plan$/)
+  await expect(
+    page.getByRole("link", { name: "Open proposed schedule in Google Maps" }),
+  ).toBeVisible()
 
-  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-desktop.png" })
+  const titleButton = page.getByRole("button", {
+    name: "Lunch · Konoba Panorama",
+    exact: true,
+  })
+  const before = await titleButton.evaluate(
+    (element) => getComputedStyle(element).fontSize,
+  )
+  await titleButton.click()
+  const editor = page.getByRole("textbox", {
+    name: "Edit item title: Lunch · Konoba Panorama",
+  })
+  await expect(editor).toBeVisible()
+  expect(await editor.evaluate((element) => getComputedStyle(element).fontSize)).toBe(before)
+
+  const detailsDoNotOverlapNextItem = await editor.evaluate((titleEditor) => {
+    const openItem = titleEditor.closest("li")
+    if (openItem === null) return false
+    const nextItem = openItem.nextElementSibling
+    return nextItem === null
+      ? true
+      : openItem.getBoundingClientRect().bottom <=
+          nextItem.getBoundingClientRect().top
+  })
+  expect(detailsDoNotOverlapNextItem).toBe(true)
+  expect(
+    await page
+      .getByRole("button", {
+        name: "Snorkel · Punta Rata Beach",
+        exact: true,
+      })
+      .evaluate((element) => element.scrollWidth <= element.clientWidth),
+  ).toBe(true)
+
+  const tabsOverlap = await page.locator(".side-tabs a").evaluateAll((tabs) => {
+    const boxes = tabs.map((tab) => tab.getBoundingClientRect())
+    return boxes.slice(1).some((box, index) => box.top < boxes[index]!.bottom)
+  })
+  expect(tabsOverlap).toBe(false)
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(1100)
+  await page.screenshot({
+    fullPage: true,
+    path: "artifacts/sidequest-needs-schedule.png",
+  })
+
   await page.setViewportSize({ height: 844, width: 390 })
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(390)
-  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-mobile.png" })
+  const mobileControlsOverlap = await page.evaluate(() => {
+    const mapLink = document.querySelector<HTMLElement>(".schedule-map-link")
+    const loadDemo = document.querySelector<HTMLElement>(".primary-control")
+    if (mapLink === null || loadDemo === null) return true
+    const mapBox = mapLink.getBoundingClientRect()
+    const demoBox = loadDemo.getBoundingClientRect()
+    return !(
+      mapBox.right <= demoBox.left ||
+      mapBox.left >= demoBox.right ||
+      mapBox.bottom <= demoBox.top ||
+      mapBox.top >= demoBox.bottom
+    )
+  })
+  expect(mobileControlsOverlap).toBe(false)
+  await page.screenshot({
+    fullPage: true,
+    path: "artifacts/sidequest-needs-schedule-mobile.png",
+  })
 })
 
-test("edits and reorders the human operational lists", async ({ page }) => {
+test("reorders the generated proposal from the whole unlocked item", async ({ page }) => {
   await installWebMcpHarness(page)
   await page.setViewportSize({ height: 900, width: 1100 })
   await page.goto("/")
-  await loadDemo(page)
+  await waitForTools(page)
+  await generateCroatiaProposal(page)
+  await page.getByRole("tab", { name: "Proposed schedule" }).click()
 
-  expect(
-    await page
-      .getByRole("button", { name: "Return & shower", exact: true })
-      .evaluate((element) => getComputedStyle(element).cursor),
-  ).toBe("grab")
-
+  const swim = page.getByRole("button", {
+    name: "Snorkel · Punta Rata Beach",
+    exact: true,
+  })
+  expect(await swim.evaluate((element) => getComputedStyle(element).cursor)).toBe("grab")
   await dragTo(
     page,
-    page.getByRole("button", { name: "Return & shower", exact: true }),
-    page.getByRole("button", { name: "Biokovo sunset hike", exact: true }),
+    swim,
+    page.getByRole("button", { name: "Lunch · Konoba Panorama", exact: true }),
   )
 
   await expect
     .poll(() =>
       page
         .locator('[data-testid^="stop-"]')
-        .evaluateAll((stops) => stops.map((stop) => stop.getAttribute("data-testid"))),
-    )
-    .toEqual([
-      "stop-gravel-loop",
-      "stop-return-shower",
-      "stop-biokovo-hike",
-      "stop-dinner",
-    ])
-  await expect(page.getByTestId("stop-dinner")).toHaveAttribute(
-    "data-draggable",
-    "false",
-  )
-  await expect(page.getByTestId("stop-dinner")).toContainText("18:30")
-
-  await page.getByRole("tab", { name: "Context" }).click()
-  await page.getByRole("button", { name: "Add requirement" }).click()
-  await page.getByRole("textbox", { name: "New requirement" }).fill(
-    "avoid steep climbs",
-  )
-  await page.getByRole("textbox", { name: "New requirement" }).press("Enter")
-  await page.getByRole("button", { name: "Cross out dog with us" }).click()
-  await expect(
-    page.getByRole("textbox", { name: "Edit requirement: dog with us" }).locator(".."),
-  ).toHaveAttribute("data-status", "crossed")
-
-  await dragTo(
-    page,
-    page.getByRole("textbox", { name: "Edit requirement: avoid steep climbs" }).locator(".."),
-    page.getByRole("textbox", { name: "Edit requirement: car available" }).locator(".."),
-  )
-  await expect
-    .poll(() =>
-      page
-        .locator(".constraint-list .inline-editor")
-        .evaluateAll((inputs) =>
-          inputs.map((input) => (input as HTMLInputElement).value),
+        .evaluateAll((stops) =>
+          stops.map((stop) => {
+            const editor = stop.querySelector<HTMLInputElement>(".inline-editor")
+            return editor?.value ?? stop.querySelector(".stop-title-button")?.textContent
+          }),
         ),
     )
     .toEqual([
-      "avoid steep climbs",
-      "car available",
-      "dog with us",
-      "max 20 min drive",
-      "keep dinner at 18:30",
+      expect.stringContaining("20 km shaded gravel loop"),
+      expect.stringContaining("Snorkel · Punta Rata Beach"),
+      expect.stringContaining("Lunch · Konoba Panorama"),
     ])
-})
-
-test("copies complete demo context and starts fresh without an app modal", async ({
-  context,
-  page,
-}) => {
-  await installWebMcpHarness(page)
-  await context.grantPermissions(["clipboard-read", "clipboard-write"], {
-    origin: "http://127.0.0.1:4173",
-  })
-  await page.setViewportSize({ height: 844, width: 390 })
-  let dialogCount = 0
-  page.on("dialog", async (dialog) => {
-    dialogCount += 1
-    await dialog.dismiss()
-  })
-  await page.goto("/")
-  await loadDemo(page)
-  await page.getByRole("tab", { name: "Context" }).click()
-  await page.getByRole("button", {
-    name: "Copy full context for ChatGPT",
-  }).click()
-
-  await expect(
-    page.getByRole("button", { name: "Full context copied" }),
-  ).toBeVisible()
-  const prompt = await page.evaluate(() => navigator.clipboard.readText())
-  expect(prompt).toContain('"id": "baska-voda-demo"')
-  expect(prompt).toContain('"title": "Baška Voda Adventure"')
-  expect(prompt).toContain('"locked": true')
-  expect(prompt).toContain('"events": []')
-  expect(prompt).toContain("get_mission_state")
-  const release = page.getByText("v0.1.1 · updated 3 Sep 2026")
-  const primary = page.getByRole("button", { name: "New plan" })
-  await expect(release).toBeVisible()
-  const releaseStyle = await release.evaluate((element) => {
-    const style = getComputedStyle(element)
-    return {
-      background: style.backgroundImage,
-      border: style.borderStyle,
-      shadow: style.boxShadow,
-    }
-  })
-  expect(releaseStyle).toEqual({
-    background: "none",
-    border: "none",
-    shadow: "none",
-  })
-  const releaseBox = await release.boundingBox()
-  const primaryBox = await primary.boundingBox()
-  expect(releaseBox).not.toBeNull()
-  expect(primaryBox).not.toBeNull()
-  if (releaseBox !== null && primaryBox !== null)
-    expect(releaseBox.x + releaseBox.width).toBeLessThan(primaryBox.x)
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
-    .toBeLessThanOrEqual(390)
-  await page.screenshot({
-    fullPage: true,
-    path: "artifacts/sidequest-full-context-copy.png",
-  })
-
-  await page.getByRole("button", { name: "New plan" }).click()
-  expect(dialogCount).toBe(0)
-  await expect(page.getByRole("heading", { name: "Untitled plan" })).toBeVisible()
-  await expect(page.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
 })

@@ -2,99 +2,92 @@
 
 > Your day changed. Your plan should too.
 
-Sidequest is a local-first live plan shared by people and their browser agent. A person can mark what happened; an agent can read that same mission, adapt it to new constraints, research replacements, and write the result back to the visible board.
+Sidequest turns ordinary travel needs into an editable, source-backed schedule. The person writes or clicks together **Needs**; ChatGPT structures them, researches suitable places, and writes a fresh **Proposed schedule** back to the same page through WebMCP Site Tools.
 
-This repository implements the Baška Voda killer flow plus San Francisco and Barcelona sample missions for [The WebMCP Challenge](https://webmcp.devpost.com/).
+This repository is an English-only entry for [The WebMCP Challenge](https://webmcp.devpost.com/).
 
 ## Submission status
 
 - Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
+- Local release: v0.2.0
+- Production update: pending Vercel authorization
 - Demo video: pending
 - License: MIT
-- Submission language: English
 
-The application, tests, screenshots, license, hosting configuration, public repository, and production deployment are complete. Production deploys use the Vercel CLI; automatic GitHub deployments require repository access for the Vercel GitHub app. A public YouTube demo under three minutes remains pending.
+## How to use it
+
+1. Open **Needs**. A new browser profile starts with an empty planning brief.
+2. Write naturally in **What you need**. The placeholder shows an example. You do not need to build the checklist manually.
+3. Optionally refine **Must-haves** in the page: add, rename, cross out, remove, reorder, or mark a need **Fixed**.
+4. Choose **Copy needs for ChatGPT** and paste the result into a ChatGPT conversation that can open the Sidequest page with Site Tools.
+5. ChatGPT reads the live revision, turns the brief into the editable Needs list, preserves fixed or locked commitments, researches places, and generates a new **Proposed schedule** on the page.
+6. Open a schedule item to edit it, use its shared action menu, or launch that place in Google Maps or Apple Maps. The schedule also has one complete Google Maps route.
+7. Whenever Needs change, copy them again. Every handoff instructs the agent to replace the unlocked proposal, so the schedule is always derived from the current Needs.
+
+**Load demo** contains two input examples, not prebuilt schedules:
+
+- **Palermo arrival** — airport car rental, breakfast and coffee, one nearby sight, parking, and a fixed 16:00 Hotel Trinacria check-in.
+- **South Croatia gravel day** — a 20 km shaded gravel ride before 10:00, limited driving, no main roads, a restaurant, snorkeling, parking, and a calculated return time.
 
 ## Why WebMCP
 
-A normal travel assistant can describe a revised day in chat. Sidequest uses WebMCP because the valuable result is durable shared state: the timeline, map, locked dinner, revision, and audit log all update in the page the group is already using.
+A normal assistant can return an itinerary as chat text. Sidequest makes the result durable and directly editable:
 
-- Human controls and agent tools dispatch the same typed domain actions.
-- The agent receives stable stop IDs, constraints, coordinates, sources, and the latest revision.
-- Every write is optimistic-concurrency safe and visible immediately.
-- The 18:30 dinner is a locked invariant, not a sentence the model is merely asked to remember.
-- Without WebMCP, the complete manual UI still works.
+- the page and agent share one typed mission store;
+- the agent can read the latest brief, fixed needs, stop IDs, locks, places, sources, and revision;
+- every accepted tool write appears immediately in the visible page and persists locally;
+- every write uses optimistic concurrency, so stale agents cannot silently overwrite newer human changes;
+- the full manual UI still works without WebMCP.
 
-The implementation uses the imperative top-level `document.modelContext.registerTool` API. No tool is registered from an iframe and no declarative tool markup is required.
-
-Sidequest is not a chat client and it does not run a remote MCP server. The conversation remains in ChatGPT. When ChatGPT opens the Sidequest page in a Site Tools-capable browser, the page exposes five WebMCP tools to that conversation. ChatGPT is the input and reasoning surface; Sidequest is the durable plan that both the person and the agent can read and update.
-
-## Start with a real plan
-
-1. Open the production URL. A first visit starts with an empty plan for the current day, not the Baška Voda fixture.
-2. Rename `Untitled plan` inline.
-3. Either add the first item manually with `+`, or open **Context**, click **Copy full context for ChatGPT**, and paste it into ChatGPT. The handoff includes the production URL, task instruction, revision, title, timezone, constraints, stops, locks, sources, and history.
-4. Tell ChatGPT the goal, location, available time, energy, and hard constraints. It can atomically start a titled plan, research options, add items, and reorder the board through the same five tools.
-5. Open an item with its chevron, use `…` to reveal the shared horizontal action tray, and lock commitments the agent must preserve. Manual controls continue to work in a normal browser without WebMCP.
-
-**Load demo** opens a compact catalog: Baška Voda demonstrates live replanning, San Francisco demonstrates errands with opening windows, and Barcelona demonstrates source-backed specialty coffee, beach, and timed-ticket planning. A loaded sample changes the action to **New plan**.
+Sidequest is not a chat client and does not run a remote MCP server. ChatGPT remains the language and research surface. The open page registers five imperative `document.modelContext.registerTool` tools and acts as the shared planning artifact.
 
 ## The five tools
 
 | Tool | Purpose |
 | --- | --- |
-| `get_mission_state` | Read the compact current mission, revision, stop IDs, constraints, route data, locks, and sources. |
-| `update_day_context` | Set title, timezone, current context, and constraints; update the current plan or atomically replace it with a fresh one. |
-| `update_mission_stop` | Mark an unlocked stop planned, active, completed, or skipped. |
-| `add_mission_stop` | Add one researched stop with coordinates, timing, travel estimate, rationale, and HTTPS source. |
-| `reorder_mission_stops` | Reorder every future stop while preserving locked commitment times. |
+| `get_mission_state` | Read the live brief, structured needs, revision, proposed stops, locks, places, and sources. |
+| `update_day_context` | Structure the brief into fixed or flexible needs and replace the unlocked proposal while preserving locked commitments. |
+| `update_mission_stop` | Mark an unlocked proposal item planned, active, completed, or skipped. |
+| `add_mission_stop` | Add one researched item with time, coordinates, travel estimate, rationale, and an HTTPS source. |
+| `reorder_mission_stops` | Reorder all future items while preserving locked commitment times. |
 
-All inputs are strict Zod schemas. Every write requires `expectedRevision`; stale, malformed, oversized, and invariant-breaking writes return controlled errors without changing storage. Tool names, descriptions, parameters, and serialized results are tested against current WebMCP size guidance.
-
-## Demo flow
-
-1. Choose **Load demo**, then **Baška Voda · plan disruption**, to load the seeded mission at revision 6.
-2. Use the visible **Done** control on “Forest gravel loop” — revision 7 proves the human path.
-3. Give the browser agent this prompt:
-
-> We are in Baška Voda and our day changed. Read the current Sidequest mission. The gravel ride is complete, we are low on energy, and the Biokovo hike is no longer a good fit. Use reliable sources to find a relaxed swim stop and a fuel stop within our constraints. Keep our 18:30 dinner unchanged. Make the required updates with the available site tools and update the Sidequest board, not just the chat.
-
-4. The intended outcome is revision 12: low energy, hike skipped, researched Punta Rata and INA stops added, future route reordered, and dinner still locked at 18:30.
+All inputs use strict Zod schemas. Invalid, stale, oversized, or invariant-breaking writes return controlled errors without changing storage.
 
 ## Architecture
 
 ```text
-Human controls ─┐
-                ├─> MissionAction -> pure domain transition -> MissionStore
-WebMCP tools ───┘                                      │
-                                                      ├─> localStorage
-                                                      └─> pure presenter -> React + Motion
-                                                                                  │
-                                                                                  └─> Google / Apple Maps
+Free-form brief ─┐
+Editable Needs ──┼─> MissionAction -> pure transition -> MissionStore
+WebMCP tools ────┘                                  │
+                                                   ├─> localStorage
+                                                   └─> presenter -> React + Motion
+                                                                          │
+                                                                          └─> Google / Apple Maps
 ```
 
-`Mission` is the only domain source of truth. React owns only view state such as selection and copy feedback. The WebMCP adapter validates external input and dispatches the same action union as the UI; it cannot mutate the mission directly.
-
-### State and session identity
-
-The prototype has no account or server session. On page load it reads one mission from the `sidequest:mission:v1` key in `localStorage`; every accepted human or agent mutation updates the in-memory store and persists that same mission. The data therefore survives reloads in the same browser profile and origin, while another browser, profile, device, or private window has its own independent plan.
-
-WebMCP tools are registered against the currently open document and close over its live store. A human edit in that page is immediately visible to the next `get_mission_state` call. Every write requires the latest `revision`; a stale write is rejected and the agent must read again before retrying. The copied JSON is explicitly only a snapshot for conversation context, never the authority for a later write.
-
-Already-open duplicate tabs do not live-sync in this P0. Each tab keeps its own in-memory snapshot and the last accepted write persists to `localStorage`; reload before switching editing between tabs. Cross-device, multi-user, and concurrent-tab identity would require a backend session or synchronization layer and are intentionally outside this hackathon build.
+`Mission` is the only domain source of truth. React owns only transient view state. Human controls and WebMCP tools dispatch the same action union through the same transition gate.
 
 Key files:
 
 - `src/domain/mission.ts` — schemas and action/result unions
-- `src/domain/mission-transition.ts` — invariants and pure transitions
-- `src/store.ts` — persistence, subscriptions, and accepted-mutation publishing
-- `src/webmcp.ts` — one catalog and the five imperative tool registrations
-- `src/mission-prompt.ts` — complete live mission snapshot for the ChatGPT handoff
+- `src/domain/mission-transition.ts` — pure transitions and invariants
+- `src/domain/seed.ts` — blank state, two Needs examples, and a test fixture
+- `src/store.ts` — persistence and subscriptions
+- `src/webmcp.ts` — the five Site Tool registrations
+- `src/mission-prompt.ts` — the Needs-only ChatGPT handoff
+- `src/map-links.ts` — Google and Apple Maps URL builders
 - `src/view-model.ts` — pure `Mission + ViewState -> MissionScreen` projection
-- `src/useMissionViewModel.ts` — React adapter from `ViewAction` to domain actions
-- `src/App.tsx` and `src/MissionWorkspace.tsx` — minimal renderer and Motion reorder boundary
-- `src/MissionMap.tsx` — Google Maps preview plus Google/Apple outbound links
+- `src/useMissionViewModel.ts` — React action adapter
+- `src/App.tsx` and `src/MissionWorkspace.tsx` — minimal UI and Motion reorder boundary
+
+### State and session identity
+
+There is no account or backend session. The app reads one mission from `sidequest:mission:v1` in `localStorage`. Each accepted human or agent mutation updates memory and persists the same mission. State survives reloads on the same origin and browser profile; another browser, device, private window, or profile has a separate plan.
+
+WebMCP tools close over the live store belonging to the open document. A human edit is visible to the next `get_mission_state`. Copied JSON is only a conversation snapshot; the agent must read the live revision before writing.
+
+Already-open duplicate tabs do not live-sync in this prototype. Reload before switching editing between tabs. Multi-device identity and collaboration require a backend and are outside this focused build.
 
 ## Run locally
 
@@ -105,9 +98,7 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL. A first visit starts with a blank plan, and subsequent changes persist in `localStorage`. Use **Load demo** to choose one of the three samples or **New plan** to return to a fresh board.
-
-The route view renders a Google Maps preview without adding a map library to the bundle. Set `VITE_GOOGLE_MAPS_EMBED_KEY` to use the official Google Maps Embed API endpoint; otherwise the preview uses Google's public embed URL. Clicking the preview opens the selected item in Google Maps; adjacent actions open that item in Apple Maps or the entire ordered plan in Google Maps.
+Open the printed local URL. Use **Load demo** for either sample brief or start typing directly in **Needs**.
 
 ## Verification
 
@@ -118,45 +109,45 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Or run every automated gate:
+Run every gate with:
 
 ```bash
 npm run check
 ```
 
-The tests cover domain invariants, stale writes, persistence recovery, exact tool registration, partial-registration cleanup, the full revision 7→12 sequence, React manual controls, secure source links, responsive browser rendering, and the 1,500-character tool-result budget.
+The browser tests cover the two-example menu, free-form and structured Needs editing, clipboard handoff, five-tool generation, map links, smooth whole-item reorder, desktop layout, and 390 px overflow.
 
-Visual baselines are committed at:
+Visual evidence:
 
-- `artifacts/sidequest-desktop.png`
-- `artifacts/sidequest-mobile.png`
+- `artifacts/sidequest-needs.png`
+- `artifacts/sidequest-needs-schedule.png`
+- `artifacts/sidequest-needs-schedule-mobile.png`
 
 ## Manual browser checks
 
-Automated tests use a native-shaped `document.modelContext.registerTool` harness. Before submission, repeat the following with the actual browser integration:
+Automated tests use a native-shaped `document.modelContext.registerTool` harness. Before submission:
 
-- [x] Host the production build on a public HTTPS URL.
-- [ ] Open it in ChatGPT's in-app browser with Site Tools support and run the demo prompt.
-- [ ] Open it in a Chrome build with WebMCP enabled and confirm all five tools are discoverable.
-- [ ] Confirm every tool result updates the visible board and persists after reload.
-- [ ] Confirm dinner remains locked at 18:30 and a stale revision is rejected cleanly.
-- [ ] Check the public source links, Google Maps preview, and Google/Apple Maps launch actions.
-- [x] Verify the deployed site at desktop and 390px mobile widths.
+- [x] Host a production build on a public HTTPS URL.
+- [ ] Deploy v0.2.0 after restoring Vercel authorization.
+- [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
+- [ ] Confirm all five tools are discoverable in a compatible Chrome build.
+- [ ] Confirm the generated proposal updates visibly and survives reload.
+- [ ] Confirm a stale revision is rejected and locked commitments survive regeneration.
+- [ ] Check per-item Google/Apple Maps and the complete Google Maps schedule.
+- [x] Verify the local build at desktop and 390 px widths.
 
 ## Security and privacy
 
-- Mission data stays in the browser; there is no backend, account, analytics, or custom LLM call.
-- Tool input is allowlisted through strict schemas; text containing HTML delimiters is rejected.
-- Source URLs must use HTTPS and render with `target="_blank"` plus `rel="noopener noreferrer"`.
-- Completed and skipped stops remain auditable but are excluded from the route.
-- Registration uses one abort signal so partial failure removes the full tool surface.
-- Vercel and Netlify configurations supply a CSP, permissions policy, MIME protection, referrer policy, and clickjacking protection.
+- Planning data stays in the browser; there is no backend, account, analytics, or custom LLM call.
+- Strict schemas allowlist tool input; text containing HTML delimiters is rejected.
+- Source URLs require HTTPS and open with `noopener noreferrer`.
+- Completed and skipped items remain auditable but are excluded from the map schedule.
+- One abort signal owns the complete tool registration lifecycle.
+- Hosting policies include CSP, permissions policy, MIME protection, referrer policy, and clickjacking protection.
 
 ## Limitations
 
-Sidequest is intentionally a focused hackathon prototype: one local plan, three optional sample missions, browser persistence, English UI, a Google Maps location preview, and no authentication or multi-user sync. It does not provide live GPS, live weather, turn-by-turn directions, reservations, automatic web research, or a custom chat interface. Google and Apple Maps require network access and open outside Sidequest for full map interaction.
-
-WebMCP remains progressive enhancement. Actual discovery in ChatGPT/Chrome, the demo video, and Devpost submission are manual release steps.
+Sidequest is a focused hackathon prototype: one local plan, two optional Needs examples, English UI, browser persistence, and outbound map links. It does not provide accounts, live tab sync, GPS tracking, reservations, turn-by-turn directions, or its own chat interface. ChatGPT performs research; Google and Apple Maps require network access.
 
 ## References
 

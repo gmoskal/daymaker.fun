@@ -1,60 +1,63 @@
 import type { DemoMissionId } from "./domain/seed"
+import type { EnergyLevel } from "./domain/mission"
 
 export const SIDEQUEST_URL = "https://sidequest-webmcp-eta.vercel.app"
 
 export const COPY = {
   addItem: "Add item",
   addItemHint: "Add item and press Enter",
-  addRequirement: "Add requirement",
-  addRequirementHint: "Add requirement and press Enter",
+  addRequirement: "Add need",
+  addRequirementHint: "Add need and press Enter",
   activityAriaLabel: "Activity log",
   activityEmpty: "No changes yet. Human and agent decisions will appear here.",
   activityTitle: "History",
-  agentHint: "Copy the complete board context, then paste it into ChatGPT.",
+  agentHint:
+    "Copy these needs into ChatGPT. The agent will research places and write its proposal back to this board through Site Tools.",
   boardTitle: "Board title",
   close: "Close",
   closeMenu: "Close menu",
-  constraintsTitle: "Operating constraints",
-  contextTitle: "Context",
-  copyPrompt: "Copy full context for ChatGPT",
-  copiedPrompt: "Full context copied",
+  constraintsTitle: "Must-haves",
+  contextTitle: "Needs",
+  copyPrompt: "Copy needs for ChatGPT",
+  copiedPrompt: "Needs copied",
   currentLocation: "Current position",
   currentTime: "Local time",
   deleteItem: "Delete item",
   deleteItemConfirm: "Delete this item?",
   done: "Mark done",
   editItemTitle: "Edit item title",
-  editRequirement: "Edit requirement",
-  energy: "Group energy",
+  editRequirement: "Edit need",
+  energy: "Preferred pace",
   emptyPlanHint:
-    "Start with + or load the demo. Drag any unlocked item to reorder it; use the chevron for done, skip, lock, or delete. Route opens the whole plan in Google Maps. ChatGPT can read and update the same plan through Site Tools.",
-  freshInstruction:
-    "Create a genuinely new plan. Ask me only for the goal, current location, available time, energy, and hard constraints missing from my message. Once you have enough information, call update_day_context with replacePlan: true, a concise title, and the correct IANA timezone. Then research reliable options when needed, add practical stops, and order them on the Sidequest board.",
-  googleMapsPreview: "Google Maps preview",
+    "This proposal is generated from Needs. Copy your needs to ChatGPT to create it. Drag any unlocked item to reorder it. Open the complete proposal in Google Maps or use the map links on each item.",
   hideItemActions: "Hide item actions",
   loadDemo: "Load demo",
   loadDemoConfirm: "Replace the current plan with this sample?",
   lock: "Lock",
   locked: "Locked",
-  mapCaption: "Preview one item here, or open the whole ordered plan in Google Maps.",
-  mapTitle: "Route",
   missionViews: "Mission views",
   newPlan: "New plan",
-  newRequirement: "New requirement",
-  noMapItems: "No locations to show.",
+  newRequirement: "New need",
+  fixed: "Fixed",
+  flexible: "Flexible",
+  removeNeed: "Remove",
   openMenu: "Open menu",
   openInAppleMaps: "Open in Apple Maps",
   openInGoogleMaps: "Open in Google Maps",
-  openPlanInGoogleMaps: "Open full plan in Google Maps",
+  openPlanInGoogleMaps: "Open proposed schedule in Google Maps",
+  planningBrief: "What you need",
+  planningBriefPlaceholder:
+    "Example: I land in Palermo tomorrow morning. Find a rental car, great breakfast and coffee, one nearby sight, parking, and get me to my hotel by 16:00.",
+  planningInstruction:
+    "Do this on every handoff: turn the free-form brief into the editable Needs list and call update_day_context with those needs, the brief, and replacePlan: true. Preserve locked commitments and mark non-negotiable needs as fixed. Then research suitable places and generate a Proposed schedule on the Sidequest board. Existing unlocked schedule items are replaceable suggestions, not requirements.",
   promptOpen:
     "Open {url} and use its Site Tools. Make the requested changes on the Sidequest board, not only in chat.",
   promptProtocol:
     "Call get_mission_state immediately before writing. The JSON below is a snapshot from copy time; if its revision differs from the live tool result, use the live state. After each write, use the returned revision for the next write.",
-  promptSnapshot: "Complete Sidequest mission snapshot at copy time:",
-  release: "v0.1.1 · updated 3 Sep 2026",
+  promptSnapshot: "Needs snapshot at copy time:",
+  release: "v0.2.0 · updated 3 Sep 2026",
   actionsFor: "Actions for",
-  planTitle: "Plan",
-  routeItems: "Plan locations",
+  planTitle: "Proposed schedule",
   scheduleTitle: "Schedule",
   samplePlans: "Sample plans",
   showItemActions: "Show item actions",
@@ -64,40 +67,31 @@ export const COPY = {
   unlock: "Unlock",
   unlockToEdit: "Unlock to edit",
   view: "View",
-  viewOnMap: "View on map",
   webMcpChecking: "Checking site tools…",
   webMcpConnected: "Site tools connected",
   webMcpError: "Site tools could not connect · manual controls remain available",
   webMcpUnavailable: "Manual mode · open in ChatGPT or enable Chrome WebMCP",
 } as const
 
+export const PACE_LABELS = {
+  high: "Full",
+  low: "Easy",
+  medium: "Balanced",
+} as const satisfies Record<EnergyLevel, string>
+
 export const DEMO_OPTIONS = [
   {
-    description: "A low-energy coastal plan must change without moving dinner.",
-    id: "baska-voda-demo",
-    label: "Baška Voda · plan disruption",
+    description: "Rental car, breakfast, one sight, parking, and a fixed 16:00 check-in.",
+    id: "palermo-arrival-demo",
+    label: "Palermo arrival",
   },
   {
-    description: "Five errands with opening windows and a fixed evening commitment.",
-    id: "san-francisco-demo",
-    label: "San Francisco · errands",
-  },
-  {
-    description: "Specialty coffee, a practical swim and one timed museum ticket.",
-    id: "barcelona-demo",
-    label: "Barcelona · coffee & swim",
+    description: "A 20 km shaded gravel ride, lunch, snorkeling, and parking.",
+    id: "croatia-gravel-demo",
+    label: "South Croatia gravel day",
   },
 ] as const satisfies ReadonlyArray<{
   description: string
   id: DemoMissionId
   label: string
 }>
-
-export const DEMO_INSTRUCTIONS = {
-  "baska-voda-demo":
-    "Update this existing plan with replacePlan: false. The gravel ride is complete, the group is low on energy, and the Biokovo hike is no longer a good fit. Use reliable sources to find a relaxed swim stop and a fuel stop within the current constraints. Keep the 18:30 dinner unchanged.",
-  "san-francisco-demo":
-    "Update this existing plan with replacePlan: false. The camera pickup moved to 16:00 and my energy is now low. Reorder the remaining errands around their real opening windows, add one quiet lunch stop if it fits, and keep the 19:00 dinner unchanged.",
-  "barcelona-demo":
-    "Update this existing plan with replacePlan: false. We started late and want to keep only one excellent specialty coffee, a safe serviced beach swim, and the locked 16:00 Picasso ticket. Check reliable current sources and simplify the route.",
-} as const satisfies Record<DemoMissionId, string>

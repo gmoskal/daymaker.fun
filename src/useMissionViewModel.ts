@@ -23,6 +23,7 @@ const hasPlanContent = (store: MissionStore) => {
   const mission = store.getSnapshot()
   return (
     mission.stops.length > 0 ||
+    mission.context.brief !== "" ||
     mission.context.constraints.length > 0 ||
     mission.events.length > 0 ||
     mission.title !== BLANK_MISSION_TITLE
@@ -44,6 +45,8 @@ export const useMissionViewModel = ({
     missionPanelForPath(window.location.pathname),
   )
   const [webMcp, setWebMcp] = useState<WebMcpState>({ type: "checking" })
+
+  useEffect(() => setCopied(false), [mission.revision])
 
   useEffect(() => {
     let active = true
@@ -84,9 +87,6 @@ export const useMissionViewModel = ({
         case "SelectPanel":
           navigate(action.panel)
           return
-        case "SelectStop":
-          setSelectedStopId(action.stopId)
-          return
         case "ToggleStopActions":
           setSelectedStopId((selected) =>
             selected === action.stopId ? null : action.stopId,
@@ -107,10 +107,6 @@ export const useMissionViewModel = ({
             }).type === "applied"
           )
             setSelectedStopId(null)
-          return
-        case "ShowStopOnMap":
-          setSelectedStopId(action.stopId)
-          navigate("route")
           return
         case "SetStopStatus":
           if (
@@ -187,6 +183,43 @@ export const useMissionViewModel = ({
             },
           })
           return
+        case "SetConstraintFixed":
+          store.dispatch({
+            type: "SetConstraintFixed",
+            value: {
+              actor: "human",
+              input: {
+                constraintId: action.constraintId,
+                expectedRevision: store.getSnapshot().revision,
+                fixed: action.fixed,
+              },
+            },
+          })
+          return
+        case "RemoveConstraint":
+          store.dispatch({
+            type: "RemoveConstraint",
+            value: {
+              actor: "human",
+              input: {
+                constraintId: action.constraintId,
+                expectedRevision: store.getSnapshot().revision,
+              },
+            },
+          })
+          return
+        case "SetBrief":
+          store.dispatch({
+            type: "SetBrief",
+            value: {
+              actor: "human",
+              input: {
+                brief: action.brief,
+                expectedRevision: store.getSnapshot().revision,
+              },
+            },
+          })
+          return
         case "SetTitle":
           store.dispatch({
             type: "SetTitle",
@@ -247,13 +280,13 @@ export const useMissionViewModel = ({
         case "NewPlan":
           store.newPlan()
           setSelectedStopId(null)
-          navigate("plan", true)
+          navigate("context", true)
           return
         case "LoadDemo":
           if (hasPlanContent(store) && !window.confirm(COPY.loadDemoConfirm)) return
           store.loadDemo(action.demoId)
           setSelectedStopId(null)
-          navigate("plan", true)
+          navigate("context", true)
           return
       }
     },

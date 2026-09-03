@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: full-context copy and agent-created plans complete; Git integration permission pending
+> Status: Needs-first planning flow complete; production redeploy authorization pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -30,18 +30,19 @@
 - [x] 9. Clarify schedule hierarchy, adding, and item actions
 - [x] 10. Add a typed sample-plan catalog and loader menu
 - [x] 11. Let the agent create titled plans from complete copied context
+- [x] 12. Make Needs the human input and Proposed schedule the agent output
 
 ## Blocking decisions accepted in this plan
 
 - One `Mission` aggregate and one external `MissionStore` are the only source of domain truth.
-- A small direct `MissionAction` discriminated union is sufficient; event sourcing, a backend, custom chat, and additional state libraries are out of scope. Three stable workspace URLs use the native History API without a router dependency.
+- A small direct `MissionAction` discriminated union is sufficient; event sourcing, a backend, custom chat, and additional state libraries are out of scope. Two stable workspace URLs use the native History API without a router dependency.
 - Zod strict schemas are the runtime boundary and the source for inferred input types plus WebMCP JSON Schema.
 - View state (selected stop, copy feedback, WebMCP availability) remains separate from mission state.
 - The page registers tools once from the top-level composition root and passes `{ signal }` as the current second argument to `registerTool`.
 - The usability revision uses strict Bauhaus minimalism: a white canvas, black geometric typography, one high-contrast red accent, restrained date context, readable schedule times, generous negative space, one active workspace panel, and at most one expanded stop. Decorative shadows, gradients, neumorphic surfaces, and container borders are prohibited.
 - Motion for React is the interaction adapter for draggable operational lists. The mission store remains authoritative; drag previews are renderer-local and commit one declared action at drag end.
-- Schedule order and constraint order are editable. People explicitly control stop locks; agents must respect them. The route is derived from schedule order, and history remains an immutable audit instead of becoming a second editable list.
-- The map is a Google Maps location preview with explicit Google Maps and Apple Maps launch actions, never a straight-line route or turn-by-turn navigation claim.
+- Schedule order and constraint order are editable. People explicitly control stop locks; agents must respect them. History remains an immutable audit instead of becoming a second editable list.
+- Map access is derived from the Proposed schedule: each located item has Google Maps and Apple Maps launch actions, and the complete schedule has one Google Maps directions link. The app never claims to provide turn-by-turn navigation.
 
 ## Recommended implementation sequence
 
@@ -519,6 +520,110 @@ Implementation result:
   and 5/5 Chromium tests. The inspected 390px evidence is
   `artifacts/sidequest-full-context-copy.png`; it verifies the long copy label,
   modal-free reset, and unobstructed borderless `v0.1.1` release marker.
+
+### 12 [x] Make Needs the human input and Proposed schedule the agent output
+
+Description: Reframe Sidequest around one clear contract: the person edits a
+planning brief and must-haves in Needs, while the agent creates a Proposed
+schedule and researches its places. Remove Route as a workspace; maps remain
+available from every generated schedule item and for the complete schedule.
+
+Acceptance criteria:
+
+- AC-1: the application has exactly two ordered workspace tabs: `Needs` first at
+  `/needs`, then `Proposed schedule` at `/schedule`; `/` canonicalizes to Needs
+  and no Route tab or route workspace remains.
+- AC-2: Needs exposes one editable, persisted planning brief. Existing version-1
+  localStorage missions without a brief load safely with an empty brief.
+- AC-3: `Group energy / Medium` is absent. The same typed intensity is presented
+  as `Preferred pace / Balanced`, with Easy and Full mappings for low and high.
+- AC-4: copied text contains the current brief, situation, preferred pace,
+  active must-haves, identity/revision, and locked commitments. It excludes
+  unlocked proposed stops and events, and explicitly asks the agent to research
+  and generate or replace the Proposed schedule.
+- AC-5: `update_day_context` accepts the brief through the existing strict schema
+  and still leaves the public catalog at exactly five tools.
+- AC-6: every proposed schedule item with a real location exposes explicit
+  Google Maps and Apple Maps links in its expanded content. The schedule also
+  retains one whole-schedule Google Maps action; maps are never a third tab.
+- AC-7: all new visible and clipboard copy is English and comes from
+  `src/copy.ts`; English remains the intentional single P0 locale.
+- AC-8: desktop and 390px browser evidence shows only the two tabs, a legible
+  borderless brief editor, map links without overlap, and no new cards, shadows,
+  gradients, decorative borders, or horizontal overflow.
+- AC-9: the planning brief accepts ordinary prose and shows a concrete example;
+  the structured must-have list is optional input that can be added, renamed,
+  crossed out, removed, reordered, or marked `Fixed` in the UI.
+- AC-10: every copied handoff tells the agent to parse the free-form brief into
+  the editable Needs list, write those Needs through `update_day_context`, then
+  replace the unlocked Proposed schedule. This happens on every handoff.
+- AC-11: the sample catalog contains only the supplied Palermo arrival and South
+  Croatia gravel-day briefs. Samples contain Needs, not prebuilt schedules.
+- AC-12: replacing a proposal removes prior unlocked suggestions but preserves
+  already locked commitments.
+
+Tests:
+
+- AC-1/3 -> unit: `view-model.test.ts > presents Needs first and a Proposed
+  schedule second`; integration: `App.test.tsx > starts in Needs with two tabs`.
+- AC-2/5 -> domain: `mission.test.ts > edits the planning brief through the
+  transition gate`; store: `store.test.ts > migrates a stored mission without a
+  brief`; adapter: the existing five-tool WebMCP catalog test plus updated killer
+  flow.
+- AC-4 -> unit: `mission-prompt.test.ts > copies needs without proposed stops`;
+  integration: `App.test.tsx > copies editable Needs for the agent`.
+- AC-6 -> unit: `map-links.test.ts > creates item and complete schedule links`;
+  integration: `App.test.tsx > exposes maps from every located schedule item`.
+- AC-7 -> `copy.test.ts > keeps Needs and Proposed schedule terminology`;
+  locale generation is skipped because this repository intentionally has one
+  English copy object and no localization generator.
+- AC-8 -> browser: `sidequest.spec.ts > edits Needs and opens the generated
+  schedule`; evidence: `artifacts/sidequest-needs-schedule.png`.
+- AC-9/10 -> domain: fixed/remove need transition tests; unit:
+  `mission-prompt.test.ts > asks the agent to structure Needs and regenerate`;
+  integration: `App.test.tsx > edits all forms of Needs`.
+- AC-11 -> `store.test.ts > loads only the two Needs examples`.
+- AC-12 -> `mission.test.ts > replaces only unlocked proposed items`.
+
+Sources/References: `src/domain/mission.ts`, `src/domain/mission-transition.ts`,
+`src/domain/seed.ts`, `src/store.ts`, `src/copy.ts`, `src/mission-prompt.ts`,
+`src/view-model.ts`, `src/useMissionViewModel.ts`, `src/MissionWorkspace.tsx`,
+new `src/map-links.ts`, `src/App.tsx`, unit/integration/E2E tests.
+
+Before implementation gate:
+
+- [x] The current mission schema, seed catalog, persistence loader, prompt
+  projection, route workspace, map component, navigation config, store adapter,
+  responsive CSS, and tests were inspected at `a3a2346`.
+- [x] Source of truth decision: `Mission.context.brief` owns the human planning
+  brief; the clipboard owns no duplicate schedule data and serializes a derived
+  planning-input projection.
+- [x] Navigation decision: retain internal panel ID `plan` for minimal churn, but
+  expose it only as `Proposed schedule` at `/schedule`; Needs is the fallback.
+- [x] Map decision: extract pure URL builders and render links inside schedule
+  items; remove the Route workspace rather than maintain parallel navigation.
+- [x] Named regression tests written and observed red before production edits.
+
+Implementation result:
+
+- Behavioral red: the focused Needs, prompt, sample-catalog, fixed-need, and
+  replacement tests failed on the intended missing behavior before their
+  production slices were added.
+- `Mission.context.brief` and structured fixed/flexible Needs now persist in the
+  same versioned aggregate. Legacy missions default the new fields safely.
+- Every clipboard handoff contains the current prose and active Needs, tells the
+  agent to structure them first, then replace unlocked suggestions and generate
+  a researched Proposed schedule while preserving locks.
+- The demo catalog now contains exactly the Palermo and South Croatia prose
+  examples supplied for this flow, both with an empty schedule.
+- The Route workspace and embedded map were removed. Each located item exposes
+  Google and Apple Maps; the complete proposal exposes Google Maps directions.
+- Motion still reorders from the complete unlocked row. Expanding a row remounts
+  the layout projection so details never overlap and typography does not scale.
+- Green: 66/66 unit and integration tests, TypeScript/Vite production build,
+  and 4/4 Chromium flows pass. Desktop and 390 px evidence is stored in
+  `artifacts/sidequest-needs.png`, `artifacts/sidequest-needs-schedule.png`, and
+  `artifacts/sidequest-needs-schedule-mobile.png`.
 
 ## Risks and dependencies
 

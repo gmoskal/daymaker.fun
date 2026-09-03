@@ -1,9 +1,9 @@
-# Bug raporty — indeks
+# Bug reports
 
-Generowany z nagłówków raportów — nie edytuj ręcznie. Regeneracja: patrz skill `bug-report` (sekcja Index).
+Historical UI regressions captured during the Sidequest redesign.
 
-| Raport | Status | Klasyfikacja |
-|---|---|---|
-| [Bug 001 — Tytuł nie otwiera elementu i blokuje drag](./001-title-expand-drag.md) | zweryfikowany | klient-lokalny |
-| [Bug 002 — Zniekształcenie fontu przy rozwijaniu](./002-font-distortion-on-expand.md) | zweryfikowany | klient-lokalny |
-| [Bug 003 — Oś timeline’u koliduje z treścią](./003-timeline-axis-layout.md) | zweryfikowany | klient-lokalny |
+| Report | Status | Scope |
+| --- | --- | --- |
+| [Bug 001 — Title did not expand the item and blocked drag](./001-title-expand-drag.md) | verified | local client |
+| [Bug 002 — Font distortion while expanding](./002-font-distortion-on-expand.md) | verified | local client |
+| [Bug 003 — Timeline axis collided with content](./003-timeline-axis-layout.md) | verified | local client |

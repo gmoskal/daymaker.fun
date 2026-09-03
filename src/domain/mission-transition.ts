@@ -5,10 +5,13 @@ import {
   PERSONAL_MISSION_ID,
   ReorderMissionConstraintsInputSchema,
   ReorderMissionStopsInputSchema,
+  RemoveMissionConstraintInputSchema,
   RemoveMissionStopInputSchema,
   RenameMissionConstraintInputSchema,
   RenameMissionStopInputSchema,
   SetMissionStopLockInputSchema,
+  SetMissionBriefInputSchema,
+  SetMissionConstraintFixedInputSchema,
   SetMissionTitleInputSchema,
   ToggleMissionConstraintInputSchema,
   UpdateDayContextInputSchema,
@@ -123,7 +126,7 @@ const applyContext = ({
         date: context.currentTime.slice(0, 10),
         events: [],
         id: PERSONAL_MISSION_ID,
-        stops: [],
+        stops: mission.stops.filter((stop) => stop.locked),
       }
     : mission
   return commit({
@@ -138,9 +141,10 @@ const applyContext = ({
     patch: {
       context: {
         ...context,
-        constraints: constraints.map((label, index) => ({
-          id: `constraint-${slug(label)}-${index + 1}`,
-          label,
+        constraints: constraints.map((need, index) => ({
+          fixed: need.fixed,
+          id: `constraint-${slug(need.label)}-${index + 1}`,
+          label: need.label,
           status: "active",
         })),
       },
@@ -353,11 +357,11 @@ const applyAddConstraint = ({
       "FORBIDDEN_ACTION",
       "Only a person can edit the requirement checklist directly.",
     )
-  if (mission.context.constraints.length >= 6)
+  if (mission.context.constraints.length >= 10)
     return rejected(
       mission,
       "LIMIT_REACHED",
-      "A mission can contain at most 6 requirements.",
+      "A mission can contain at most 10 needs.",
     )
   if (
     mission.context.constraints.some(
@@ -368,6 +372,7 @@ const applyAddConstraint = ({
     return rejected(mission, "INVALID_INPUT", "That requirement already exists.")
 
   const added = {
+    fixed: false,
     id: constraintId(mission, parsed.data.label, id()),
     label: parsed.data.label,
     status: "active" as const,
@@ -385,6 +390,104 @@ const applyAddConstraint = ({
       context: {
         ...mission.context,
         constraints: [...mission.context.constraints, added],
+      },
+    },
+  })
+}
+
+const applyConstraintFixed = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<
+  Extract<MissionAction, { type: "SetConstraintFixed" }>
+>): MissionMutation => {
+  const parsed = SetMissionConstraintFixedInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The fixed need update is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can mark a need as fixed directly.",
+    )
+  const constraint = mission.context.constraints.find(
+    (item) => item.id === parsed.data.constraintId,
+  )
+  if (constraint === undefined)
+    return rejected(
+      mission,
+      "CONSTRAINT_NOT_FOUND",
+      "That need is not in this mission.",
+    )
+
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      summary: `${constraint.label} marked ${parsed.data.fixed ? "fixed" : "flexible"}`,
+      type: "constraints_updated",
+    },
+    id,
+    mission,
+    patch: {
+      context: {
+        ...mission.context,
+        constraints: mission.context.constraints.map((item) =>
+          item.id === constraint.id
+            ? { ...item, fixed: parsed.data.fixed }
+            : item,
+        ),
+      },
+    },
+  })
+}
+
+const applyRemoveConstraint = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<Extract<MissionAction, { type: "RemoveConstraint" }>>): MissionMutation => {
+  const parsed = RemoveMissionConstraintInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The need removal is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can remove a need directly.",
+    )
+  const constraint = mission.context.constraints.find(
+    (item) => item.id === parsed.data.constraintId,
+  )
+  if (constraint === undefined)
+    return rejected(
+      mission,
+      "CONSTRAINT_NOT_FOUND",
+      "That need is not in this mission.",
+    )
+
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      summary: `Removed need — ${constraint.label}`,
+      type: "constraints_updated",
+    },
+    id,
+    mission,
+    patch: {
+      context: {
+        ...mission.context,
+        constraints: mission.context.constraints.filter(
+          (item) => item.id !== constraint.id,
+        ),
       },
     },
   })
@@ -565,6 +668,39 @@ const applyTitle = ({
     id,
     mission,
     patch: { title: parsed.data.title },
+  })
+}
+
+const applyBrief = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<Extract<MissionAction, { type: "SetBrief" }>>): MissionMutation => {
+  const parsed = SetMissionBriefInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The planning brief is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can edit the planning brief directly.",
+    )
+
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      summary: "Updated planning needs",
+      type: "context_updated",
+    },
+    id,
+    mission,
+    patch: {
+      context: { ...mission.context, brief: parsed.data.brief },
+    },
   })
 }
 
@@ -779,10 +915,16 @@ export const applyMissionAction = ({
       return applyToggleConstraint({ action, id, mission })
     case "ReorderConstraints":
       return applyReorderConstraints({ action, id, mission })
+    case "SetConstraintFixed":
+      return applyConstraintFixed({ action, id, mission })
+    case "RemoveConstraint":
+      return applyRemoveConstraint({ action, id, mission })
     case "SetStopLock":
       return applyStopLock({ action, id, mission })
     case "SetTitle":
       return applyTitle({ action, id, mission })
+    case "SetBrief":
+      return applyBrief({ action, id, mission })
     case "AddItem":
       return applyAddItem({ action, id, mission })
     case "RenameStop":

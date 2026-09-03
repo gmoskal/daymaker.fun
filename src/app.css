@@ -26,7 +26,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -38,6 +39,7 @@ a {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
+textarea:focus-visible,
 [contenteditable]:focus-visible {
   outline: 0;
   text-decoration: underline;
@@ -431,6 +433,13 @@ input:focus-visible,
   text-underline-offset: 5px;
 }
 
+.inline-title-editor {
+  min-height: 1.25em;
+  field-sizing: content;
+  overflow: hidden;
+  resize: none;
+}
+
 .add-trigger {
   width: 44px;
   height: 44px;
@@ -476,6 +485,44 @@ input:focus-visible,
   display: grid;
   grid-template-columns: 0.7fr 1.8fr 0.8fr;
   gap: 22px;
+}
+
+.needs-brief {
+  max-width: 520px;
+  margin-bottom: 48px;
+  display: grid;
+  gap: 12px;
+}
+
+.needs-brief > span {
+  color: #b2b2b6;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.needs-brief textarea {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #555559;
+  font-size: 1rem;
+  line-height: 1.55;
+  outline: 0;
+  resize: none;
+}
+
+.needs-brief textarea::placeholder {
+  color: #aaaab0;
+}
+
+.needs-brief textarea:focus {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
 }
 
 .context-facts dt {
@@ -539,8 +586,35 @@ input:focus-visible,
 }
 
 .constraint-list .inline-editor {
+  flex: 1;
   color: #5e5e62;
   font-size: 0.88rem;
+}
+
+.need-fixed-control,
+.need-remove-control {
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #a0a0a5;
+  cursor: pointer;
+  font-size: 0.64rem;
+}
+
+.need-fixed-control {
+  min-width: 48px;
+  text-align: right;
+}
+
+.need-fixed-control[aria-pressed="true"] {
+  color: var(--accent-deep);
+}
+
+.need-remove-control {
+  width: 32px;
+  flex: 0 0 32px;
+  font-size: 1rem;
 }
 
 .constraint-list li[data-status="crossed"] .check-control > span {
@@ -564,34 +638,16 @@ input:focus-visible,
   line-height: 1.5;
 }
 
-.google-map-preview {
-  position: relative;
-  width: 100%;
-  height: 310px;
-}
-
-.google-map-preview iframe {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  pointer-events: none;
-}
-
-.map-preview-link {
-  position: absolute;
-  inset: 0;
-  cursor: pointer;
-}
-
-.map-provider-actions {
-  margin: 20px 0 38px;
+.item-map-links {
+  margin-top: 12px;
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 18px;
 }
 
-.map-provider-actions a {
-  min-height: 40px;
+.item-map-links a,
+.schedule-map-link {
+  min-height: 32px;
   display: inline-flex;
   align-items: center;
   color: #68686d;
@@ -600,40 +656,8 @@ input:focus-visible,
   text-decoration: none;
 }
 
-.map-route-list {
-  display: grid;
-  gap: 12px;
-}
-
-.map-route-list button {
-  min-height: 42px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  border: 0;
-  background: transparent;
-  color: #8c8c91;
-  cursor: pointer;
-  font-size: 0.78rem;
-  text-align: left;
-}
-
-.map-route-list button.is-selected {
-  color: var(--ink);
-}
-
-.map-route-list button span {
-  width: 24px;
-  color: var(--accent);
-  font-size: 0.68rem;
-  text-align: center;
-}
-
-.map-caption,
-.empty-log {
-  color: #aaaab0;
-  font-size: 0.7rem;
+.schedule-map-link {
+  margin: 24px 0 80px 96px;
 }
 
 .empty-log {
@@ -673,8 +697,8 @@ input:focus-visible,
 
 .side-tabs a {
   width: 32px;
-  height: 72px;
-  padding: 0;
+  min-height: 82px;
+  padding: 12px 0;
   display: grid;
   place-items: center;
   border: 0;
@@ -807,6 +831,11 @@ input:focus-visible,
     margin-left: 86px;
   }
 
+  .schedule-map-link {
+    max-width: 108px;
+    margin-left: 86px;
+  }
+
   .detail-actions,
   .stop-actions {
     gap: 14px;
@@ -833,7 +862,7 @@ input:focus-visible,
 
   .side-tabs a {
     width: 32px;
-    height: 68px;
+    min-height: 80px;
     font-size: 0.62rem;
   }
 

@@ -28,6 +28,11 @@ export const EVENT_TYPES = [
 export const PERSONAL_MISSION_ID = "personal-plan"
 
 const htmlPattern = /[<>]/
+const briefText = z
+  .string()
+  .trim()
+  .max(600)
+  .refine((value) => !htmlPattern.test(value), "HTML is not allowed")
 const text = (maxLength: number) =>
   z
     .string()
@@ -53,12 +58,19 @@ const httpsUrl = z
   .url()
   .refine((value) => new URL(value).protocol === "https:", "Use an HTTPS URL")
   .describe("Public HTTPS source URL.")
-const constraintTextList = z
-  .array(text(80))
-  .max(6)
-  .refine((values) => new Set(values).size === values.length, {
-    message: "Constraints must be unique",
-  })
+const NeedInputSchema = z.strictObject({
+  fixed: z.boolean().describe("True when the need cannot be traded off."),
+  label: text(80).describe("One concise planning need."),
+})
+const needInputList = z
+  .array(NeedInputSchema)
+  .max(10)
+  .refine(
+    (values) =>
+      new Set(values.map((value) => value.label.toLocaleLowerCase())).size ===
+      values.length,
+    { message: "Needs must be unique" },
+  )
 
 const identifier = (value: string) =>
   value
@@ -69,6 +81,7 @@ const identifier = (value: string) =>
     .replace(/(^-|-$)/g, "")
 
 export const MissionConstraintSchema = z.strictObject({
+  fixed: z.boolean().default(false),
   id: text(80),
   label: text(80),
   status: z.enum(CONSTRAINT_STATUSES),
@@ -77,6 +90,7 @@ export const MissionConstraintSchema = z.strictObject({
 const storedConstraintSchema = z.union([
   MissionConstraintSchema,
   text(80).transform((label) => ({
+    fixed: false,
     id: `constraint-${identifier(label)}`,
     label,
     status: "active" as const,
@@ -85,7 +99,7 @@ const storedConstraintSchema = z.union([
 
 const missionConstraintList = z
   .array(storedConstraintSchema)
-  .max(6)
+  .max(10)
   .refine((values) => new Set(values.map((value) => value.id)).size === values.length, {
     message: "Constraint IDs must be unique",
   })
@@ -124,6 +138,7 @@ export const MissionStopSchema = z.strictObject({
 })
 
 export const DayContextSchema = z.strictObject({
+  brief: briefText.default(""),
   constraints: missionConstraintList,
   currentLocation: GeoPointSchema,
   currentTime: dateTime,
@@ -159,12 +174,23 @@ const ExpectedRevisionSchema = z.strictObject({
 })
 
 export const UpdateDayContextInputSchema = ExpectedRevisionSchema.extend({
-  constraints: constraintTextList.describe("Current limits the new plan must respect."),
+  brief: briefText.describe(
+    "What the person needs the proposed schedule to accomplish.",
+  ),
+  constraints: needInputList.describe(
+    "Editable planning needs parsed from the person's brief.",
+  ),
   currentLocation: GeoPointSchema.describe("Where the group is now."),
   currentTime: dateTime,
-  energy: z.enum(ENERGY_LEVELS).describe("Current group energy."),
+  energy: z
+    .enum(ENERGY_LEVELS)
+    .describe("Desired pace: low is easy, medium is balanced, high is full."),
   reason: text(160).describe("Why the context changed."),
-  replacePlan: z.boolean().describe("True starts a new empty plan; false updates this plan."),
+  replacePlan: z
+    .boolean()
+    .describe(
+      "True replaces unlocked suggestions but preserves locks; false updates in place.",
+    ),
   timezone: timeZone,
   title: text(80).describe("Concise user-facing plan title."),
 })
@@ -216,7 +242,16 @@ export const ToggleMissionConstraintInputSchema = ExpectedRevisionSchema.extend(
 })
 
 export const ReorderMissionConstraintsInputSchema = ExpectedRevisionSchema.extend({
-  orderedConstraintIds: z.array(text(80)).min(1).max(6),
+  orderedConstraintIds: z.array(text(80)).min(1).max(10),
+})
+
+export const SetMissionConstraintFixedInputSchema = ExpectedRevisionSchema.extend({
+  constraintId: text(80),
+  fixed: z.boolean(),
+})
+
+export const RemoveMissionConstraintInputSchema = ExpectedRevisionSchema.extend({
+  constraintId: text(80),
 })
 
 export const SetMissionStopLockInputSchema = ExpectedRevisionSchema.extend({
@@ -226,6 +261,10 @@ export const SetMissionStopLockInputSchema = ExpectedRevisionSchema.extend({
 
 export const SetMissionTitleInputSchema = ExpectedRevisionSchema.extend({
   title: text(80),
+})
+
+export const SetMissionBriefInputSchema = ExpectedRevisionSchema.extend({
+  brief: briefText,
 })
 
 export const AddBoardItemInputSchema = ExpectedRevisionSchema.extend({
@@ -249,6 +288,7 @@ export const RenameMissionConstraintInputSchema = ExpectedRevisionSchema.extend(
 export type Mission = z.infer<typeof MissionSchema>
 export type MissionStop = z.infer<typeof MissionStopSchema>
 export type MissionConstraint = z.infer<typeof MissionConstraintSchema>
+export type EnergyLevel = (typeof ENERGY_LEVELS)[number]
 export type Actor = z.infer<typeof MissionEventSchema>["actor"]
 export type UpdateDayContextInput = z.infer<
   typeof UpdateDayContextInputSchema
@@ -269,10 +309,17 @@ export type ToggleMissionConstraintInput = z.infer<
 export type ReorderMissionConstraintsInput = z.infer<
   typeof ReorderMissionConstraintsInputSchema
 >
+export type SetMissionConstraintFixedInput = z.infer<
+  typeof SetMissionConstraintFixedInputSchema
+>
+export type RemoveMissionConstraintInput = z.infer<
+  typeof RemoveMissionConstraintInputSchema
+>
 export type SetMissionStopLockInput = z.infer<
   typeof SetMissionStopLockInputSchema
 >
 export type SetMissionTitleInput = z.infer<typeof SetMissionTitleInputSchema>
+export type SetMissionBriefInput = z.infer<typeof SetMissionBriefInputSchema>
 export type AddBoardItemInput = z.infer<typeof AddBoardItemInputSchema>
 export type RenameMissionStopInput = z.infer<
   typeof RenameMissionStopInputSchema
@@ -291,6 +338,7 @@ type ActionValue<TInput> = {
 
 export type MissionAction =
   | { type: "UpdateContext"; value: ActionValue<UpdateDayContextInput> }
+  | { type: "SetBrief"; value: ActionValue<SetMissionBriefInput> }
   | { type: "UpdateStop"; value: ActionValue<UpdateMissionStopInput> }
   | { type: "AddStop"; value: ActionValue<AddMissionStopInput> }
   | { type: "ReorderStops"; value: ActionValue<ReorderMissionStopsInput> }
@@ -299,6 +347,14 @@ export type MissionAction =
   | {
       type: "ReorderConstraints"
       value: ActionValue<ReorderMissionConstraintsInput>
+    }
+  | {
+      type: "SetConstraintFixed"
+      value: ActionValue<SetMissionConstraintFixedInput>
+    }
+  | {
+      type: "RemoveConstraint"
+      value: ActionValue<RemoveMissionConstraintInput>
     }
   | { type: "SetStopLock"; value: ActionValue<SetMissionStopLockInput> }
   | { type: "SetTitle"; value: ActionValue<SetMissionTitleInput> }

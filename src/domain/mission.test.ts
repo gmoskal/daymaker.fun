@@ -51,7 +51,8 @@ const replacementAction = (
   value: {
     actor: "agent",
     input: {
-      constraints: ["finish before 18:00"],
+      brief: "Plan a quiet Warsaw afternoon.",
+      constraints: [{ fixed: true, label: "finish before 18:00" }],
       currentLocation: {
         label: "Warsaw",
         lat: 52.2297,
@@ -83,8 +84,14 @@ describe("mission", () => {
     ).toMatchObject({ status: "completed" })
   })
 
-  it("starts a titled replacement plan atomically", () => {
-    const value = expectApplied(apply(replacementAction())).mission
+  it("replaces only unlocked proposed items", () => {
+    const value = expectApplied(
+      apply(
+        replacementAction({
+          constraints: [{ fixed: true, label: "finish before 18:00" }],
+        }),
+      ),
+    ).mission
 
     expect(value).toMatchObject({
       date: "2026-09-03",
@@ -92,12 +99,86 @@ describe("mission", () => {
       revision: 7,
       title: "Quiet Warsaw afternoon",
     })
-    expect(value.stops).toEqual([])
+    expect(value.context.constraints).toContainEqual({
+      fixed: true,
+      id: "constraint-finish-before-18-00-1",
+      label: "finish before 18:00",
+      status: "active",
+    })
+    expect(value.stops).toEqual([
+      expect.objectContaining({ id: "dinner", locked: true }),
+    ])
     expect(value.events).toHaveLength(1)
     expect(value.events[0]).toMatchObject({
       actor: "agent",
       type: "context_updated",
     })
+  })
+
+  it("edits the planning brief through the transition gate", () => {
+    const result = apply({
+      type: "SetBrief",
+      value: {
+        actor: "human",
+        input: {
+          brief:
+            "Plan a calm afternoon by the water with one excellent local lunch.",
+          expectedRevision: 6,
+        },
+      },
+    } as unknown as MissionAction)
+
+    expect(result).toMatchObject({
+      type: "applied",
+      value: {
+        mission: {
+          context: {
+            brief:
+              "Plan a calm afternoon by the water with one excellent local lunch.",
+          },
+          revision: 7,
+        },
+      },
+    })
+  })
+
+  it("lets a person mark and remove a structured need", () => {
+    const fixed = expectApplied(
+      apply({
+        type: "SetConstraintFixed",
+        value: {
+          actor: "human",
+          input: {
+            constraintId: "constraint-dog",
+            expectedRevision: 6,
+            fixed: true,
+          },
+        },
+      } as unknown as MissionAction),
+    ).mission
+
+    expect(
+      fixed.context.constraints.find((need) => need.id === "constraint-dog"),
+    ).toMatchObject({ fixed: true })
+
+    const removed = expectApplied(
+      apply(
+        {
+          type: "RemoveConstraint",
+          value: {
+            actor: "human",
+            input: {
+              constraintId: "constraint-dog",
+              expectedRevision: 7,
+            },
+          },
+        } as unknown as MissionAction,
+        fixed,
+      ),
+    ).mission
+    expect(
+      removed.context.constraints.some((need) => need.id === "constraint-dog"),
+    ).toBe(false)
   })
 
   it("rejects stale or malformed replacement plans without mutation", () => {

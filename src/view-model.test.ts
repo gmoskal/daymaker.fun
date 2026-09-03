@@ -1,9 +1,36 @@
 import { describe, expect, it } from "vitest"
 
 import { SEED_MISSION } from "./domain/seed"
-import { presentMission, toHumanStopOrder } from "./view-model"
+import {
+  MISSION_PANELS,
+  missionPanelForPath,
+  presentMission,
+  toHumanStopOrder,
+} from "./view-model"
 
 describe("mission presenter", () => {
+  it("presents Needs first and a Proposed schedule second", () => {
+    expect(MISSION_PANELS).toEqual([
+      { id: "context", label: "Needs", path: "/needs" },
+      { id: "plan", label: "Proposed schedule", path: "/schedule" },
+    ])
+    expect(missionPanelForPath("/")).toBe("context")
+
+    const screen = presentMission({
+      copied: false,
+      mission: SEED_MISSION,
+      panel: "context",
+      selectedStopId: null,
+      webMcp: { type: "connected" },
+    })
+    expect(screen.workspace.type).toBe("context")
+    if (screen.workspace.type !== "context")
+      throw new Error("Expected Needs screen")
+    expect((screen.workspace as unknown as { pace: string }).pace).toBe(
+      "Balanced",
+    )
+  })
+
   it("presents one focused plan and the true mission state", () => {
     const screen = presentMission({
       copied: false,
@@ -35,7 +62,7 @@ describe("mission presenter", () => {
     })
   })
 
-  it("derives route and context workspaces from the same mission", () => {
+  it("derives Needs from the same mission", () => {
     const mission = {
       ...SEED_MISSION,
       stops: SEED_MISSION.stops.map((stop) =>
@@ -46,21 +73,6 @@ describe("mission presenter", () => {
             : stop,
       ),
     }
-    const routeScreen = presentMission({
-      copied: true,
-      mission,
-      panel: "route",
-      selectedStopId: null,
-      webMcp: { type: "connected" },
-    })
-    expect(routeScreen.workspace.type).toBe("route")
-    if (routeScreen.workspace.type !== "route")
-      throw new Error("Expected route screen")
-    expect(routeScreen.workspace.route.map((stop) => stop.id)).toEqual([
-      "return-shower",
-      "dinner",
-    ])
-
     const contextScreen = presentMission({
       copied: true,
       mission,
@@ -71,16 +83,31 @@ describe("mission presenter", () => {
     expect(contextScreen.workspace.type).toBe("context")
     if (contextScreen.workspace.type !== "context")
       throw new Error("Expected context screen")
-    expect(contextScreen.workspace.copyLabel).toBe("Full context copied")
+    expect(contextScreen.workspace.copyLabel).toBe("Needs copied")
     expect(contextScreen.workspace.prompt).toContain(
-      '"id": "baska-voda-demo"',
+      '"missionId": "generated-schedule-fixture"',
     )
-    expect(contextScreen.workspace.prompt).toContain('"locked": true')
-    expect(contextScreen.workspace.prompt).toContain('"events": []')
+    expect(contextScreen.workspace.prompt).toContain('"lockedCommitments"')
+    expect(contextScreen.workspace.prompt).not.toContain('"events"')
     expect(contextScreen.webMcp).toEqual({
       label: "Site tools connected",
       tone: "positive",
     })
+
+    const planScreen = presentMission({
+      copied: false,
+      mission,
+      panel: "plan",
+      selectedStopId: null,
+      webMcp: { type: "connected" },
+    })
+    expect(planScreen.workspace.type).toBe("plan")
+    if (planScreen.workspace.type !== "plan")
+      throw new Error("Expected plan screen")
+    expect(
+      planScreen.workspace.stops.find((stop) => stop.id === "gravel-loop")
+        ?.mapLinks,
+    ).toBeDefined()
   })
 
   it("maps human drag order into unlocked schedule slots", () => {

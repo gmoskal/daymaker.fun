@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { MissionSchema } from "./domain/mission"
+import { MissionSchema, type Mission } from "./domain/mission"
 import {
   DEMO_MISSIONS,
+  PALERMO_ARRIVAL_MISSION,
   SEED_MISSION,
   createBlankMission,
 } from "./domain/seed"
@@ -32,8 +33,11 @@ const memoryStorage = (initial: Record<string, string> = {}) => {
 }
 
 describe("mission store", () => {
-  it("loads each named demo from the typed catalog", () => {
-    expect(Object.keys(DEMO_MISSIONS)).toHaveLength(3)
+  it("loads only the two Needs examples", () => {
+    expect(Object.keys(DEMO_MISSIONS)).toEqual([
+      "palermo-arrival-demo",
+      "croatia-gravel-demo",
+    ])
     Object.values(DEMO_MISSIONS).forEach((mission) =>
       expect(MissionSchema.safeParse(mission).success).toBe(true),
     )
@@ -44,18 +48,18 @@ describe("mission store", () => {
       storage: memory.storage,
     })
 
-    Reflect.apply(missionStore.loadDemo, missionStore, ["san-francisco-demo"])
-    expect(missionStore.getSnapshot().title).toBe("San Francisco Errands")
-    expect(missionStore.getSnapshot().stops.some((stop) => stop.locked)).toBe(true)
+    Reflect.apply(missionStore.loadDemo, missionStore, ["palermo-arrival-demo"])
+    expect(missionStore.getSnapshot().title).toBe("Palermo arrival")
+    expect(missionStore.getSnapshot().context.brief).toContain("Hotel Trinacria")
+    expect(missionStore.getSnapshot().stops).toEqual([])
 
-    Reflect.apply(missionStore.loadDemo, missionStore, ["barcelona-demo"])
-    expect(missionStore.getSnapshot().title).toBe("Barcelona Swim & Coffee")
-    expect(missionStore.getSnapshot().stops.map((stop) => stop.title)).toEqual(
-      expect.arrayContaining(["NOMAD specialty coffee", "Swim · Bogatell Beach"]),
+    Reflect.apply(missionStore.loadDemo, missionStore, ["croatia-gravel-demo"])
+    expect(missionStore.getSnapshot().title).toBe("South Croatia gravel day")
+    expect(missionStore.getSnapshot().context.brief).toContain("20 km gravel ride")
+    expect(missionStore.getSnapshot().context.constraints).toContainEqual(
+      expect.objectContaining({ fixed: true, label: "finish before 10:00" }),
     )
-    const firstBarcelona = missionStore.getSnapshot()
-    Reflect.apply(missionStore.loadDemo, missionStore, ["barcelona-demo"])
-    expect(missionStore.getSnapshot()).not.toBe(firstBarcelona)
+    expect(missionStore.getSnapshot().stops).toEqual([])
   })
   it("persists an accepted action and notifies subscribers", () => {
     const memory = memoryStorage()
@@ -135,6 +139,30 @@ describe("mission store", () => {
     expect(invalid.values.get("unrelated")).toBe("preserve me")
   })
 
+  it("migrates a stored mission without a brief", () => {
+    const legacy = structuredClone(SEED_MISSION) as unknown as {
+      context: {
+        brief?: string
+        constraints: Array<{
+          fixed?: boolean
+        }>
+      }
+    }
+    delete legacy.context.brief
+    legacy.context.constraints.forEach((need) => delete need.fixed)
+    const memory = memoryStorage({
+      [MISSION_STORAGE_KEY]: JSON.stringify(legacy),
+    })
+
+    const loaded = loadMission(memory.storage)
+
+    expect((loaded.context as Mission["context"] & { brief?: string }).brief)
+      .toBe("")
+    expect(loaded.context.constraints.every((need) => need.fixed === false))
+      .toBe(true)
+    expect(memory.removals).toEqual([])
+  })
+
   it("switches explicitly between a new plan and the deterministic demo", () => {
     const memory = memoryStorage()
     const store = createMissionStore({
@@ -150,8 +178,8 @@ describe("mission store", () => {
 
     store.loadDemo()
 
-    expect(store.getSnapshot()).toEqual(SEED_MISSION)
-    expect(store.getSnapshot()).not.toBe(SEED_MISSION)
+    expect(store.getSnapshot()).toEqual(PALERMO_ARRIVAL_MISSION)
+    expect(store.getSnapshot()).not.toBe(PALERMO_ARRIVAL_MISSION)
     expect(memory.writes).toEqual([MISSION_STORAGE_KEY, MISSION_STORAGE_KEY])
   })
 })

@@ -30,8 +30,9 @@ type AgentStop = {
 
 type AgentMission = {
   context: {
+    brief: string
     energy: string
-    limits: string[]
+    limits: Array<{ fixed: boolean; label: string }>
     now: string
     place: [string, number, number]
   }
@@ -144,10 +145,11 @@ const toAgentStop = (stop: Mission["stops"][number]): AgentStop => ({
 const toMissionState = (mission: Mission): MissionStateResult => ({
   mission: {
     context: {
+      brief: mission.context.brief,
       energy: mission.context.energy,
       limits: mission.context.constraints
         .filter((constraint) => constraint.status === "active")
-        .map((constraint) => constraint.label),
+        .map(({ fixed, label }) => ({ fixed, label })),
       now: clock(mission.context.currentTime),
       place: toAgentPlace(mission.context.currentLocation),
     },
@@ -182,14 +184,14 @@ const TOOL_CATALOG = [
   tool({
     annotations: { readOnlyHint: true, untrustedContentHint: true },
     description:
-      "Read the current Sidequest mission: revision, context, stable stop IDs, statuses, times, coordinates, locked commitments, and sources. Use before changing the mission.",
+      "Read the current Sidequest needs and proposed schedule: revision, brief, limits, stable stop IDs, times, places, locks, and sources. Use before changing it.",
     execute: (store) => toMissionState(store.getSnapshot()),
     name: "get_mission_state",
     schema: EmptyInputSchema,
   }),
   tool({
     description:
-      "Set title, timezone, time, location, energy, and constraints. Can replace the plan atomically or update it in place. Returns the new revision.",
+      "Set the planning brief, title, timezone, time, location, pace, and must-haves. Can replace the proposal atomically. Returns the new revision.",
     execute: (store, input) =>
       toToolResult(
         store.dispatch({

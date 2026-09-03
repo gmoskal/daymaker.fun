@@ -1,19 +1,35 @@
 import { describe, expect, it } from "vitest"
 
-import { COPY, DEMO_INSTRUCTIONS } from "./copy"
+import { COPY } from "./copy"
+import type { Mission } from "./domain/mission"
 import { SEED_MISSION, createBlankMission } from "./domain/seed"
 import { toMissionPrompt } from "./mission-prompt"
 
 describe("mission prompt", () => {
-  it("copies the complete selected demo context", () => {
-    const prompt = toMissionPrompt(SEED_MISSION)
+  it("copies needs without proposed stops", () => {
+    const mission = structuredClone(SEED_MISSION) as Mission & {
+      context: Mission["context"] & { brief: string }
+    }
+    mission.context.brief =
+      "Replace the steep hike with a calm swim and keep dinner fixed."
+    const prompt = toMissionPrompt(mission)
     const snapshot = prompt
       .split(`${COPY.promptSnapshot}\n\n`)
       .at(1)
 
-    expect(prompt).toContain(DEMO_INSTRUCTIONS["baska-voda-demo"])
     expect(snapshot).toBeDefined()
-    expect(JSON.parse(snapshot ?? "null")).toEqual(SEED_MISSION)
+    expect(JSON.parse(snapshot ?? "null")).toMatchObject({
+      brief: "Replace the steep hike with a calm swim and keep dinner fixed.",
+      lockedCommitments: [
+        expect.objectContaining({ locked: true, title: "Dinner reservation" }),
+      ],
+      missionId: "generated-schedule-fixture",
+      pace: "balanced",
+      revision: 6,
+    })
+    expect(snapshot).not.toContain('"stops"')
+    expect(snapshot).not.toContain('"events"')
+    expect(prompt).toContain("generate a Proposed schedule")
   })
 
   it("tells the agent how to replace a blank plan", () => {
@@ -21,8 +37,16 @@ describe("mission prompt", () => {
       createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"),
     )
 
-    expect(prompt).toContain("replacePlan: true")
+    expect(prompt).toContain("generate a Proposed schedule")
     expect(prompt).toContain("get_mission_state")
-    expect(prompt).toContain('"id": "personal-plan"')
+    expect(prompt).toContain('"missionId": "personal-plan"')
+  })
+
+  it("asks the agent to structure Needs and regenerate every time", () => {
+    const prompt = toMissionPrompt(SEED_MISSION)
+
+    expect(prompt).toContain("turn the free-form brief into the editable Needs list")
+    expect(prompt).toContain("replacePlan: true")
+    expect(prompt).toContain("on every handoff")
   })
 })

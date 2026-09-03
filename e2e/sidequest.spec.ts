@@ -130,18 +130,18 @@ const generateCroatiaProposal = async (page: Page) => {
   })
   expect(context).toMatchObject({ ok: true, revision: 1 })
 
-  const ride = await addStop(page, 1, {
-    durationMinutes: 120,
+  const swim = await addStop(page, 1, {
+    durationMinutes: 90,
     location: {
-      label: "Biokovo gravel route parking",
-      lat: 43.3266,
-      lng: 17.0098,
+      label: "Punta Rata Beach parking, Brela",
+      lat: 43.3692,
+      lng: 16.9221,
     },
-    rationale: "A shaded 20 km mixed-surface loop that finishes before 10:00.",
-    startsAt: "2026-09-04T07:15:00+02:00",
-    title: "20 km shaded gravel loop",
+    rationale: "Clear water and a varied seabed make this a practical snorkeling stop.",
+    startsAt: "2026-09-04T12:30:00+02:00",
+    title: "Snorkel · Punta Rata Beach",
   })
-  const lunch = await addStop(page, ride.revision, {
+  const lunch = await addStop(page, swim.revision, {
     durationMinutes: 75,
     kind: "meal",
     location: {
@@ -153,19 +153,19 @@ const generateCroatiaProposal = async (page: Page) => {
     startsAt: "2026-09-04T10:30:00+02:00",
     title: "Lunch · Konoba Panorama",
   })
-  const swim = await addStop(page, lunch.revision, {
-    durationMinutes: 90,
+  const ride = await addStop(page, lunch.revision, {
+    durationMinutes: 120,
     location: {
-      label: "Punta Rata Beach parking, Brela",
-      lat: 43.3692,
-      lng: 16.9221,
+      label: "Biokovo gravel route parking",
+      lat: 43.3266,
+      lng: 17.0098,
     },
-    rationale: "Clear water and a varied seabed make this a practical snorkeling stop.",
-    startsAt: "2026-09-04T12:30:00+02:00",
-    title: "Snorkel · Punta Rata Beach",
+    rationale: "A shaded 20 km mixed-surface loop that finishes before 10:00.",
+    startsAt: "2026-09-04T07:15:00+02:00",
+    title: "20 km shaded gravel loop",
   })
-  expect(swim).toMatchObject({ ok: true, revision: 4 })
-  return swim
+  expect(ride).toMatchObject({ ok: true, revision: 4 })
+  return ride
 }
 
 test("shows only the two free-form Needs examples without overflow", async ({ page }) => {
@@ -489,6 +489,11 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
   const day = page.getByRole("region", { name: "Friday, 04 September 2026" })
   await expect(day.getByText("Baška Voda")).toBeVisible()
   await expect(day.getByText("06:30")).toHaveCount(0)
+  await expect(page.locator('[data-testid^="stop-"] time')).toHaveText([
+    "07:15",
+    "10:30",
+    "12:30",
+  ])
   await expect(page.getByRole("button", { name: "20 km shaded gravel loop", exact: true }))
     .toBeVisible()
   await page.getByRole("button", { name: "20 km shaded gravel loop", exact: true }).click()

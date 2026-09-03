@@ -1,6 +1,9 @@
 import { COPY } from "./copy"
 import type { Mission, MissionConstraint, MissionStop } from "./domain/mission"
-import { futureStops } from "./domain/mission-transition"
+import {
+  chronologicalStops,
+  futureStops,
+} from "./domain/mission-transition"
 import {
   BLANK_LOCATION_LABEL,
   BLANK_MISSION_TITLE,
@@ -208,7 +211,7 @@ const timelineFor = (
   route: ScheduleMapPoint[],
 ): TimelineStopScreen[] => {
   const routeById = new Map(route.map((stop) => [stop.id, stop]))
-  return mission.stops.map((stop) => {
+  return chronologicalStops(mission.stops).map((stop) => {
     const mapPoint = routeById.get(stop.id)
     return {
       expanded: expandedStopIds.includes(stop.id),

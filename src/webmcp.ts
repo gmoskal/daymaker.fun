@@ -11,6 +11,7 @@ import {
   type MissionMutation,
 } from "./domain/mission"
 import { BLANK_LOCATION_LABEL, BLANK_MISSION_TITLE } from "./domain/seed"
+import { chronologicalStops } from "./domain/mission-transition"
 import { toSessionUrl } from "./session-link"
 import type { MissionStore } from "./store"
 
@@ -183,7 +184,7 @@ const toMissionState = async (mission: Mission): Promise<MissionStateResult> => 
     date: mission.date,
     id: mission.id,
     offset: offset(mission.context.currentTime),
-    stops: mission.stops.map(toAgentStop),
+    stops: chronologicalStops(mission.stops).map(toAgentStop),
     title: mission.title === BLANK_MISSION_TITLE ? null : mission.title,
     tz: mission.timezone,
     updatedAt: mission.updatedAt,

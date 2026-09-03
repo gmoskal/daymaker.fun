@@ -431,7 +431,9 @@ describe("mission", () => {
         },
       }),
     )
-    const added = value.mission.stops.at(-1)
+    const added = value.mission.stops.find(
+      (stop) => stop.id === value.change.stopId,
+    )
 
     expect(added).toMatchObject({
       id: "punta-rata-swim-snorkel-test-id",
@@ -511,10 +513,10 @@ describe("mission", () => {
     )
 
     expect(futureStops(value.mission).map((stop) => stop.id)).toEqual([
+      "gravel-loop",
       "biokovo-hike",
       "return-shower",
       "dinner",
-      "gravel-loop",
     ])
     expect(value.mission.stops.find((stop) => stop.id === "dinner")?.startsAt).toBe(
       "2026-08-30T18:30:00+02:00",

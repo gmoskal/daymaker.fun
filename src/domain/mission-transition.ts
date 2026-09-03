@@ -102,6 +102,13 @@ const stale = (mission: Mission, expectedRevision: number) =>
         true,
       )
 
+export const chronologicalStops = (
+  stops: readonly MissionStop[],
+): MissionStop[] =>
+  [...stops].sort(
+    (left, right) => Date.parse(left.startsAt) - Date.parse(right.startsAt),
+  )
+
 const applyContext = ({
   action,
   id,
@@ -269,13 +276,15 @@ const applyAdd = ({
     },
     id,
     mission,
-    patch: { stops: [...mission.stops, added] },
+    patch: { stops: chronologicalStops([...mission.stops, added]) },
   })
 }
 
 export const futureStops = (mission: Mission): MissionStop[] =>
-  mission.stops.filter(
-    (stop) => stop.status === "active" || stop.status === "planned",
+  chronologicalStops(
+    mission.stops.filter(
+      (stop) => stop.status === "active" || stop.status === "planned",
+    ),
   )
 
 const sameIdsOnce = (actual: string[], proposed: string[]) =>
@@ -343,7 +352,7 @@ const applyReorder = ({
     },
     id,
     mission,
-    patch: { stops: [...history, ...ordered] },
+    patch: { stops: chronologicalStops([...history, ...ordered]) },
   })
 }
 
@@ -745,11 +754,11 @@ const applyAddItem = ({
   }
   const firstLocked = mission.stops.findIndex((stop) => stop.locked)
   const insertAt = firstLocked === -1 ? mission.stops.length : firstLocked
-  const stops = [
+  const stops = chronologicalStops([
     ...mission.stops.slice(0, insertAt),
     added,
     ...mission.stops.slice(insertAt),
-  ]
+  ])
   return commit({
     actor: action.value.actor,
     at: mission.context.currentTime,

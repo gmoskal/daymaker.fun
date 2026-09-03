@@ -368,6 +368,7 @@ const BriefEditor = ({
     if (next === value) return
     dispatch({ brief: next, type: "SetBrief" })
   }
+  const currentCopyLabel = brief === value ? copyLabel : COPY.copyPrompt
 
   return (
     <div className="brief-stage">
@@ -412,7 +413,7 @@ const BriefEditor = ({
           onClick={() => dispatch({ brief, prompt, type: "CopyPrompt" })}
           type="button"
         >
-          {copyLabel}
+          {currentCopyLabel}
         </button>
         <p>{COPY.agentHint}</p>
       </aside>

@@ -44,7 +44,7 @@ describe("mission presenter", () => {
     const screen = presentMission(input)
 
     expect(screen.updateMarker).toBe(
-      "v0.3.2 · updated 3 Sep 2026 · 15:42 CEST",
+      "v0.3.3 · updated 3 Sep 2026 · 15:42 CEST",
     )
   })
 
@@ -77,6 +77,33 @@ describe("mission presenter", () => {
       label: "Manual mode · open in ChatGPT or enable Chrome WebMCP",
       tone: "neutral",
     })
+  })
+
+  it("presents the schedule and complete map route chronologically", () => {
+    const screen = presentMission({
+      copied: false,
+      mission: { ...SEED_MISSION, stops: [...SEED_MISSION.stops].reverse() },
+      panel: "plan",
+      expandedStopIds: [],
+      webMcp: { type: "connected" },
+    })
+
+    if (screen.workspace.type !== "plan")
+      throw new Error("Expected plan screen")
+    expect(screen.workspace.stops.map((stop) => stop.time)).toEqual([
+      "11:30",
+      "15:30",
+      "17:15",
+      "18:30",
+    ])
+
+    const map = new URL(screen.workspace.mapUrl ?? "")
+    expect(map.searchParams.get("waypoints")?.split("|")).toEqual([
+      "43.3569,16.9502",
+      "43.3407,17.061",
+      "43.3578,16.9491",
+    ])
+    expect(map.searchParams.get("destination")).toBe("43.3573,16.9507")
   })
 
   it("derives Needs from the same mission", () => {

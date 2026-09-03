@@ -197,7 +197,7 @@ describe("WebMCP", () => {
     const context = fakeContext()
     const missionStore = createMissionStore({
       id: ids(),
-      mission: SEED_MISSION,
+      mission: { ...SEED_MISSION, stops: [...SEED_MISSION.stops].reverse() },
       storage: memoryStorage,
     })
     await registerMissionTools(missionStore)
@@ -221,6 +221,12 @@ describe("WebMCP", () => {
       ok: true,
       revision: 6,
     })
+    expect(initial.mission.stops.map((stop) => stop.at)).toEqual([
+      "11:30",
+      "15:30",
+      "17:15",
+      "18:30",
+    ])
 
     const contextResult = await execute<ToolMutationResult>(
       context,

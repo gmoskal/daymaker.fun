@@ -63,7 +63,7 @@ export const COPY = {
   promptProtocol:
     "The one-shot planning URL clears the previous browser-local board before Site Tools register. Do not inspect, compare, preserve, or clear an earlier plan with a tool call. Call get_mission_state as soon as the page opens to obtain the new blank board's revision. Immediately call update_day_context with the copied planning input, that revision, and with replacePlan: true to initialize this request before research, clarification, or progress narration. After each write, use the returned revision for the next write. Every successful read or write returns a sessionUrl containing the complete current board. After the final successful write, end your response with [Open updated Sidequest plan](sessionUrl), replacing sessionUrl with the exact returned URL. Use the URL returned by the final read only when the requested plan was already written in this turn. Do not finish without the clickable link.",
   promptSnapshot: "Planning input at copy time:",
-  release: "v0.3.2",
+  release: "v0.3.3",
   researchDepth: "Effort",
   researchDepthAriaLabel: "Planning effort",
   updated: "updated",

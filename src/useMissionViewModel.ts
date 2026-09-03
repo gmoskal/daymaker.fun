@@ -254,12 +254,14 @@ export const useMissionViewModel = ({
             .catch(() => setSessionLinkCopied(false))
           return
         case "NewPlan":
+          setCopied(false)
           store.newPlan()
           setExpandedStopIds([])
           navigate("context", true)
           return
         case "LoadDemo":
           if (hasPlanContent(store) && !window.confirm(COPY.loadDemoConfirm)) return
+          setCopied(false)
           store.loadDemo(action.demoId)
           setExpandedStopIds([])
           navigate("context", true)

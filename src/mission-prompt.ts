@@ -1,5 +1,6 @@
 import { COPY, SIDEQUEST_URL } from "./copy"
 import type { Mission } from "./domain/mission"
+import { chronologicalStops } from "./domain/mission-transition"
 import {
   BLANK_LOCATION_LABEL,
   BLANK_MISSION_TITLE,
@@ -24,7 +25,9 @@ const planningNeedsFor = (mission: Mission) => {
       : { currentLocation: mission.context.currentLocation }),
     currentTime: mission.context.currentTime,
     date: mission.date,
-    lockedCommitments: mission.stops.filter((stop) => stop.locked),
+    lockedCommitments: chronologicalStops(mission.stops).filter(
+      (stop) => stop.locked,
+    ),
     missionId: mission.id,
     ...(mission.context.stage === "needs" ? { needs } : {}),
     revision: mission.revision,

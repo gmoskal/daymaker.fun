@@ -142,6 +142,56 @@ describe("Sidequest app", () => {
     expect(prompt).toContain("RESEARCH DEPTH: DEEP")
   })
 
+  it("resets copied feedback as soon as the brief changes", async () => {
+    window.history.replaceState(null, "", "/needs")
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    })
+    render(<App registration={registration(true)} store={blankStore()} />)
+
+    const brief = screen.getByRole("textbox", {
+      name: "1 · Describe your needs",
+    })
+    fireEvent.change(brief, { target: { value: "Plan a calm afternoon." } })
+    fireEvent.click(screen.getByRole("button", { name: "Copy to ChatGPT" }))
+    await screen.findByRole("button", { name: "Copied for ChatGPT" })
+
+    fireEvent.change(brief, {
+      target: { value: "Plan a calm afternoon and an early dinner." },
+    })
+
+    expect(
+      screen.getByRole("button", { name: "Copy to ChatGPT" }),
+    ).toBeEnabled()
+  })
+
+  it("resets copied feedback when a demo replaces the current brief", async () => {
+    window.history.replaceState(null, "", "/needs")
+    const missionStore = blankStore()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    })
+    vi.spyOn(window, "confirm").mockReturnValue(true)
+    render(<App registration={registration(true)} store={missionStore} />)
+
+    const brief = screen.getByRole("textbox", {
+      name: "1 · Describe your needs",
+    })
+    fireEvent.change(brief, { target: { value: "Plan a calm afternoon." } })
+    fireEvent.click(screen.getByRole("button", { name: "Copy to ChatGPT" }))
+    await screen.findByRole("button", { name: "Copied for ChatGPT" })
+
+    fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /Palermo arrival/ }))
+
+    expect(screen.getByRole("button", { name: "Copy to ChatGPT" }))
+      .toBeEnabled()
+  })
+
   it("uses research depth as a structured Needs prompt change", async () => {
     window.history.replaceState(null, "", "/needs")
     const missionStore = store()
@@ -165,11 +215,13 @@ describe("Sidequest app", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
     expect(writeText.mock.calls[0]?.[0]).toContain("RESEARCH DEPTH: QUICK")
     await waitFor(() => expect(copy).toBeDisabled())
+    expect(copy).toHaveAccessibleName("Changes copied for ChatGPT")
 
     fireEvent.click(
       screen.getByRole("button", { name: "Set planning effort to Deep" }),
     )
     expect(copy).toBeEnabled()
+    expect(copy).toHaveAccessibleName("Copy changes to ChatGPT")
     fireEvent.click(copy)
 
     await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2))
@@ -662,5 +714,7 @@ describe("Sidequest app", () => {
     fireEvent.click(screen.getByRole("button", { name: "New plan" }))
     expect(confirm).not.toHaveBeenCalled()
     expect(missionStore.getSnapshot().stops).toEqual([])
+    expect(screen.getByRole("button", { name: "Copy to ChatGPT" }))
+      .toBeDisabled()
   })
 })

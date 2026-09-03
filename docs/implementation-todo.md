@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: Needs-first planning flow deployed; automatic Vercel Git connection permission pending
+> Status: v0.2.1 Needs-first planning flow deployed; automatic Vercel Git connection permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -752,6 +752,9 @@ Implementation result:
   `artifacts/sidequest-brief*.png`, `artifacts/sidequest-needs*.png`, and
   `artifacts/sidequest-demo-menu.png`; the final live local Needs DOM was also
   inspected in the in-app browser.
+- Production deployment `dpl_HjKqhBToQKPfvZZ6rRAJihwC64Y5` is READY and
+  aliased at `https://sidequest-webmcp-eta.vercel.app`; the served bundle was
+  checked for the v0.2.1 marker and final handoff instruction.
 
 ## Risks and dependencies
 

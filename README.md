@@ -11,7 +11,7 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 - Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
 - Local release: v0.2.1
-- Production deployment: v0.2.0 live; v0.2.1 pending deployment
+- Production deployment: v0.2.1 live
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -130,7 +130,7 @@ Visual evidence:
 Automated tests use a native-shaped `document.modelContext.registerTool` harness. Before submission:
 
 - [x] Host a production build on a public HTTPS URL.
-- [x] Deploy v0.2.0 and verify the production asset.
+- [x] Deploy v0.2.1 and verify the production asset.
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and survives reload.

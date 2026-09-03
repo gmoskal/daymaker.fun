@@ -189,6 +189,9 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   await page.setViewportSize({ height: 900, width: 1100 })
   await page.goto("/")
   await waitForTools(page)
+  expect(
+    await page.evaluate(() => getComputedStyle(document.documentElement).fontSize),
+  ).toBe("18px")
   await expect(page.getByRole("tab", { name: "Proposed schedule" }))
     .toHaveAttribute("aria-disabled", "true")
   await selectExample(page, /Palermo arrival/)
@@ -243,6 +246,9 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   expect(initialCopyButtonStyle.height).toBeGreaterThanOrEqual(44)
   await page.screenshot({ fullPage: true, path: "artifacts/sidequest-brief.png" })
   await page.setViewportSize({ height: 844, width: 390 })
+  expect(
+    await page.evaluate(() => getComputedStyle(document.documentElement).fontSize),
+  ).toBe("16px")
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(390)

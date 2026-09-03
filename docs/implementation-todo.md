@@ -38,8 +38,9 @@
 - [x] 17. Make Proposed schedule a read-only expandable result
 - [x] 18. Align the add-Need interaction with the list
 - [x] 19. Transfer a complete session through a shareable URL
-- [x] 20. Keep ChatGPT's response in the person's language
-- [~] 21. Make daymaker.fun the production domain
+- [~] 20. Keep ChatGPT's response in the person's language
+- [x] 21. Make daymaker.fun the production domain
+- [~] 22. Raise the desktop typography scale
 
 ## Blocking decisions accepted in this plan
 
@@ -1181,7 +1182,7 @@ Implementation result:
   608-character link for revision 1; a separate empty browser imported it at
   `/schedule`, stored revision 1, and cleaned the fragment from the address.
 
-### 20 [x] Keep ChatGPT's response in the person's language
+### 20 [~] Keep ChatGPT's response in the person's language
 
 Description: Make the copied planning protocol keep questions, progress
 summaries, and the final answer in the language of the person's request, even
@@ -1197,6 +1198,13 @@ Acceptance criteria:
   unchanged, including the final clickable session URL.
 - AC-4: The rule is defined once in the English-only `src/copy.ts` source of
   truth; no parallel locale state or UI localization mechanism is introduced.
+- AC-5: The language rule is the first instruction in the copied handoff and
+  explicitly ignores surrounding conversation, earlier messages, UI locale,
+  and inferred profile language. English planning input makes every message
+  English; Polish planning input makes every message Polish, including
+  questions, progress, tool-use narration, and the final response.
+- AC-6: The agent is explicitly forbidden from narrating in one language while
+  generating plan content in another.
 
 Tests:
 
@@ -1206,6 +1214,9 @@ Tests:
 - AC-1/2/3 -> integration: `mission-prompt.test.ts > keeps the agent response
   in the person's request language` verifies that the complete copied prompt
   carries the fallback and preservation rules.
+- AC-5/6 -> integration: the same test verifies first-position precedence and
+  the whole-message English/Polish contract against conversation-language
+  leakage.
 - A separate translation/codegen gate is skipped because P0 has one declared
   UI locale and the change instructs the external agent how to select its
   response language; it does not add a localized UI string catalog.
@@ -1244,8 +1255,25 @@ Implementation result:
   and is aliased at `https://sidequest-webmcp-eta.vercel.app`. Public asset
   `index-BQQJgeUW.js` contains v0.2.5, both language-selection rules, and the
   exact-session-link preservation rule.
+- Regression reopened after a real English demo handoff still produced Polish
+  narration about creating an English plan. The initial wording governed plan
+  output but did not override the surrounding conversation strongly enough.
+- Regression red: `npm run test -- src/copy.test.ts src/mission-prompt.test.ts`
+  passed the five existing assertions and failed the two strengthened language
+  assertions because the handoff did not start with a mandatory language rule.
+- Regression green: the same focused command passed 7/7 after one dedicated
+  language paragraph became the first handoff instruction. It now governs all
+  questions, progress updates, tool-use narration, and the final response and
+  explicitly forbids cross-language narration.
+- The combined post-regression gate passed 74/74 Vitest tests, strict build,
+  and 5/5 Chromium flows.
+- Mature-TypeScript follow-up round 1 still introduced no language state.
+  Round 2 moved the contract to the first handoff boundary instead of relying
+  on late protocol prose. Round 3 kept it in the existing copy module. Round 4
+  removed the weaker duplicated wording from `promptProtocol`. Round 5 changed
+  no React state, component, effect, or physical module boundary.
 
-### 21 [~] Make daymaker.fun the production domain
+### 21 [x] Make daymaker.fun the production domain
 
 Description: Attach the purchased `daymaker.fun` domain to the existing Vercel
 project, preserve the current deployment alias, and make the custom HTTPS origin
@@ -1298,6 +1326,71 @@ Implementation result:
   Round 3 rejected a second environment/config service for one public constant.
   Round 4 required no new helper, wrapper, type, or cast. Round 5 required no
   React component, state, effect, or renderer change.
+- Production deployment `dpl_92b8LT2S8THNCzxCw1iHwp8xj8ZS` reached `READY`
+  with `https://daymaker.fun` as its alias. The apex passes Vercel domain
+  verification and serves HTTP 200 over a valid certificate; public asset
+  `index-BvipF-GN.js` contains v0.2.6 and the canonical custom origin.
+- Hover retains its existing MX record. The obsolete `* -> 216.40.34.41`
+  placeholder was removed after it conflicted with the exact `www` CNAME.
+- `www.daymaker.fun` passed Vercel verification through its exact CNAME, received
+  renewable certificate `cert_WWZgc9o4ghNPv0uy3VSVG3JP`, and loaded the live
+  `/needs` app in the browser. Both Vercel edge addresses returned HTTP 200 with
+  certificate validation for the `www` host.
+
+### 22 [~] Raise the desktop typography scale
+
+Description: Give the wide-screen interface a more confident contemporary
+type scale while preserving the existing compact mobile layout and strict
+minimal visual language.
+
+Acceptance criteria:
+
+- AC-1: At widths above 560px, the root type scale is 18px so existing rem-based
+  headings, schedule rows, Needs, metadata, and actions grow proportionally.
+- AC-2: At 390px, the root scale remains 16px and the page keeps zero horizontal
+  overflow.
+- AC-3: The change adds no border, gradient, decorative shadow, new animation,
+  or component-specific font override.
+- AC-4: Desktop and mobile screenshots show readable text without clipping,
+  overlap, or viewport bleed.
+
+Tests:
+
+- AC-1/2 -> browser: `sidequest.spec.ts > edits Needs and copies the current
+  handoff` asserts the computed root size at 1100px and 390px plus the existing
+  mobile overflow contract.
+- AC-3 -> review: focused CSS diff contains one responsive root declaration.
+- AC-4 -> browser evidence: `artifacts/sidequest-brief.png` and
+  `artifacts/sidequest-brief-mobile.png`.
+- Unit coverage is skipped because this is a CSS rendering contract; the real
+  Chromium computed style and screenshots exercise the affected boundary.
+
+Sources/References: `src/app.css`, `e2e/sidequest.spec.ts`, existing visual
+evidence under `artifacts/`.
+
+Before implementation gate:
+
+- [x] Scope fixed to the desktop root scale; no component or domain contract
+  changes.
+- [x] Named computed-style assertion observed red before the CSS change.
+
+Implementation result:
+
+- Behavioral red: `npx playwright test -g "edits Needs and copies the current
+  handoff"` failed on the new desktop assertion with `Expected: 18px`,
+  `Received: 16px` before the production CSS changed.
+- Focused green: the same real Chromium flow passed with an 18px desktop root,
+  16px mobile root, and no 390px overflow.
+- Full gate: 74/74 Vitest tests, strict TypeScript/Vite build, and 5/5 Chromium
+  flows passed. `artifacts/sidequest-brief.png` and its mobile counterpart were
+  inspected with no clipping, overlap, or viewport bleed.
+- Frontend-design kept the chosen direction brutally minimal: one responsive
+  root scale raises the complete hierarchy without component overrides,
+  additional decoration, or new motion.
+- Mature-TypeScript rounds 1–2 found no domain/view state or action boundary to
+  change; round 3 kept ownership in the existing stylesheet; round 4 retained
+  one direct media query rather than a helper or token layer; round 5 introduced
+  no React component, context, memoization, or effect.
 
 ## Risks and dependencies
 

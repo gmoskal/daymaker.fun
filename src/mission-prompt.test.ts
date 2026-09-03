@@ -91,11 +91,16 @@ describe("mission prompt", () => {
     mission.context.brief = "Find great coffee before my flight."
     const prompt = toMissionPrompt(mission)
 
+    expect(prompt).toMatch(/^LANGUAGE REQUIREMENT:/u)
     expect(prompt).toContain(
-      "all user-facing questions, progress summaries, and the final response",
+      "Use only the primary language of the person's free-form brief or Needs",
+    )
+    expect(prompt).toContain("Ignore earlier messages")
+    expect(prompt).toContain(
+      "English planning input requires every message to be in English",
     )
     expect(prompt).toContain(
-      "use the language of the person's latest message",
+      "including questions, progress updates, tool-use narration, and the final response",
     )
     expect(prompt).toContain("Do not translate the exact session link")
   })

@@ -4,22 +4,34 @@ import { COPY, SIDEQUEST_URL } from "./copy"
 
 describe("English product copy", () => {
   it("keeps the agent handoff and mission positioning explicit", () => {
+    const allCopy = Object.values(COPY).join(" ")
+
     expect(COPY.tagline).toBe("Your day changed. Your plan should too.")
     expect(COPY.contextTitle).toBe("Needs")
     expect(COPY.planTitle).toBe("Proposed schedule")
     expect(COPY.planningBrief).toBe("1 · Describe your needs")
     expect(COPY.handoffTitle).toBe("2 · Copy to ChatGPT")
     expect(COPY.constraintsTitle).toBe("3 · Review and edit needs")
-    expect(Object.values(COPY).join(" ")).not.toContain("Must-haves")
+    expect(allCopy).not.toContain("Must-haves")
     expect(COPY.promptOpen).toContain("not only in chat")
     expect(COPY.promptOpen).toContain("continue in Work")
     expect(COPY.promptProtocol).toContain("If the live board is blank")
     expect(COPY.promptProtocol).toContain("sessionUrl")
     expect(COPY.promptProtocol).toContain("[Open updated Sidequest plan]")
-    expect(COPY.promptProtocol).toContain(
-      "same language as the person's free-form brief or latest Needs request",
+    expect(allCopy).toContain("LANGUAGE REQUIREMENT")
+    expect(allCopy).toContain(
+      "Do not follow the language of the surrounding conversation",
     )
-    expect(COPY.promptProtocol).toContain(
+    expect(allCopy).toContain(
+      "English planning input requires every message to be in English",
+    )
+    expect(allCopy).toContain(
+      "Polish planning input requires every message to be in Polish",
+    )
+    expect(allCopy).toContain(
+      "Do not narrate in one language while writing the plan in another",
+    )
+    expect(allCopy).toContain(
       "proper names, source titles, and exact tool-returned values unchanged",
     )
     expect(COPY.planningInstruction).toContain("generate a Proposed schedule")

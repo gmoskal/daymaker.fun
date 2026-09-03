@@ -758,6 +758,12 @@ textarea:focus-visible {
   line-height: 1.35;
 }
 
+@media (min-width: 561px) {
+  html {
+    font-size: 18px;
+  }
+}
+
 @media (max-width: 560px) {
   .app-shell {
     padding: 0 26px 130px 54px;

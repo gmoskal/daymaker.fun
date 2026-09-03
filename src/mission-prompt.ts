@@ -25,6 +25,7 @@ const planningNeedsFor = (mission: Mission) => {
 
 export const toMissionPrompt = (mission: Mission) =>
   [
+    COPY.promptLanguage,
     COPY.promptOpen.replace("{url}", `${SIDEQUEST_URL}/needs`),
     COPY.planningInstruction,
     COPY.promptProtocol,

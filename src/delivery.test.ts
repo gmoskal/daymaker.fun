@@ -30,6 +30,7 @@ describe("delivery repository", () => {
     expect(vercel).toContain('"outputDirectory": "dist"')
     expect(vercel).toContain('"rewrites"')
     expect(vercel).toContain('"key": "Content-Security-Policy"')
+    expect(vercel).toContain("https://www.youtube.com")
     expect(vercel).toContain("https://www.youtube-nocookie.com")
     expect(vercel).toContain('"key": "Permissions-Policy"')
   })

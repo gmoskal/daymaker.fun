@@ -48,7 +48,7 @@ const AboutPage = () => (
         allowFullScreen
         loading="lazy"
         referrerPolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube-nocookie.com/embed/XlG632xwWvs"
+        src="https://www.youtube.com/embed/XlG632xwWvs"
         title={COPY.aboutVideoTitle}
       />
     </div>

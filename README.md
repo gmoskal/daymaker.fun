@@ -34,8 +34,8 @@ Sidequest is not a chat client and it does not run a remote MCP server. The conv
 
 1. Open the production URL. A first visit starts with an empty plan for the current day, not the Baška Voda fixture.
 2. Rename `Untitled plan` inline.
-3. Either add the first item manually with `+`, or click **Copy prompt for ChatGPT** and paste it into ChatGPT. The copied prompt includes the production URL and asks ChatGPT to open the page and use its Site Tools.
-4. Tell ChatGPT the goal, location, available time, energy, and hard constraints. It can update context, research options, add items, and reorder the board through the five tools.
+3. Either add the first item manually with `+`, or open **Context**, click **Copy full context for ChatGPT**, and paste it into ChatGPT. The handoff includes the production URL, task instruction, revision, title, timezone, constraints, stops, locks, sources, and history.
+4. Tell ChatGPT the goal, location, available time, energy, and hard constraints. It can atomically start a titled plan, research options, add items, and reorder the board through the same five tools.
 5. Open an item with its chevron, use `…` to reveal the shared horizontal action tray, and lock commitments the agent must preserve. Manual controls continue to work in a normal browser without WebMCP.
 
 **Load demo** opens a compact catalog: Baška Voda demonstrates live replanning, San Francisco demonstrates errands with opening windows, and Barcelona demonstrates source-backed specialty coffee, beach, and timed-ticket planning. A loaded sample changes the action to **New plan**.
@@ -45,7 +45,7 @@ Sidequest is not a chat client and it does not run a remote MCP server. The conv
 | Tool | Purpose |
 | --- | --- |
 | `get_mission_state` | Read the compact current mission, revision, stop IDs, constraints, route data, locks, and sources. |
-| `update_day_context` | Update current time, position, energy, and constraints. |
+| `update_day_context` | Set title, timezone, current context, and constraints; update the current plan or atomically replace it with a fresh one. |
 | `update_mission_stop` | Mark an unlocked stop planned, active, completed, or skipped. |
 | `add_mission_stop` | Add one researched stop with coordinates, timing, travel estimate, rationale, and HTTPS source. |
 | `reorder_mission_stops` | Reorder every future stop while preserving locked commitment times. |
@@ -76,12 +76,21 @@ WebMCP tools ───┘                                      │
 
 `Mission` is the only domain source of truth. React owns only view state such as selection and copy feedback. The WebMCP adapter validates external input and dispatches the same action union as the UI; it cannot mutate the mission directly.
 
+### State and session identity
+
+The prototype has no account or server session. On page load it reads one mission from the `sidequest:mission:v1` key in `localStorage`; every accepted human or agent mutation updates the in-memory store and persists that same mission. The data therefore survives reloads in the same browser profile and origin, while another browser, profile, device, or private window has its own independent plan.
+
+WebMCP tools are registered against the currently open document and close over its live store. A human edit in that page is immediately visible to the next `get_mission_state` call. Every write requires the latest `revision`; a stale write is rejected and the agent must read again before retrying. The copied JSON is explicitly only a snapshot for conversation context, never the authority for a later write.
+
+Already-open duplicate tabs do not live-sync in this P0. Each tab keeps its own in-memory snapshot and the last accepted write persists to `localStorage`; reload before switching editing between tabs. Cross-device, multi-user, and concurrent-tab identity would require a backend session or synchronization layer and are intentionally outside this hackathon build.
+
 Key files:
 
 - `src/domain/mission.ts` — schemas and action/result unions
 - `src/domain/mission-transition.ts` — invariants and pure transitions
 - `src/store.ts` — persistence, subscriptions, and accepted-mutation publishing
 - `src/webmcp.ts` — one catalog and the five imperative tool registrations
+- `src/mission-prompt.ts` — complete live mission snapshot for the ChatGPT handoff
 - `src/view-model.ts` — pure `Mission + ViewState -> MissionScreen` projection
 - `src/useMissionViewModel.ts` — React adapter from `ViewAction` to domain actions
 - `src/App.tsx` and `src/MissionWorkspace.tsx` — minimal renderer and Motion reorder boundary

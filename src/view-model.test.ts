@@ -71,7 +71,12 @@ describe("mission presenter", () => {
     expect(contextScreen.workspace.type).toBe("context")
     if (contextScreen.workspace.type !== "context")
       throw new Error("Expected context screen")
-    expect(contextScreen.workspace.copyLabel).toBe("Prompt copied")
+    expect(contextScreen.workspace.copyLabel).toBe("Full context copied")
+    expect(contextScreen.workspace.prompt).toContain(
+      '"id": "baska-voda-demo"',
+    )
+    expect(contextScreen.workspace.prompt).toContain('"locked": true')
+    expect(contextScreen.workspace.prompt).toContain('"events": []')
     expect(contextScreen.webMcp).toEqual({
       label: "Site tools connected",
       tone: "positive",

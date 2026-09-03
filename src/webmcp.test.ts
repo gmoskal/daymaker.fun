@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { SEED_MISSION, createBlankMission } from "./domain/seed"
+import { SEED_MISSION } from "./domain/seed"
 import { createMissionStore, type MissionStore, type StoragePort } from "./store"
 import {
   TOOL_NAMES,
@@ -154,11 +154,11 @@ describe("WebMCP", () => {
     expect(missionStore.getSnapshot()).toBe(before)
   })
 
-  it("builds a fresh plan through the same five tools", async () => {
+  it("starts a titled replacement plan through update_day_context", async () => {
     const context = fakeContext()
     const missionStore = createMissionStore({
       id: ids(),
-      mission: createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"),
+      mission: SEED_MISSION,
       storage: memoryStorage,
     })
     await registerMissionTools(missionStore)
@@ -169,9 +169,9 @@ describe("WebMCP", () => {
       {},
     )
     expect(initial).toMatchObject({
-      mission: { stops: [], title: "Untitled plan" },
+      mission: { title: "Baška Voda Adventure" },
       ok: true,
-      revision: 0,
+      revision: 6,
     })
 
     const contextResult = await execute<ToolMutationResult>(
@@ -182,10 +182,14 @@ describe("WebMCP", () => {
         currentLocation: { label: "Warsaw", lat: 52.2297, lng: 21.0122 },
         currentTime: "2026-09-03T12:15:00+02:00",
         energy: "medium",
-        expectedRevision: 0,
+        expectedRevision: 6,
         reason: "Starting a personal afternoon plan.",
+        replacePlan: true,
+        timezone: "Europe/Warsaw",
+        title: "Quiet Warsaw afternoon",
       },
     )
+    expect(contextResult).toMatchObject({ ok: true, revision: 7 })
     const added = await execute<ToolMutationResult>(
       context,
       "add_mission_stop",
@@ -206,8 +210,14 @@ describe("WebMCP", () => {
       },
     )
 
-    expect(added).toMatchObject({ ok: true, revision: 2 })
+    expect(added).toMatchObject({ ok: true, revision: 8 })
+    expect(missionStore.getSnapshot()).toMatchObject({
+      id: "personal-plan",
+      revision: 8,
+      title: "Quiet Warsaw afternoon",
+    })
     expect(missionStore.getSnapshot().stops).toHaveLength(1)
+    expect(missionStore.getSnapshot().events).toHaveLength(2)
   })
 
   it("executes the killer flow through the real store", async () => {
@@ -246,6 +256,9 @@ describe("WebMCP", () => {
       energy: "low",
       expectedRevision: 7,
       reason: "The group finished the ride and reported low energy.",
+      replacePlan: false,
+      timezone: "Europe/Zagreb",
+      title: "Baška Voda Adventure",
     })
     const skipped = await execute<ToolMutationResult>(context, "update_mission_stop", {
       expectedRevision: contextResult.revision,

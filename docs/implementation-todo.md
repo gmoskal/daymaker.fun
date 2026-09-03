@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: item interaction, schedule hierarchy, and sample loader complete; Git integration permission pending
+> Status: full-context copy and agent-created plans complete; Git integration permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -29,6 +29,7 @@
 - [x] 8. Make a fresh personal plan the default and explain the chat boundary
 - [x] 9. Clarify schedule hierarchy, adding, and item actions
 - [x] 10. Add a typed sample-plan catalog and loader menu
+- [x] 11. Let the agent create titled plans from complete copied context
 
 ## Blocking decisions accepted in this plan
 
@@ -425,6 +426,99 @@ Implementation result:
 - Source of truth: `DEMO_MISSIONS` and its derived `DemoMissionId` own the three immutable snapshots; `MissionStore.loadDemo` clones the selected mission and publishes through the existing persistence/subscription path.
 - Copy gate: sample labels, descriptions, confirmation text, and scenario prompts live in `src/copy.ts`; `npm run test -- src/copy.test.ts src/App.test.tsx` passed as part of the 48-test gate. English remains the only intentional P0 locale, so there is no codegen command.
 - Visual evidence inspected: `artifacts/sidequest-demo-menu.png`, `artifacts/sidequest-san-francisco.png`, and `artifacts/sidequest-barcelona.png` at 390 px show no clipping, trigger occlusion, border/card/shadow, or horizontal overflow.
+
+### 11 [x] Let the agent create titled plans from complete copied context
+
+Description: Make the copied ChatGPT handoff self-contained and let the existing
+WebMCP surface start a genuinely fresh, titled plan. Preserve the five-tool limit
+by extending `update_day_context`; remove the app-owned confirmation from the
+human `New plan` action without attempting to bypass any review owned by the
+ChatGPT browser.
+
+Acceptance criteria:
+
+- AC-1: `update_day_context` accepts an explicit title, IANA timezone, and
+  replacement intent.
+  With `replacePlan: false` it updates context/title while preserving stops; with
+  `replacePlan: true` it atomically creates a personal plan identity, clears old
+  stops/history, derives the new date, and records one accepted revision.
+- AC-2: a stale or malformed replacement is rejected without changing or
+  persisting the mission; exactly five top-level WebMCP tools remain registered.
+- AC-3: the clipboard text for the selected demo is generated from the current
+  `Mission` and contains its complete JSON snapshot: identity, revision, title,
+  date, timezone, day context, constraints, stops, locks, sources, and events.
+- AC-4: each demo keeps its own replanning instruction, while the fresh-plan
+  instruction tells the agent to collect missing facts and use
+  `update_day_context` with `replacePlan: true`; copied state is explicitly a
+  snapshot and the agent must still read the live revision before writing.
+- AC-5: the copy action is labeled `Copy full context for ChatGPT`, works for the
+  currently selected demo from Context, and retains a clear copied-success state.
+- AC-6: the human `New plan` action clears the current mission immediately and
+  never calls the app's `window.confirm`. Loading a demo over a non-demo personal
+  plan keeps its separate destructive confirmation.
+- AC-7: desktop and 390px evidence shows the longer copy label without clipping,
+  overflow, a border, card, shadow, gradient, modal, or added persistent control.
+- AC-8: all changed visible/copyable strings stay English-only in `src/copy.ts`;
+  no locale generator exists for this intentionally single-language P0.
+- AC-9: a small `v0.1.1 · updated 3 Sep 2026` release marker sits at the page
+  bottom with no background, border, shadow, interaction, or overlap with the
+  primary action at desktop and 390px widths.
+
+Tests:
+
+- AC-1/2 -> unit/domain: `mission.test.ts > starts a titled replacement plan
+  atomically`; adapter integration: `webmcp.test.ts > starts a titled replacement
+  plan through update_day_context` and the existing five-definition contract.
+- AC-3/4/8 -> unit: `mission-prompt.test.ts > copies the complete selected demo
+  context`; integration: `App.test.tsx > copies complete demo context`.
+- AC-5/6 -> integration: `App.test.tsx > starts a new plan without confirmation
+  and copies selected demo context`.
+- AC-7 -> browser: `sidequest.spec.ts > copies complete demo context and starts
+  fresh without an app modal`; evidence:
+  `artifacts/sidequest-full-context-copy.png`. Unit-only visual proof is skipped
+  because clipboard behavior and viewport composition require a real browser.
+- AC-9 -> integration: `App.test.tsx > shows the latest release at the page
+  bottom`; the same AC-7 browser evidence verifies placement and occlusion.
+
+Sources/References: `src/domain/mission.ts`, `src/domain/mission-transition.ts`,
+`src/webmcp.ts`, `src/copy.ts`, new `src/mission-prompt.ts`, `src/view-model.ts`,
+`src/useMissionViewModel.ts`, `src/App.test.tsx`, `src/webmcp.test.ts`,
+`e2e/sidequest.spec.ts`, official OpenAI Site Tools documentation.
+
+Before implementation gate:
+
+- [x] The current five-tool catalog, strict Zod schemas, domain transition,
+  prompt projection, clipboard action, `NewPlan` path, copy source, tests, and
+  desktop/mobile layout were inspected at `d61fa74`.
+- [x] Contract decision: required `title`, `timezone`, and `replacePlan` fields
+  extend `UpdateDayContextInputSchema`; no sixth tool or second store. Timezone
+  is part of the context update so a replacement never inherits the previous
+  location's display time.
+- [x] Replacement intentionally discards the prior plan. The app removes its own
+  confirmation; ChatGPT's security review remains platform-owned per OpenAI Docs.
+- [x] The complete clipboard snapshot is serialized from `Mission`; demo copy
+  stores only scenario instructions, never a second copy of mission data.
+- [x] Named regression tests written and observed red before production edits.
+
+Implementation result:
+
+- Red evidence: the replacement action was rejected by the old strict schema,
+  the clipboard exposed only a static prompt, `New plan` still called confirm,
+  and the release marker was absent.
+- Green behavior: `update_day_context` now owns title, timezone, and explicit
+  replacement intent while keeping the catalog at five tools. Replacement
+  clears the prior stops/history atomically; in-place updates preserve them.
+- The clipboard prompt serializes the current `Mission` exactly once and labels
+  it as a stale-able snapshot; each sample contributes only its scenario text.
+- The app-owned `New plan` confirmation is gone. The separate confirmation for
+  replacing a personal plan with a sample remains tested.
+- Five mature-TypeScript simplification passes covered the schema-derived input,
+  domain transition, single-store action flow, prompt source of truth, and UI
+  lifecycle/error paths. No second state model or sixth tool was introduced.
+- `npm run check` passed 55/55 Vitest tests, the strict TypeScript/Vite build,
+  and 5/5 Chromium tests. The inspected 390px evidence is
+  `artifacts/sidequest-full-context-copy.png`; it verifies the long copy label,
+  modal-free reset, and unobstructed borderless `v0.1.1` release marker.
 
 ## Risks and dependencies
 

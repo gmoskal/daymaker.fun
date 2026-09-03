@@ -1,4 +1,4 @@
-import { COPY, DEMO_PROMPTS } from "./copy"
+import { COPY } from "./copy"
 import type { Mission, MissionConstraint, MissionStop } from "./domain/mission"
 import { futureStops } from "./domain/mission-transition"
 import {
@@ -6,6 +6,7 @@ import {
   isDemoMissionId,
   type DemoMissionId,
 } from "./domain/seed"
+import { toMissionPrompt } from "./mission-prompt"
 
 export type WebMcpState =
   | { type: "checking" }
@@ -236,9 +237,7 @@ const workspaceFor = (
   timeline: TimelineStopScreen[],
   route: RouteStopScreen[],
 ): MissionWorkspaceScreen => {
-  const prompt = isDemoMissionId(mission.id)
-    ? DEMO_PROMPTS[mission.id]
-    : COPY.freshPrompt
+  const prompt = toMissionPrompt(mission)
   switch (panel) {
     case "plan":
       return {

@@ -93,7 +93,7 @@ input:focus-visible,
 .date-block > span {
   display: grid;
   gap: 6px;
-  color: #b6b6b9;
+  color: #88888d;
   font-size: 0.92rem;
   font-weight: 550;
   line-height: 1.1;
@@ -700,6 +700,16 @@ input:focus-visible,
   bottom: 28px;
 }
 
+.release-marker {
+  position: absolute;
+  left: clamp(30px, 7vw, 74px);
+  bottom: 40px;
+  color: #b6b6b9;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
 .primary-action {
   min-width: 112px;
   min-height: 52px;
@@ -830,6 +840,11 @@ input:focus-visible,
   .primary-control {
     right: 22px;
     bottom: 22px;
+  }
+
+  .release-marker {
+    left: 54px;
+    bottom: 38px;
   }
 }
 

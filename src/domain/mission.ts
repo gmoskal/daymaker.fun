@@ -25,6 +25,7 @@ export const EVENT_TYPES = [
   "stop_removed",
   "stops_reordered",
 ] as const
+export const PERSONAL_MISSION_ID = "personal-plan"
 
 const htmlPattern = /[<>]/
 const text = (maxLength: number) =>
@@ -38,6 +39,16 @@ const optionalText = (maxLength: number) => text(maxLength).optional()
 const dateTime = z
   .iso.datetime({ offset: true })
   .describe("ISO 8601 date-time with an explicit UTC offset.")
+const timeZone = text(80)
+  .refine((value) => {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: value })
+      return true
+    } catch {
+      return false
+    }
+  }, "Use a valid IANA timezone")
+  .describe("IANA timezone, such as Europe/Warsaw.")
 const httpsUrl = z
   .url()
   .refine((value) => new URL(value).protocol === "https:", "Use an HTTPS URL")
@@ -153,6 +164,9 @@ export const UpdateDayContextInputSchema = ExpectedRevisionSchema.extend({
   currentTime: dateTime,
   energy: z.enum(ENERGY_LEVELS).describe("Current group energy."),
   reason: text(160).describe("Why the context changed."),
+  replacePlan: z.boolean().describe("True starts a new empty plan; false updates this plan."),
+  timezone: timeZone,
+  title: text(80).describe("Concise user-facing plan title."),
 })
 
 export const UpdateMissionStopInputSchema = ExpectedRevisionSchema.extend({

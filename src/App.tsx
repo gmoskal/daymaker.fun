@@ -150,6 +150,7 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
           {screen.primaryAction.label}
         </button>
       </div>
+      <small className="release-marker">{COPY.release}</small>
     </main>
   )
 }

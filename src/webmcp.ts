@@ -189,7 +189,7 @@ const TOOL_CATALOG = [
   }),
   tool({
     description:
-      "Set the mission's current real-world time, location, energy, and constraints. This updates the shared board and returns its new revision.",
+      "Set title, timezone, time, location, energy, and constraints. Can replace the plan atomically or update it in place. Returns the new revision.",
     execute: (store, input) =>
       toToolResult(
         store.dispatch({

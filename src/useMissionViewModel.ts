@@ -245,7 +245,6 @@ export const useMissionViewModel = ({
             .catch(() => setCopied(false))
           return
         case "NewPlan":
-          if (hasPlanContent(store) && !window.confirm(COPY.newPlanConfirm)) return
           store.newPlan()
           setSelectedStopId(null)
           navigate("plan", true)

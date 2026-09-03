@@ -2,6 +2,7 @@ import {
   AddBoardItemInputSchema,
   AddMissionConstraintInputSchema,
   AddMissionStopInputSchema,
+  PERSONAL_MISSION_ID,
   ReorderMissionConstraintsInputSchema,
   ReorderMissionStopsInputSchema,
   RemoveMissionStopInputSchema,
@@ -33,7 +34,7 @@ type ApplyParams<TAction extends MissionAction> = {
   mission: Mission
 }
 
-type MissionPatch = Pick<Mission, "context" | "stops" | "title">
+type MissionPatch = Pick<Mission, "context" | "stops" | "timezone" | "title">
 
 type CommitParams = {
   actor: Actor
@@ -111,17 +112,29 @@ const applyContext = ({
     constraints,
     expectedRevision: _expectedRevision,
     reason,
+    replacePlan,
+    timezone,
+    title,
     ...context
   } = parsed.data
+  const target = replacePlan
+    ? {
+        ...mission,
+        date: context.currentTime.slice(0, 10),
+        events: [],
+        id: PERSONAL_MISSION_ID,
+        stops: [],
+      }
+    : mission
   return commit({
     actor: action.value.actor,
     at: context.currentTime,
     change: {
-      summary: `Updated context — ${reason}`,
+      summary: `${replacePlan ? `Started ${title}` : "Updated context"} — ${reason}`,
       type: "context_updated",
     },
     id,
-    mission,
+    mission: target,
     patch: {
       context: {
         ...context,
@@ -131,6 +144,8 @@ const applyContext = ({
           status: "active",
         })),
       },
+      timezone,
+      title,
     },
   })
 }

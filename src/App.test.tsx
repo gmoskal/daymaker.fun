@@ -31,20 +31,32 @@ const blankStore = () =>
   })
 const registration = (supported: boolean): Promise<WebMcpRegistration> =>
   Promise.resolve({ dispose: () => undefined, supported })
+const originalClipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard")
 
 afterEach(() => {
   vi.restoreAllMocks()
   window.history.replaceState(null, "", "/")
+  if (originalClipboard === undefined) {
+    Reflect.deleteProperty(navigator, "clipboard")
+  } else {
+    Object.defineProperty(navigator, "clipboard", originalClipboard)
+  }
 })
 
 describe("Sidequest app", () => {
+  it("shows the latest release at the page bottom", () => {
+    render(<App registration={registration(false)} store={blankStore()} />)
+
+    expect(screen.getByText("v0.1.1 · updated 3 Sep 2026")).toBeVisible()
+  })
+
   it("starts as a blank plan and keeps the demo optional", () => {
     const missionStore = blankStore()
     vi.spyOn(window, "confirm").mockReturnValue(true)
     render(<App registration={registration(false)} store={missionStore} />)
 
     expect(screen.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
-    expect(screen.getByRole("button", { name: "Copy prompt for ChatGPT" }))
+    expect(screen.getByRole("button", { name: "Copy full context for ChatGPT" }))
       .toBeVisible()
 
     fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
@@ -476,6 +488,57 @@ describe("Sidequest app", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: /Baška Voda/ }))
     expect(missionStore.getSnapshot().revision).toBe(6)
     expect(screen.getByTestId("stop-gravel-loop")).toHaveTextContent("Active")
-    expect(window.confirm).toHaveBeenCalledOnce()
+    expect(window.confirm).not.toHaveBeenCalled()
+  })
+
+  it("keeps confirmation when a sample would replace a personal plan", () => {
+    const missionStore = blankStore()
+    missionStore.dispatch({
+      type: "SetTitle",
+      value: {
+        actor: "human",
+        input: { expectedRevision: 0, title: "My afternoon" },
+      },
+    })
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    render(<App registration={registration(false)} store={missionStore} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Load demo" }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /Barcelona/ }))
+
+    expect(confirm).toHaveBeenCalledOnce()
+    expect(missionStore.getSnapshot()).toMatchObject({
+      id: "personal-plan",
+      title: "My afternoon",
+    })
+  })
+
+  it("starts a new plan without confirmation and copies selected demo context", async () => {
+    const missionStore = store()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    })
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    render(<App registration={registration(true)} store={missionStore} />)
+
+    fireEvent.click(screen.getByRole("tab", { name: "Context" }))
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Copy full context for ChatGPT",
+      }),
+    )
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
+    const prompt = writeText.mock.calls[0]?.[0]
+    expect(prompt).toContain('"id": "baska-voda-demo"')
+    expect(prompt).toContain('"title": "Baška Voda Adventure"')
+    expect(prompt).toContain('"stops": [')
+    expect(prompt).toContain('"events": []')
+
+    fireEvent.click(screen.getByRole("button", { name: "New plan" }))
+    expect(confirm).not.toHaveBeenCalled()
+    expect(missionStore.getSnapshot().stops).toEqual([])
   })
 })

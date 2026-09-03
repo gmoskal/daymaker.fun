@@ -1,4 +1,4 @@
-import type { Mission } from "./mission"
+import { PERSONAL_MISSION_ID, type Mission } from "./mission"
 
 export const DEMO_MISSION_ID = "baska-voda-demo"
 export const BLANK_MISSION_TITLE = "Untitled plan"
@@ -28,7 +28,7 @@ export const createBlankMission = (
   },
   date: localDate(now, timezone),
   events: [],
-  id: "personal-plan",
+  id: PERSONAL_MISSION_ID,
   revision: 0,
   schemaVersion: 1,
   stops: [],

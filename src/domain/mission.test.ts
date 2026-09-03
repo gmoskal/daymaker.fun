@@ -4,6 +4,7 @@ import {
   type Mission,
   type MissionAction,
   type MissionMutation,
+  type UpdateDayContextInput,
 } from "./mission"
 import { applyMissionAction, futureStops } from "./mission-transition"
 import { SEED_MISSION } from "./seed"
@@ -43,6 +44,30 @@ const stopAction = (
     },
   },
 }) as MissionAction
+const replacementAction = (
+  fields: Partial<UpdateDayContextInput> = {},
+): MissionAction => ({
+  type: "UpdateContext",
+  value: {
+    actor: "agent",
+    input: {
+      constraints: ["finish before 18:00"],
+      currentLocation: {
+        label: "Warsaw",
+        lat: 52.2297,
+        lng: 21.0122,
+      },
+      currentTime: "2026-09-03T12:15:00+02:00",
+      energy: "medium",
+      expectedRevision: 6,
+      reason: "Starting a personal afternoon plan.",
+      replacePlan: true,
+      timezone: "Europe/Warsaw",
+      title: "Quiet Warsaw afternoon",
+      ...fields,
+    },
+  },
+})
 
 describe("mission", () => {
   it("applies a valid action through the single transition gate", () => {
@@ -56,6 +81,37 @@ describe("mission", () => {
     expect(
       value.mission.stops.find((stop) => stop.id === "gravel-loop"),
     ).toMatchObject({ status: "completed" })
+  })
+
+  it("starts a titled replacement plan atomically", () => {
+    const value = expectApplied(apply(replacementAction())).mission
+
+    expect(value).toMatchObject({
+      date: "2026-09-03",
+      id: "personal-plan",
+      revision: 7,
+      title: "Quiet Warsaw afternoon",
+    })
+    expect(value.stops).toEqual([])
+    expect(value.events).toHaveLength(1)
+    expect(value.events[0]).toMatchObject({
+      actor: "agent",
+      type: "context_updated",
+    })
+  })
+
+  it("rejects stale or malformed replacement plans without mutation", () => {
+    const original = mission()
+
+    expectRejected(
+      apply(replacementAction({ expectedRevision: 5 }), original),
+      "STALE_REVISION",
+    )
+    expectRejected(
+      apply(replacementAction({ timezone: "Mars/Olympus" }), original),
+      "INVALID_INPUT",
+    )
+    expect(original).toEqual(SEED_MISSION)
   })
 
   it("rejects a stale action without changing the original mission", () => {

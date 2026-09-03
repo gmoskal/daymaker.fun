@@ -195,6 +195,9 @@ test("completes and captures the Sidequest killer flow", async ({ page }) => {
       energy: "low",
       expectedRevision: 7,
       reason: "The ride used more energy than expected.",
+      replacePlan: false,
+      timezone: "Europe/Zagreb",
+      title: "Baška Voda Adventure",
     }),
   ).toMatchObject({ ok: true, revision: 8 })
 
@@ -347,4 +350,70 @@ test("edits and reorders the human operational lists", async ({ page }) => {
       "max 20 min drive",
       "keep dinner at 18:30",
     ])
+})
+
+test("copies complete demo context and starts fresh without an app modal", async ({
+  context,
+  page,
+}) => {
+  await installWebMcpHarness(page)
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+    origin: "http://127.0.0.1:4173",
+  })
+  await page.setViewportSize({ height: 844, width: 390 })
+  let dialogCount = 0
+  page.on("dialog", async (dialog) => {
+    dialogCount += 1
+    await dialog.dismiss()
+  })
+  await page.goto("/")
+  await loadDemo(page)
+  await page.getByRole("tab", { name: "Context" }).click()
+  await page.getByRole("button", {
+    name: "Copy full context for ChatGPT",
+  }).click()
+
+  await expect(
+    page.getByRole("button", { name: "Full context copied" }),
+  ).toBeVisible()
+  const prompt = await page.evaluate(() => navigator.clipboard.readText())
+  expect(prompt).toContain('"id": "baska-voda-demo"')
+  expect(prompt).toContain('"title": "Baška Voda Adventure"')
+  expect(prompt).toContain('"locked": true')
+  expect(prompt).toContain('"events": []')
+  expect(prompt).toContain("get_mission_state")
+  const release = page.getByText("v0.1.1 · updated 3 Sep 2026")
+  const primary = page.getByRole("button", { name: "New plan" })
+  await expect(release).toBeVisible()
+  const releaseStyle = await release.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      background: style.backgroundImage,
+      border: style.borderStyle,
+      shadow: style.boxShadow,
+    }
+  })
+  expect(releaseStyle).toEqual({
+    background: "none",
+    border: "none",
+    shadow: "none",
+  })
+  const releaseBox = await release.boundingBox()
+  const primaryBox = await primary.boundingBox()
+  expect(releaseBox).not.toBeNull()
+  expect(primaryBox).not.toBeNull()
+  if (releaseBox !== null && primaryBox !== null)
+    expect(releaseBox.x + releaseBox.width).toBeLessThan(primaryBox.x)
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(390)
+  await page.screenshot({
+    fullPage: true,
+    path: "artifacts/sidequest-full-context-copy.png",
+  })
+
+  await page.getByRole("button", { name: "New plan" }).click()
+  expect(dialogCount).toBe(0)
+  await expect(page.getByRole("heading", { name: "Untitled plan" })).toBeVisible()
+  await expect(page.getByText(/Drag any unlocked item to reorder it/)).toBeVisible()
 })

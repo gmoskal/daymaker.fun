@@ -176,8 +176,15 @@ replacement rule.
 ### Cleanup
 
 - Task worktree: `/Users/gmm/tmp/codex/bug-004-prompt-reuses-unrelated-board`
-  (to be removed after delivery).
-- Worktree `node_modules` symlink to the main checkout (removed with worktree).
+  removed after delivery; its task branch was deleted and worktrees pruned.
+- Worktree `node_modules` symlink to the main checkout was removed with the
+  worktree.
+- No worktree or branch candidates remained for bugs 002, 003, or 004.
+- The global temp sweep found four directories owned by unrelated tasks. Their
+  ownership was not proven for this task, so none was deleted.
+- Post-cleanup storage snapshot: `/Users/gmm/tmp` 8.3 GB, `/Users/gmm/.codex`
+  28 GB, Xcode DerivedData 1.7 GB, data volume 43 GiB free. No Xcode build was
+  used by this web-only fix.
 
 ## Dowód końcowego compositora
 

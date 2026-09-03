@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: item-interaction and schedule-hierarchy revision in progress; Git integration pending
+> Status: item interaction, schedule hierarchy, and sample loader complete; Git integration permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -27,7 +27,7 @@
 - [ ] 6. Connect the public repository to the deployed Vercel project
 - [x] 7. Make first use and every interactive control unmistakable
 - [x] 8. Make a fresh personal plan the default and explain the chat boundary
-- [~] 9. Clarify schedule hierarchy, adding, and item actions
+- [x] 9. Clarify schedule hierarchy, adding, and item actions
 - [x] 10. Add a typed sample-plan catalog and loader menu
 
 ## Blocking decisions accepted in this plan
@@ -331,7 +331,7 @@ Implementation result:
 - Full green: `npm run check` passed 38/38 unit, integration, and contract tests, the strict TypeScript/Vite production build, and both Chromium flows 2/2.
 - Browser inspection at desktop and 390px confirmed the blank current-day hierarchy, unclipped title, single active workspace, and frameless actions.
 
-### 9 [~] Clarify schedule hierarchy, adding, and item actions
+### 9 [x] Clarify schedule hierarchy, adding, and item actions
 
 Description: Make the plan itself—not the decorative date—the dominant information. Replace competing and unexplained controls with one add flow and one expandable action menu per item, following the supplied screenshot and subsequent feedback.
 
@@ -369,7 +369,24 @@ Implementation result:
 
 - Behavioral red: `npm run test -- src/domain/mission.test.ts src/App.test.tsx` ran 26 tests and failed the five intended behaviors: no `RemoveStop` transition, visible revision, persistent add field, missing item chevron menu, and missing Delete action.
 - Visual red: `npx playwright test -g "preserves readable schedule hierarchy"` failed because the date numeral measured 124.8px against the 72px maximum before reaching the time, accent, timeline, and menu assertions.
-- Pending implementation, full gate, browser evidence, and production deployment.
+- The date is restrained and normally tracked, while 16px+ schedule times sit
+  immediately left of one dotted list-level axis. The saturated `#d21f2b` accent
+  is reserved for active state; titles and item actions remain neutral.
+- Native History API routes now own `/plan`, `/context`, and `/route`, with
+  Back/Forward restoration. History remains domain audit data without a visible
+  duplicate workspace.
+- Item titles open first and then edit inline; the whole unlocked row remains the
+  Motion reorder surface. `layout="position"` preserves the smooth positional
+  transition without scaling type during expand/collapse.
+- A shared frameless `…` control reveals the same horizontal icon action tray on
+  whichever item is open. Done/restore, skip, lock/unlock, delete, and map actions
+  remain visually distinct from content without borders or cards.
+- Route provides individual Google/Apple links and one action for the complete
+  ordered plan in Google Maps. Blank-state copy explains `+`, drag, item actions,
+  Route, and the ChatGPT Site Tools boundary.
+- Green: `npm run check` passed 48/48 Vitest tests, the strict TypeScript/Vite
+  production build, and 4/4 Chromium E2E tests. Inspected desktop and 390px
+  evidence confirms no clipping, horizontal overflow, frame, shadow, or gradient.
 
 ### 10 [x] Add a typed sample-plan catalog and loader menu
 

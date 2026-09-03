@@ -3,8 +3,8 @@
 | Pole | Wartość |
 |---|---|
 | Start pracy | 2026-09-03 03:58 |
-| Koniec pracy | — |
-| Status | test czerwony |
+| Koniec pracy | 2026-09-03 04:43 |
+| Status | zweryfikowany |
 | Klasyfikacja | klient-lokalny |
 | Rodzaj dowodu | wizualny-statyczny |
 | Baza analizy | `46959e5a1bb99b0346eff8f91ab5f46fc65d9a53` |
@@ -48,6 +48,15 @@ Wiersz renderuje pole edycji również w stanie zwiniętym, więc zwykły klik t
 
 ## Rozwiązanie
 
+`StopItem` renderuje zwinięty tytuł jako przycisk otwierający element. W stanie
+otwartym pojawia się ten sam wizualnie `InlineEditor`, automatycznie dostaje fokus
+i zachowuje edycję z samym podkreśleniem. `Reorder.Item` pozostaje powierzchnią
+gestu dla całego odblokowanego wiersza, a CSS komunikuje ten stan kursorami
+`grab`/`grabbing`. Zablokowany element nadal można otworzyć i obsłużyć przez jego
+menu, ale nie można go przeciągać.
+
+Nie zmieniono modelu domenowego, bocznych zakładek, źródła stanu ani katalogu
+pięciu narzędzi WebMCP.
 
 ## Raport z implementacji i testów
 
@@ -71,8 +80,59 @@ waiting for getByRole('button', { name: 'Return & shower', exact: true })
 1 failed
 ```
 
+Zmiany:
+
+- `src/MissionWorkspace.tsx`: osobny kontrakt zwiniętego przycisku i otwartego
+  edytora, jeden rozwinięty element oraz pełny wiersz jako powierzchnia reorder.
+- `src/app.css`: neutralny tytuł bez hover-color oraz kursory `grab` i
+  `grabbing` dla odblokowanego elementu.
+- `src/App.test.tsx` i `e2e/sidequest.spec.ts`: trwałe regresje dla kliknięcia
+  tytułu, edycji, kursora i dragowania rozpoczętego na treści wiersza.
+
+Dostarczenie: commit `33facb41ec148b6167306e7493fccb50be0fded5` na `main`.
+
+GREEN i bramka zakresu:
+
+```text
+$ npm run check
+Test Files  8 passed (8)
+Tests  48 passed (48)
+✓ built in 2.98s
+4 passed (20.4s)
+```
+
+- AC-1/2: zielony — `App.test.tsx`, otwarcie tytułem i pojedynczy otwarty element.
+- AC-3/4: zielony — `sidequest.spec.ts`, reorder z powierzchni tytułu i obliczony
+  kursor `grab`.
+- AC-5: zielony — test integracyjny blokady oraz ręcznie sprawdzone menu elementu.
+- AC-6: zielony — screenshot desktop/mobile i kontrola stylów bez ramek, cieni,
+  gradientów lub zmiany koloru tytułu.
+
+### Cleanup
+
+- Ten raport nie utworzył osobnego worktree ani procesu w tle.
+- Zachowano `bugs/assets/001-title-expand-drag/after.png` (40 KiB) jako lokalny,
+  ignorowany przez Git dowód przez wymagany okres retencji.
+- Ścieżka `/Users/gmm/tmp/codex/bug-001` należy do innego repozytorium
+  (`btc-demo`) i została świadomie pozostawiona bez zmian.
 
 ## Dowód końcowego compositora
 
+- Stan po zmianie: [otwarty element z neutralnym tytułem i menu](assets/001-title-expand-drag/after.png)
 
 ## Protokół weryfikacji
+
+1. Otwórz czysty plan na `/plan`, wybierz demo Baška Voda, kliknij zwinięty
+   `Forest gravel loop`: ma otworzyć się dokładnie ten element, z fokusem w
+   edytorze tytułu.
+2. Uruchom `npm run check`; oczekiwane: 48/48 testów Vitest, poprawny build i
+   4/4 testy Chromium. Testy uruchamiają prawdziwy store, React, Motion i DOM;
+   nie podmieniają ścieżki gestu.
+3. Przeciągnij odblokowany wiersz zaczynając na tytule. Kolejność ma się zmienić,
+   a zablokowany wiersz ma pozostać nieruchomy.
+4. Sprawdź `src/MissionWorkspace.tsx` (`StopItem`, `InlineEditor`) i
+   `src/app.css` (`.stop-open`, `.stop-title-button`). Model `MissionAction` i
+   katalog `WEBMCP_TOOL_DEFINITIONS` nie mogą się zmienić.
+5. Potwierdź dostarczenie:
+   `git tag -l 'fix/001-*'` oraz
+   `git merge-base --is-ancestor $(git rev-parse 'fix/001-title-expand-drag^{commit}') main`.

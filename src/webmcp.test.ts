@@ -269,9 +269,9 @@ describe("WebMCP", () => {
       revision: 8,
       title: "Quiet Warsaw afternoon",
     })
-    expect(missionStore.getSnapshot().stops).toHaveLength(2)
-    expect(missionStore.getSnapshot().stops).toContainEqual(
-      expect.objectContaining({ id: "dinner", locked: true }),
+    expect(missionStore.getSnapshot().stops).toHaveLength(1)
+    expect(missionStore.getSnapshot().stops).not.toContainEqual(
+      expect.objectContaining({ id: "dinner" }),
     )
     expect(missionStore.getSnapshot().events).toHaveLength(2)
   })

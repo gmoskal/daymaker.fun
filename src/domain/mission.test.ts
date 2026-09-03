@@ -159,7 +159,7 @@ describe("mission", () => {
     ).toMatchObject({ status: "completed" })
   })
 
-  it("replaces only unlocked proposed items", () => {
+  it("replaces the complete previous proposal when starting a new plan", () => {
     const value = expectApplied(
       apply(
         replacementAction({
@@ -180,9 +180,7 @@ describe("mission", () => {
       label: "finish before 18:00",
       status: "active",
     })
-    expect(value.stops).toEqual([
-      expect.objectContaining({ id: "dinner", locked: true }),
-    ])
+    expect(value.stops).toEqual([])
     expect(value.events).toHaveLength(1)
     expect(value.events[0]).toMatchObject({
       actor: "agent",

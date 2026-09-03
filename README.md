@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [daymaker.fun](https://daymaker.fun)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.7
-- Production deployment: v0.2.7 live
+- Local release: v0.2.8
+- Production deployment: v0.2.8 pending verification
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -20,8 +20,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 1. Open **Needs** and describe what the plan must accomplish. This initial description is required; the placeholder shows a complete example.
 2. Choose **Copy to ChatGPT** and paste the self-contained handoff into ChatGPT on mobile or desktop.
-3. ChatGPT continues in Work, opens the public Sidequest `/needs` page, and calls `get_mission_state`. If that browser opens a blank board, it initializes it from the copied planning input instead of discarding the description because its local revision differs.
-4. ChatGPT asks concise questions if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** to the page it opened with Site Tools. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated Sidequest plan** link.
+3. ChatGPT continues in Work, opens the public Sidequest `/needs` page, and calls `get_mission_state` only to obtain the current revision. It then immediately calls `update_day_context` with `replacePlan: true`, treating the copied input as a new request and discarding any unrelated proposal already open in that browser.
+4. After that reset, ChatGPT asks concise questions only if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** to the page it opened with Site Tools. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated Sidequest plan** link.
    Questions, progress updates, and the final answer use the language of your request; Sidequest keeps proper names, sources, tool values, and the session link unchanged.
 5. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Must keep** / **Can adapt**.
 6. There are two ways to iterate. Edit Needs on the board, choose **Copy changes to ChatGPT**, and paste the update back into the chat; or describe what should change directly in ChatGPT. Either path regenerates the proposal and returns a fresh link.
@@ -52,7 +52,7 @@ Sidequest is not a chat client and does not run a remote MCP server. ChatGPT rem
 | Tool | Purpose |
 | --- | --- |
 | `get_mission_state` | Read the live brief, structured needs, revision, proposed stops, locks, places, and sources. |
-| `update_day_context` | Structure the brief into fixed or flexible needs and replace the unlocked proposal while preserving locked commitments. |
+| `update_day_context` | Structure the brief into fixed or flexible needs and, with `replacePlan: true`, discard the complete previous proposal before starting a new one. |
 | `update_mission_stop` | Mark an unlocked proposal item planned, active, completed, or skipped. |
 | `add_mission_stop` | Add one researched item with time, coordinates, travel estimate, rationale, and an HTTPS source. |
 | `reorder_mission_stops` | Reorder all future items while preserving locked commitment times. |
@@ -147,11 +147,12 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - [x] Deploy v0.2.5 and verify the response-language contract in the public asset.
 - [x] Deploy v0.2.6 and verify `daymaker.fun` over HTTPS.
 - [x] Deploy v0.2.7 and verify the two-way feedback handoff plus plan iteration utility.
+- [ ] Deploy v0.2.8 and verify immediate replacement of an unrelated live proposal.
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and survives reload.
 - [ ] Confirm ChatGPT renders the final returned `sessionUrl` as a clickable **Open updated Sidequest plan** link.
-- [ ] Confirm a stale revision is rejected and locked commitments survive regeneration.
+- [ ] Confirm a stale revision is rejected and copied fixed requirements are recreated without retaining unrelated old stops.
 - [ ] Check per-item Google/Apple Maps and the complete Google Maps schedule.
 - [x] Verify the local build at desktop and 390 px widths.
 

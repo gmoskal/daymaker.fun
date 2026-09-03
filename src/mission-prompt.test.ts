@@ -46,7 +46,7 @@ describe("mission prompt", () => {
     expect(prompt).not.toContain("Untitled plan")
   })
 
-  it("bootstraps a fresh mobile Work board instead of stopping at the mode handoff", () => {
+  it("starts a new plan immediately instead of reconciling an unrelated live board", () => {
     const mission = createBlankMission(
       new Date("2026-09-03T10:15:00Z"),
       "Europe/Warsaw",
@@ -59,10 +59,20 @@ describe("mission prompt", () => {
     )
     expect(prompt).toContain("continue in Work")
     expect(prompt).toContain("Do not stop")
-    expect(prompt).toContain("If the live board is blank")
-    expect(prompt).toContain("bootstrap it from the copied planning input")
-    expect(prompt).toContain("Do not discard the copied brief")
-    expect(prompt).toContain("using the live revision")
+    expect(prompt).toContain(
+      "Treat the copied planning input as a new plan request",
+    )
+    expect(prompt).toContain(
+      "Use the live board only to obtain the current revision",
+    )
+    expect(prompt).toContain("Immediately call update_day_context")
+    expect(prompt).toContain("with replacePlan: true")
+    expect(prompt).toContain("before research, clarification, or progress narration")
+    expect(prompt).toContain(
+      "Do not compare, reconcile, or preserve unrelated content from the live board",
+    )
+    expect(prompt).not.toContain("If the live board is blank")
+    expect(prompt).not.toContain("preserve its current Needs")
     expect(prompt).toContain("sessionUrl")
     expect(prompt).toContain("[Open updated Sidequest plan]")
     expect(prompt).toContain("Do not finish without the clickable link")

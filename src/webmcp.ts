@@ -220,7 +220,7 @@ const TOOL_CATALOG = [
   }),
   tool({
     description:
-      "Extract and set Needs plus the planning brief, title, timezone, time, location, and pace. Can replace the proposal atomically. Returns the new revision and portable session URL.",
+      "Extract and set Needs plus the planning brief, title, timezone, time, location, and pace. With replacePlan true, atomically discard the complete previous proposal and start a new one. Returns the new revision and portable session URL.",
     execute: (store, input) =>
       toToolResult(
         store.dispatch({

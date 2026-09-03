@@ -265,7 +265,9 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
     "https://daymaker.fun/needs",
   )
   expect(initialCopied).toContain("continue in Work")
-  expect(initialCopied).toContain("If the live board is blank")
+  expect(initialCopied).toContain(
+    "Use the live board only to obtain the current revision",
+  )
   expect(initialCopied).toContain("Keep the 16:00 hotel check-in fixed")
   expect(initialCopied).not.toContain('"needs"')
 

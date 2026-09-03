@@ -200,7 +200,7 @@ export const UpdateDayContextInputSchema = ExpectedRevisionSchema.extend({
   replacePlan: z
     .boolean()
     .describe(
-      "True replaces unlocked suggestions but preserves locks; false updates in place.",
+      "True starts a new plan and replaces the complete previous proposal; false updates in place.",
     ),
   timezone: timeZone,
   title: text(80).describe("Concise user-facing plan title."),

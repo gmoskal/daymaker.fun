@@ -15,7 +15,10 @@ describe("English product copy", () => {
     expect(allCopy).not.toContain("Must-haves")
     expect(COPY.promptOpen).toContain("not only in chat")
     expect(COPY.promptOpen).toContain("continue in Work")
-    expect(COPY.promptProtocol).toContain("If the live board is blank")
+    expect(COPY.promptProtocol).toContain(
+      "Use the live board only to obtain the current revision",
+    )
+    expect(COPY.promptProtocol).toContain("replace it even when that board is populated")
     expect(COPY.promptProtocol).toContain("sessionUrl")
     expect(COPY.promptProtocol).toContain("[Open updated Sidequest plan]")
     expect(allCopy).toContain("LANGUAGE REQUIREMENT")

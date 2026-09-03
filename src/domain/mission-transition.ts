@@ -129,7 +129,7 @@ const applyContext = ({
         date: context.currentTime.slice(0, 10),
         events: [],
         id: PERSONAL_MISSION_ID,
-        stops: mission.stops.filter((stop) => stop.locked),
+        stops: [],
       }
     : mission
   return commit({

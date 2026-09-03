@@ -4,7 +4,7 @@
 |---|---|
 | Start pracy | 2026-09-03 18:54 CEST |
 | Koniec pracy | — |
-| Status | analiza w toku |
+| Status | test czerwony |
 | Klasyfikacja | kontrakt/codegen |
 | Rodzaj dowodu | niewizualny |
 | Baza analizy | `5f6a9255e1d0` |
@@ -95,9 +95,27 @@ behavior do not change.
 
 ## Raport z implementacji i testów
 
+RED (`/Users/gmm/tmp/codex/bug-004-prompt-reuses-unrelated-board`):
+
+```text
+$ npm run test -- src/mission-prompt.test.ts src/domain/mission.test.ts
+Test Files  2 failed (2)
+Tests  2 failed | 24 passed (26)
+mission prompt > starts a new plan immediately instead of reconciling an unrelated live board
+AssertionError: expected copied prompt to contain "Treat the copied planning input as a new plan request"
+mission > replaces the complete previous proposal when starting a new plan
+AssertionError: expected locked previous dinner to be removed; received one stale stop
+```
+
+An earlier invocation failed with `vitest: command not found` before the shared
+`node_modules` symlink was created. It was a setup failure and is not counted as
+RED.
+
 ### Cleanup
 
-- No temporary resources created.
+- Task worktree: `/Users/gmm/tmp/codex/bug-004-prompt-reuses-unrelated-board`
+  (to be removed after delivery).
+- Worktree `node_modules` symlink to the main checkout (removed with worktree).
 
 ## Dowód końcowego compositora
 

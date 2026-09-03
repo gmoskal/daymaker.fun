@@ -24,7 +24,7 @@
 - [x] 3. Implement exactly five WebMCP tools over the same store
 - [x] 4. Implement the responsive day-plan UI and map
 - [x] 5. Complete delivery files, full gates, visual QA, and simplification rounds
-- [ ] 6. Connect the public repository to the deployed Vercel project
+- [x] 6. Connect the public repository to the deployed Vercel project
 - [x] 7. Make first use and every interactive control unmistakable
 - [x] 8. Make a fresh personal plan the default and explain the chat boundary
 - [x] 9. Clarify schedule hierarchy, adding, and item actions
@@ -225,7 +225,7 @@ Implementation result:
 - Round 5 — React and physical UI: critique found map semantics, rotated marker numbers, and sub-44px map controls. Change: added an accessible region, readable circular markers, and 44px brand/source/map/zoom targets. E2E passed and final desktop/mobile screenshots were inspected again.
 - The public repository, MIT license, and Vercel production deployment are verified. Real ChatGPT/Chrome discovery, video recording, and Devpost submission remain explicitly pending manual release actions in README.
 
-### 6 [ ] Connect the public repository to the deployed Vercel project
+### 6 [x] Connect the public repository to the deployed Vercel project
 
 Description: Add the minimum Vercel contract, connect the authenticated Vercel project to the public GitHub repository, deploy production, and record only externally verified release facts.
 
@@ -249,11 +249,11 @@ Implementation result:
 - Production deployment `dpl_9ynveDQx1YteHqeLjZgXEvqzZfwh` reached `Ready` and was aliased to `https://sidequest-webmcp-eta.vercel.app`; the served bundle contains v0.2.0 and the two Needs examples.
 - Anonymous HTTPS verification returned `200` with the configured CSP, permissions policy, referrer policy, MIME protection, and clickjacking protection.
 - Browser verification rendered the deployed mission at 1440px and 390px with no horizontal overflow.
-- `vercel git connect` still reports that the Vercel GitHub integration does not have access to the public repository. Automatic deployments remain pending that provider permission; direct production deployment works.
+- Vercel Git settings show `gmoskal/daymaker.fun` as connected to the `daymaker.fun` project. Automatic deployments are enabled for future pushes.
 
 Status:
 
-- Production v0.2.0 is complete. The remaining blocker is granting the Vercel GitHub integration access to `gmoskal/daymaker.fun`.
+- Production v0.2.0 is complete, and the renamed `gmoskal/daymaker.fun` repository is connected to Vercel for automatic deployments.
 
 ### 7 [x] Make first use and every interactive control unmistakable
 
@@ -1285,7 +1285,7 @@ the single canonical URL copied into ChatGPT handoffs and delivery docs.
 Acceptance criteria:
 
 - AC-1: Vercel reports `daymaker.fun` as configured correctly for the
-  `sidequest-webmcp` production project and serves the current app over HTTPS.
+  `daymaker.fun` production project and serves the current app over HTTPS.
 - AC-2: `www.daymaker.fun` resolves to Vercel and serves or redirects to the
   same production app instead of Hover's placeholder.
 - AC-3: copied handoffs open `https://daymaker.fun/needs`; the former Vercel
@@ -1304,7 +1304,7 @@ Tests:
   DNS propagation or certificate issuance.
 
 Sources/References: Hover DNS for `daymaker.fun`, Vercel project
-`sidequest-webmcp`, `src/copy.ts`, prompt tests, `README.md`.
+`daymaker.fun`, `src/copy.ts`, prompt tests, `README.md`.
 
 Before implementation gate:
 

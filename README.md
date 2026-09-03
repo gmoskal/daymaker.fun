@@ -12,8 +12,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 - Public repository: [github.com/gmoskal/daymaker.fun](https://github.com/gmoskal/daymaker.fun)
 - Local release: v0.4.0
 - Production deployment: v0.4.0 live and verified
-- Automatic Git deployments: pending GitHub/Vercel repository permission
-- Demo video: pending
+- Automatic Git deployments: connected to [gmoskal/daymaker.fun](https://github.com/gmoskal/daymaker.fun)
+- Demo video: [YouTube](https://www.youtube.com/watch?v=XlG632xwWvs)
 - License: MIT
 
 ## How to use it

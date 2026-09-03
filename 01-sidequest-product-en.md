@@ -508,7 +508,7 @@ Sidequest exposes five focused WebMCP tools: read the mission, update current co
 
 ### How we built it
 
-Sidequest is a local-first React and TypeScript application built with Vite. A small domain store is the single source of truth for the human UI and WebMCP handlers. Runtime schemas validate every tool input, and optimistic revision checks prevent an agent from overwriting a newer human change. The map is rendered with Leaflet, while mission state and a compact audit log are persisted in localStorage.
+Sidequest is a local-first React and TypeScript application built with Vite. A small domain store is the single source of truth for the human UI and WebMCP handlers. Runtime schemas validate every tool input, and optimistic revision checks prevent an agent from overwriting a newer human change. Motion powers controlled list reordering, Google Maps provides the location preview, Google and Apple Maps provide external launch targets, and mission state plus a compact audit log are persisted in localStorage.
 
 The WebMCP integration uses the imperative `document.modelContext.registerTool()` API in the top-level document, feature-detects support, and degrades gracefully to the normal human interface in other browsers. No custom model, API key, or backend is required: the browser agent brings the intelligence; Sidequest provides trustworthy, visible actions on the live page.
 

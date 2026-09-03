@@ -145,7 +145,9 @@ const toMissionState = (mission: Mission): MissionStateResult => ({
   mission: {
     context: {
       energy: mission.context.energy,
-      limits: mission.context.constraints,
+      limits: mission.context.constraints
+        .filter((constraint) => constraint.status === "active")
+        .map((constraint) => constraint.label),
       now: clock(mission.context.currentTime),
       place: toAgentPlace(mission.context.currentLocation),
     },

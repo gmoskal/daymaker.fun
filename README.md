@@ -57,7 +57,9 @@ Human controls ─┐
                 ├─> MissionAction -> pure domain transition -> MissionStore
 WebMCP tools ───┘                                      │
                                                       ├─> localStorage
-                                                      └─> pure presenter -> React + Leaflet
+                                                      └─> pure presenter -> React + Motion
+                                                                                  │
+                                                                                  └─> Google / Apple Maps
 ```
 
 `Mission` is the only domain source of truth. React owns only view state such as selection and copy feedback. The WebMCP adapter validates external input and dispatches the same action union as the UI; it cannot mutate the mission directly.
@@ -70,7 +72,8 @@ Key files:
 - `src/webmcp.ts` — one catalog and the five imperative tool registrations
 - `src/view-model.ts` — pure `Mission + ViewState -> MissionScreen` projection
 - `src/useMissionViewModel.ts` — React adapter from `ViewAction` to domain actions
-- `src/App.tsx` and `src/MissionMap.tsx` — renderer and Leaflet boundary
+- `src/App.tsx` and `src/MissionWorkspace.tsx` — minimal renderer and Motion reorder boundary
+- `src/MissionMap.tsx` — Google Maps preview plus Google/Apple outbound links
 
 ## Run locally
 
@@ -82,6 +85,8 @@ npm run dev
 ```
 
 Open the printed local URL. The seeded mission persists in `localStorage`; **Reset demo** restores revision 6.
+
+The route view renders a Google Maps preview without adding a map library to the bundle. Set `VITE_GOOGLE_MAPS_EMBED_KEY` to use the official Google Maps Embed API endpoint; otherwise the preview uses Google's public embed URL. Clicking the preview opens the selected item in Google Maps, and the adjacent action can open it in Apple Maps instead.
 
 ## Verification
 
@@ -114,7 +119,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - [ ] Open it in a Chrome build with WebMCP enabled and confirm all five tools are discoverable.
 - [ ] Confirm every tool result updates the visible board and persists after reload.
 - [ ] Confirm dinner remains locked at 18:30 and a stale revision is rejected cleanly.
-- [ ] Check the public source links and OpenStreetMap attribution.
+- [ ] Check the public source links, Google Maps preview, and Google/Apple Maps launch actions.
 - [x] Verify the deployed site at desktop and 390px mobile widths.
 
 ## Security and privacy
@@ -128,7 +133,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 
 ## Limitations
 
-Sidequest is intentionally a focused hackathon prototype: one deterministic mission, local browser persistence, English UI, overview mapping, and no authentication or multi-user sync. It does not provide live GPS, live weather, directions, reservations, automatic web research, or a custom chat interface. OpenStreetMap tiles require network access and are not an offline guarantee.
+Sidequest is intentionally a focused hackathon prototype: one deterministic mission, local browser persistence, English UI, a Google Maps location preview, and no authentication or multi-user sync. It does not provide live GPS, live weather, turn-by-turn directions, reservations, automatic web research, or a custom chat interface. Google and Apple Maps require network access and open outside Sidequest for full map interaction.
 
 WebMCP remains progressive enhancement. Actual discovery in ChatGPT/Chrome, the demo video, and Devpost submission are manual release steps.
 

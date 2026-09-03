@@ -85,8 +85,8 @@ OpenAI's official documentation currently states that ChatGPT's browser supports
 | Runtime schemas | Zod 4 | one source for types and validation; native `z.toJSONSchema()` for WebMCP |
 | State | custom `MissionStore` + `useSyncExternalStore` | a small, framework-light source of truth also usable outside React |
 | Persistence | localStorage | no backend, accounts, or secrets; sufficient for one demo mission |
-| Map | Leaflet 1.9.x without a React wrapper | mature markers/polylines; one `useEffect` integration; fewer dependencies |
-| Tiles | standard OpenStreetMap tiles | no key for a low-traffic demo; attribution and a fallback are mandatory |
+| Reordering | Motion for React | controlled spring reordering with the whole unlocked row as the drag surface |
+| Maps | Google Maps preview plus Google/Apple map links | recognizable map context, provider choice, and no fake straight-line routing |
 | Unit/integration | Vitest + Testing Library | fast tests for domain functions, store, and components |
 | E2E | Playwright with one Chromium project | tests the vertical slice with a mocked `document.modelContext` |
 | Hosting | Netlify static site | simple `vite build` → `dist`, HTTPS, no functions or secrets |
@@ -125,8 +125,8 @@ This prevents drift between the tool description and actual validation. For comp
 npm create vite@latest sidequest -- --template react-ts
 cd sidequest
 npm install
-npm install zod leaflet
-npm install -D @types/leaflet webmcp-types vitest jsdom \
+npm install zod motion
+npm install -D webmcp-types vitest jsdom \
   @testing-library/react @testing-library/jest-dom @playwright/test
 npx playwright install chromium
 ```
@@ -165,7 +165,7 @@ flowchart LR
   Store --> Storage[(localStorage)]
   Store --> UI[React UI]
   UI --> Timeline[Timeline]
-  UI --> Map[Leaflet map]
+  UI --> Map[Google Maps preview and provider links]
   UI --> Log[Activity log]
 ```
 
@@ -179,7 +179,7 @@ The most important architectural rule:
 2. **Application/store** — state, subscriptions, persistence, and reset.
 3. **WebMCP adapter** — tool definitions and input → domain command mapping.
 4. **UI** — rendering and human actions.
-5. **Infrastructure** — localStorage, Leaflet tiles, and source links.
+5. **Infrastructure** — localStorage, Google/Apple map URLs, and source links.
 
 ## 6. Proposed repository tree
 
@@ -915,29 +915,28 @@ After the user clicks `Done`, the gravel ride becomes `completed` and the revisi
 
 ### Desktop layout
 
-- max width of approximately 1,440 px;
-- 64–72 px header;
-- main grid: 42% left column, 58% map;
-- the timeline scrolls internally only at small viewport heights;
-- the activity log occupies the bottom of the right column or an overlay card on the map;
+- a centered white canvas no wider than approximately 760 px;
+- editable title, oversized date, sparse schedule, and generous negative space;
+- exactly one of Plan, Context, Route, or History is visible at a time;
+- secondary navigation stays behind one floating menu action;
 - the primary result must be legible in a 1,440×900 recording.
 
 ### Mobile layout
 
-- order: header → context → timeline → map → activity log;
-- map height of at least 360 px;
+- preserve the same title → date → current workspace hierarchy;
+- position time/status left and item title right, matching the supplied calendar reference;
 - every human action has a target of at least 44×44 px;
 - no horizontal scrolling at 390 px.
 
 ### Visual behavior
 
-- an agent mutation highlights the changed stop for 1.2 seconds;
 - a `skipped` stop remains in history but not in the future route;
-- a `completed` stop is visually subdued and shows a checkmark;
-- a `locked` stop shows a small lock and fixed time;
-- the map fits bounds only after a completed mutation or reorder, not on every render;
-- clicking a card centers the map, and clicking a marker selects its card;
-- the line between markers is illustrative and carries the label `Plan overview · not turn-by-turn navigation`.
+- a `completed` stop is visually subdued;
+- a `locked` stop shows a frameless lock icon and fixed time;
+- the whole unlocked row reorders with a controlled Motion spring and no drag handle;
+- clicking an item title opens its inline actions; only its time/status changes to the accent color;
+- no card border, selected bar, shadow, gradient, or decorative movement is permitted;
+- clicking the Google Maps preview opens the selected location in Google Maps.
 
 ### WebMCP status
 
@@ -956,27 +955,19 @@ Add a discreet `Copy demo prompt` button. On click, it copies the exact prompt f
 
 ## 15. Map and external data
 
-### Leaflet
+### Google Maps preview
 
-- initialize the map once in `useEffect`;
-- keep the map instance in a ref;
-- update markers and the polyline in a separate effect driven by the future-stops selector;
-- always remove layers and listeners during cleanup;
-- do not render into a hidden or zero-sized container;
-- call `invalidateSize()` after layout changes.
-
-### OpenStreetMap tiles
-
-- show the complete required attribution;
-- do not remove or cover the attribution control;
-- do not prefetch or bulk-cache tiles;
-- challenge traffic should be low, but the standard tile server offers no SLA;
-- if tiles fail to load, show a light background with markers or an empty state and keep the timeline usable.
+- derive preview and launch URLs from the selected future item in the pure presenter;
+- use an iframe only as a visual preview; a full-preview overlay opens Google Maps in a new tab;
+- use the official Google Maps Embed API endpoint when `VITE_GOOGLE_MAPS_EMBED_KEY` is configured;
+- otherwise use Google's public embed URL without adding a map-rendering dependency;
+- expose explicit Google Maps and Apple Maps links with secure external-link attributes;
+- if the preview fails to load, keep the schedule and provider launch links usable.
 
 ### What the map does not do
 
 - it does not calculate driving time;
-- it does not claim that the polyline follows a real road;
+- it does not draw or imply a straight-line route;
 - it does not provide navigation;
 - it does not send the device's current location;
 - it does not retrieve hidden data from source URLs.
@@ -1185,7 +1176,7 @@ Exit criterion: human and agent commands update one store; reload preserves stat
 - [ ] Timeline and StopCard.
 - [ ] Human Done/Skip/Undo.
 - [ ] Activity log.
-- [ ] Leaflet map, markers, polyline, and selection sync.
+- [ ] Google Maps preview, provider launch links, and selection sync.
 - [ ] Responsive layout.
 - [ ] Copy demo prompt.
 
@@ -1346,11 +1337,11 @@ Implement Sidequest from the two project documents in this repository:
 Start by inspecting the repository, package manager, AGENTS.md files, and current
 changes. Preserve all user work. Build only the P0 vertical slice first: the
 Baška Voda demo mission, shared MissionStore, human Done/Skip actions, timeline,
-Leaflet map, actor-aware activity log, deterministic reset, and exactly five
+Motion-reorderable lists, Google Maps preview, actor-aware activity log, deterministic reset, and exactly five
 imperative WebMCP tools registered in the top-level page through
 document.modelContext.registerTool().
 
-Use React, TypeScript, Vite, Zod, localStorage, Leaflet, Vitest, Testing Library,
+Use React, TypeScript, Vite, Zod, localStorage, Motion, Vitest, Testing Library,
 and one Chromium Playwright E2E as specified. UI actions and WebMCP handlers must
 call the same validated domain service. Every write must require an optimistic
 expectedRevision. Locked dinner at 18:30 must be enforced in domain code.
@@ -1377,7 +1368,10 @@ any remaining setup needed for deployment or recording.
 - [Zod: JSON Schema](https://zod.dev/json-schema) — `z.toJSONSchema()` and conversion constraints.
 - [Vite: Getting Started](https://vite.dev/guide/) — current Node requirements and React TS scaffolding.
 - [Vite: Static Deploy](https://vite.dev/guide/static-deploy) — production static build.
-- [Leaflet Quick Start](https://leafletjs.com/examples/quick-start/) — map, markers, polyline, and attribution requirement.
+- [Motion React reorder](https://motion.dev/docs/react-reorder) — controlled `Reorder.Group` and `Reorder.Item` interaction.
+- [Google Maps URLs](https://developers.google.com/maps/documentation/urls/get-started) — cross-platform map launch URLs.
+- [Google Maps Embed API](https://developers.google.com/maps/documentation/embed/quickstart) — keyed preview endpoint.
+- [Apple Map Links](https://developer.apple.com/library/archive/featuredarticles/iPhoneURLScheme_Reference/MapLinks/MapLinks.html) — Apple Maps launch parameters.
 - [Playwright](https://playwright.dev/docs/intro) — Chromium E2E and isolated browser contexts.
 - [Netlify framework build settings](https://docs.netlify.com/build/frameworks/overview/) — Vite build and `dist` directory.
 - [The WebMCP Challenge rules](https://webmcp.devpost.com/rules) — repository, working-project, and judging requirements.

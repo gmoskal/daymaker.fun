@@ -4,6 +4,8 @@ import { COPY } from "./copy"
 import type { MissionStore } from "./store"
 import {
   presentMission,
+  toHumanStopOrder,
+  type MissionPanel,
   type ViewAction,
   type WebMcpState,
 } from "./view-model"
@@ -25,6 +27,7 @@ export const useMissionViewModel = ({
   )
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [panel, setPanel] = useState<MissionPanel>("plan")
   const [webMcp, setWebMcp] = useState<WebMcpState>({ type: "checking" })
 
   useEffect(() => {
@@ -47,19 +50,137 @@ export const useMissionViewModel = ({
   const dispatch = useCallback(
     (action: ViewAction) => {
       switch (action.type) {
+        case "SelectPanel":
+          setPanel(action.panel)
+          return
         case "SelectStop":
           setSelectedStopId(action.stopId)
           return
+        case "ShowStopOnMap":
+          setSelectedStopId(action.stopId)
+          setPanel("route")
+          return
         case "SetStopStatus":
+          if (
+            store.dispatch({
+              type: "UpdateStop",
+              value: {
+                actor: "human",
+                input: {
+                  expectedRevision: store.getSnapshot().revision,
+                  reason: "Updated from the Sidequest board.",
+                  status: action.status,
+                  stopId: action.stopId,
+                },
+              },
+            }).type === "applied"
+          )
+            setSelectedStopId(null)
+          return
+        case "SetStopLock":
           store.dispatch({
-            type: "UpdateStop",
+            type: "SetStopLock",
             value: {
               actor: "human",
               input: {
                 expectedRevision: store.getSnapshot().revision,
-                reason: "Updated from the Sidequest board.",
-                status: action.status,
+                locked: action.locked,
                 stopId: action.stopId,
+              },
+            },
+          })
+          return
+        case "ReorderStops": {
+          const input = toHumanStopOrder(store.getSnapshot(), action.stopIds)
+          if (input === null) return
+          store.dispatch({
+            type: "ReorderStops",
+            value: { actor: "human", input },
+          })
+          return
+        }
+        case "AddConstraint":
+          store.dispatch({
+            type: "AddConstraint",
+            value: {
+              actor: "human",
+              input: {
+                expectedRevision: store.getSnapshot().revision,
+                label: action.label,
+              },
+            },
+          })
+          return
+        case "ToggleConstraint":
+          store.dispatch({
+            type: "ToggleConstraint",
+            value: {
+              actor: "human",
+              input: {
+                constraintId: action.constraintId,
+                expectedRevision: store.getSnapshot().revision,
+              },
+            },
+          })
+          return
+        case "ReorderConstraints":
+          store.dispatch({
+            type: "ReorderConstraints",
+            value: {
+              actor: "human",
+              input: {
+                expectedRevision: store.getSnapshot().revision,
+                orderedConstraintIds: action.constraintIds,
+              },
+            },
+          })
+          return
+        case "SetTitle":
+          store.dispatch({
+            type: "SetTitle",
+            value: {
+              actor: "human",
+              input: {
+                expectedRevision: store.getSnapshot().revision,
+                title: action.title,
+              },
+            },
+          })
+          return
+        case "AddItem":
+          store.dispatch({
+            type: "AddItem",
+            value: {
+              actor: "human",
+              input: {
+                expectedRevision: store.getSnapshot().revision,
+                title: action.title,
+              },
+            },
+          })
+          return
+        case "RenameStop":
+          store.dispatch({
+            type: "RenameStop",
+            value: {
+              actor: "human",
+              input: {
+                expectedRevision: store.getSnapshot().revision,
+                stopId: action.stopId,
+                title: action.title,
+              },
+            },
+          })
+          return
+        case "RenameConstraint":
+          store.dispatch({
+            type: "RenameConstraint",
+            value: {
+              actor: "human",
+              input: {
+                constraintId: action.constraintId,
+                expectedRevision: store.getSnapshot().revision,
+                label: action.label,
               },
             },
           })
@@ -75,6 +196,7 @@ export const useMissionViewModel = ({
           if (window.confirm(COPY.resetConfirm)) {
             store.reset()
             setSelectedStopId(null)
+            setPanel("plan")
           }
           return
       }
@@ -85,8 +207,8 @@ export const useMissionViewModel = ({
   return {
     dispatch,
     screen: useMemo(
-      () => presentMission({ copied, mission, selectedStopId, webMcp }),
-      [copied, mission, selectedStopId, webMcp],
+      () => presentMission({ copied, mission, panel, selectedStopId, webMcp }),
+      [copied, mission, panel, selectedStopId, webMcp],
     ),
   }
 }

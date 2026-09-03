@@ -1,5 +1,5 @@
 import { COPY } from "./copy"
-import type { Mission, MissionStop } from "./domain/mission"
+import type { Mission, MissionConstraint, MissionStop } from "./domain/mission"
 import { futureStops } from "./domain/mission-transition"
 
 export type WebMcpState =
@@ -8,31 +8,51 @@ export type WebMcpState =
   | { type: "unavailable" }
   | { type: "error" }
 
+export const MISSION_PANELS = [
+  { id: "plan", label: COPY.planTitle },
+  { id: "context", label: COPY.contextTitle },
+  { id: "route", label: COPY.mapTitle },
+  { id: "history", label: COPY.activityTitle },
+] as const
+
+export type MissionPanel = (typeof MISSION_PANELS)[number]["id"]
+
 export type ViewAction =
   | { type: "CopyPrompt" }
   | { type: "Reset" }
+  | { panel: MissionPanel; type: "SelectPanel" }
   | { stopId: string; type: "SelectStop" }
+  | { stopId: string; type: "ShowStopOnMap" }
   | {
       status: "completed" | "planned" | "skipped"
       stopId: string
       type: "SetStopStatus"
     }
+  | { locked: boolean; stopId: string; type: "SetStopLock" }
+  | { stopIds: string[]; type: "ReorderStops" }
+  | { label: string; type: "AddConstraint" }
+  | { constraintId: string; type: "ToggleConstraint" }
+  | { constraintIds: string[]; type: "ReorderConstraints" }
+  | { title: string; type: "SetTitle" }
+  | { title: string; type: "AddItem" }
+  | { stopId: string; title: string; type: "RenameStop" }
+  | { constraintId: string; label: string; type: "RenameConstraint" }
 
 export type RouteStopScreen = {
   coordinates: [number, number]
   id: string
   index: number
+  location: string
   selected: boolean
   title: string
 }
 
 export type TimelineStopScreen = {
   actionLabel: string
-  duration: string
+  draggable: boolean
   id: string
-  kind: string
-  location: string
   locked: boolean
+  lockLabel: string
   note?: string
   rationale: string
   routeIndex: number | null
@@ -42,19 +62,31 @@ export type TimelineStopScreen = {
   statusLabel: string
   time: string
   title: string
-  travel: string | null
 }
 
-export type MissionScreen = {
-  commitment: string
-  context: {
-    constraints: string[]
-    currentLocation: string
-    currentTime: string
-    energy: string
-  }
+export type ConstraintScreen = Pick<MissionConstraint, "id" | "label" | "status">
+
+type PlanWorkspace = {
+  heading: string
+  stops: TimelineStopScreen[]
+  type: "plan"
+}
+
+type ContextWorkspace = {
+  constraints: ConstraintScreen[]
   copyLabel: string
-  date: string
+  currentLocation: string
+  currentTime: string
+  energy: string
+  type: "context"
+}
+
+type RouteWorkspace = {
+  route: RouteStopScreen[]
+  type: "route"
+}
+
+type HistoryWorkspace = {
   events: Array<{
     actor: string
     at: string
@@ -62,16 +94,37 @@ export type MissionScreen = {
     summary: string
     type: string
   }>
+  type: "history"
+}
+
+export type MissionWorkspaceScreen =
+  | PlanWorkspace
+  | ContextWorkspace
+  | RouteWorkspace
+  | HistoryWorkspace
+
+export type MissionScreen = {
+  date: {
+    day: string
+    month: string
+    weekday: string
+    year: string
+  }
   missionTitle: string
+  navigation: Array<{
+    active: boolean
+    id: MissionPanel
+    label: string
+  }>
   revision: string
-  route: RouteStopScreen[]
-  timeline: TimelineStopScreen[]
   webMcp: { label: string; tone: "neutral" | "positive" | "warning" }
+  workspace: MissionWorkspaceScreen
 }
 
 type PresentMissionParams = {
   copied: boolean
   mission: Mission
+  panel: MissionPanel
   selectedStopId: string | null
   webMcp: WebMcpState
 }
@@ -80,16 +133,16 @@ const clock = (dateTime: string) => dateTime.slice(11, 16)
 const titleCase = (value: string) =>
   `${value.charAt(0).toUpperCase()}${value.slice(1)}`
 
-const durationLabel = (minutes: number) => {
-  const hours = Math.floor(minutes / 60)
-  const remainder = minutes % 60
-  if (hours === 0) return `${remainder}m`
-  if (remainder === 0) return `${hours}h`
-  return `${hours}h ${remainder}m`
+const focusedStopId = (mission: Mission, selectedStopId: string | null) => {
+  if (mission.stops.some((stop) => stop.id === selectedStopId))
+    return selectedStopId
+  return (
+    mission.stops.find((stop) => stop.status === "active")?.id ??
+    mission.stops.find((stop) => stop.status === "planned")?.id ??
+    mission.stops[0]?.id ??
+    null
+  )
 }
-
-const minutesBetween = (from: string, to: string) =>
-  Math.max(0, Math.round((Date.parse(to) - Date.parse(from)) / 60_000))
 
 const routeFor = (
   mission: Mission,
@@ -99,9 +152,40 @@ const routeFor = (
     coordinates: [stop.location.lat, stop.location.lng],
     id: stop.id,
     index: index + 1,
+    location: stop.location.label,
     selected: stop.id === selectedStopId,
     title: stop.title,
   }))
+
+const timelineFor = (
+  mission: Mission,
+  selectedStopId: string | null,
+  route: RouteStopScreen[],
+): TimelineStopScreen[] => {
+  const routeIndices = new Map(route.map((stop) => [stop.id, stop.index]))
+  return mission.stops.map((stop) => ({
+    actionLabel:
+      stop.status === "completed" || stop.status === "skipped"
+        ? `Restore ${stop.title} to planned`
+        : `Mark ${stop.title}`,
+    draggable:
+      !stop.locked && (stop.status === "active" || stop.status === "planned"),
+    id: stop.id,
+    locked: stop.locked,
+    lockLabel: `${stop.locked ? COPY.unlock : COPY.lock} ${stop.title}`,
+    ...(stop.note === undefined ? {} : { note: stop.note }),
+    rationale: stop.rationale,
+    routeIndex: routeIndices.get(stop.id) ?? null,
+    selected: stop.id === selectedStopId,
+    ...(stop.source === undefined
+      ? {}
+      : { source: { title: stop.source.title, url: stop.source.url } }),
+    status: stop.status,
+    statusLabel: titleCase(stop.status),
+    time: clock(stop.startsAt),
+    title: stop.title,
+  }))
+}
 
 const webMcpBadge = (state: WebMcpState): MissionScreen["webMcp"] => {
   switch (state.type) {
@@ -116,71 +200,110 @@ const webMcpBadge = (state: WebMcpState): MissionScreen["webMcp"] => {
   }
 }
 
+const dateParts = (date: string, timezone: string): MissionScreen["date"] => {
+  const value = new Date(`${date}T12:00:00Z`)
+  const part = (options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat("en-GB", { ...options, timeZone: timezone }).format(value)
+  return {
+    day: part({ day: "2-digit" }),
+    month: part({ month: "long" }),
+    weekday: part({ weekday: "long" }),
+    year: part({ year: "numeric" }),
+  }
+}
+
+const workspaceFor = (
+  panel: MissionPanel,
+  copied: boolean,
+  mission: Mission,
+  timeline: TimelineStopScreen[],
+  route: RouteStopScreen[],
+): MissionWorkspaceScreen => {
+  switch (panel) {
+    case "plan":
+      return { heading: COPY.scheduleTitle, stops: timeline, type: "plan" }
+    case "context":
+      return {
+        constraints: mission.context.constraints,
+        copyLabel: copied ? COPY.copiedPrompt : COPY.copyPrompt,
+        currentLocation: mission.context.currentLocation.label,
+        currentTime: clock(mission.context.currentTime),
+        energy: titleCase(mission.context.energy),
+        type: "context",
+      }
+    case "route":
+      return { route, type: "route" }
+    case "history":
+      return {
+        events: mission.events.map((event) => ({
+          actor: titleCase(event.actor),
+          at: clock(event.at),
+          id: event.id,
+          summary: event.summary,
+          type: event.type.replaceAll("_", " "),
+        })),
+        type: "history",
+      }
+  }
+}
+
 export const presentMission = ({
   copied,
   mission,
+  panel,
   selectedStopId,
   webMcp,
 }: PresentMissionParams): MissionScreen => {
-  const route = routeFor(mission, selectedStopId)
-  const routeIndices = new Map(route.map((stop) => [stop.id, stop.index]))
-  const commitment = mission.stops.find((stop) => stop.locked)
+  const selected = focusedStopId(mission, selectedStopId)
+  const route = routeFor(mission, selected)
+  const timeline = timelineFor(mission, selected, route)
 
   return {
-    commitment:
-      commitment === undefined
-        ? "No locked commitment"
-        : `Dinner ${clock(commitment.startsAt)} · ${durationLabel(
-            minutesBetween(mission.context.currentTime, commitment.startsAt),
-          )} left`,
-    context: {
-      constraints: mission.context.constraints,
-      currentLocation: mission.context.currentLocation.label,
-      currentTime: clock(mission.context.currentTime),
-      energy: titleCase(mission.context.energy),
-    },
-    copyLabel: copied ? COPY.copiedPrompt : COPY.copyPrompt,
-    date: new Intl.DateTimeFormat("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(`${mission.date}T12:00:00Z`)),
-    events: mission.events.map((event) => ({
-      actor: titleCase(event.actor),
-      at: clock(event.at),
-      id: event.id,
-      summary: event.summary,
-      type: event.type.replaceAll("_", " "),
-    })),
+    date: dateParts(mission.date, mission.timezone),
     missionTitle: mission.title,
-    revision: `REV ${String(mission.revision).padStart(2, "0")}`,
-    route,
-    timeline: mission.stops.map((stop) => ({
-      actionLabel:
-        stop.status === "completed" || stop.status === "skipped"
-          ? `Restore ${stop.title} to planned`
-          : `Mark ${stop.title}`,
-      duration: durationLabel(stop.durationMinutes),
-      id: stop.id,
-      kind: titleCase(stop.kind),
-      location: stop.location.label,
-      locked: stop.locked,
-      ...(stop.note === undefined ? {} : { note: stop.note }),
-      rationale: stop.rationale,
-      routeIndex: routeIndices.get(stop.id) ?? null,
-      selected: stop.id === selectedStopId,
-      ...(stop.source === undefined
-        ? {}
-        : { source: { title: stop.source.title, url: stop.source.url } }),
-      status: stop.status,
-      statusLabel: titleCase(stop.status),
-      time: clock(stop.startsAt),
-      title: stop.title,
-      travel:
-        stop.travelMinutesFromPrevious === 0
-          ? null
-          : `${stop.travelMinutesFromPrevious}m transfer`,
+    navigation: MISSION_PANELS.map((item) => ({
+      active: item.id === panel,
+      ...item,
     })),
+    revision: `REV ${String(mission.revision).padStart(2, "0")}`,
     webMcp: webMcpBadge(webMcp),
+    workspace: workspaceFor(panel, copied, mission, timeline, route),
+  }
+}
+
+const sameIdsOnce = (actual: string[], proposed: string[]) =>
+  actual.length === proposed.length &&
+  new Set(proposed).size === proposed.length &&
+  actual.every((id) => proposed.includes(id))
+
+export const toHumanStopOrder = (mission: Mission, stopIds: string[]) => {
+  const future = futureStops(mission)
+  const movable = future.filter((stop) => !stop.locked)
+  if (!sameIdsOnce(movable.map((stop) => stop.id), stopIds)) return null
+
+  const movableById = new Map(movable.map((stop) => [stop.id, stop]))
+  const queue = []
+  for (const stopId of stopIds) {
+    const stop = movableById.get(stopId)
+    if (stop === undefined) return null
+    queue.push(stop)
+  }
+  let nextMovable = 0
+  const orderedStops = []
+  for (const slot of future) {
+    if (slot.locked) {
+      orderedStops.push({ startsAt: slot.startsAt, stopId: slot.id })
+      continue
+    }
+    const stop = queue[nextMovable]
+    if (stop === undefined) return null
+    nextMovable += 1
+    orderedStops.push({ startsAt: slot.startsAt, stopId: stop.id })
+  }
+
+  return {
+    expectedRevision: mission.revision,
+    orderedStops,
+    reason: "Reordered by the person using the Sidequest board.",
   }
 }

@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: implementation and production deployment verified; Git integration in progress
+> Status: usability revision complete; production redeploy pending; Git integration pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -22,9 +22,10 @@
 - [x] 1. Scaffold the testable React/TypeScript application contract
 - [x] 2. Implement the mission domain, store, persistence, and deterministic seed
 - [x] 3. Implement exactly five WebMCP tools over the same store
-- [x] 4. Implement the responsive expedition-console UI and map
+- [x] 4. Implement the responsive day-plan UI and map
 - [x] 5. Complete delivery files, full gates, visual QA, and simplification rounds
-- [~] 6. Connect and deploy the public repository on Vercel
+- [ ] 6. Connect the public repository to the deployed Vercel project
+- [x] 7. Make first use and every interactive control unmistakable
 
 ## Blocking decisions accepted in this plan
 
@@ -33,15 +34,17 @@
 - Zod strict schemas are the runtime boundary and the source for inferred input types plus WebMCP JSON Schema.
 - View state (selected stop, copy feedback, WebMCP availability) remains separate from mission state.
 - The page registers tools once from the top-level composition root and passes `{ signal }` as the current second argument to `registerTool`.
-- The visual direction is a Croatian field-operations log: warm paper, deep Adriatic ink, contour-line texture, safety-orange accents, and restrained motion.
-- The map line is explicitly an overview, never turn-by-turn navigation.
+- The usability revision replaces the field-console density with strict Bauhaus minimalism: a white canvas, black geometric typography, one soft-coral accent, large date numerals, generous negative space, one active workspace panel, and one expanded stop. The final feedback explicitly removes decorative shadows, gradients, and neumorphic surfaces.
+- Motion for React is the interaction adapter for draggable operational lists. The mission store remains authoritative; drag previews are renderer-local and commit one declared action at drag end.
+- Schedule order and constraint order are editable. People explicitly control stop locks; agents must respect them. The route is derived from schedule order, and history remains an immutable audit instead of becoming a second editable list.
+- The map is a Google Maps location preview with explicit Google Maps and Apple Maps launch actions, never a straight-line route or turn-by-turn navigation claim.
 
 ## Recommended implementation sequence
 
 1. Test/build harness and behavioral red tests.
 2. Pure domain transition and store/persistence.
 3. WebMCP adapter and contract tests.
-4. Pure Screen projection, React View, Leaflet adapter, and E2E.
+4. Pure Screen projection, React View, Motion reorder adapter, maps launcher, and E2E.
 5. README/license/hosting configuration, full gates, screenshots, and five mature-typescript simplification rounds.
 
 ## Context and architecture thesis
@@ -145,7 +148,7 @@ Implementation result:
 - The real store completed the revision 7 -> 12 scenario, preserved dinner at 18:30, and kept the final six-stop read result within 1,500 characters.
 - Registration uses one catalog, current `registerTool(definition, { signal })`, top-level feature detection, shared abort on partial failure, and no cross-origin exposure.
 
-### 4 [x] Implement the responsive expedition-console UI and map
+### 4 [x] Implement the responsive day-plan UI and map
 
 Description: Render a polished one-screen mission board whose timeline, map, context, and audit log all project the same mission and remain fully useful in manual mode.
 
@@ -153,7 +156,7 @@ Acceptance criteria:
 
 - AC-1: the initial mission and complete replanned outcome are understandable at 1440x900 without narration.
 - AC-2: timeline and map use the same future-stop order; completed/skipped stops remain visible but are excluded from the route.
-- AC-3: selecting cards/markers synchronizes selection; source links are HTTPS with secure link attributes; map attribution remains visible.
+- AC-3: selecting a route item synchronizes selection; source and map links are HTTPS with secure link attributes; the visible preview comes from Google Maps.
 - AC-4: controls remain usable without WebMCP, provide 44px targets, and the layout has no horizontal overflow at 390px.
 - AC-5: copy comes from `src/copy.ts`, stays English-only by explicit P0 decision, and no user-provided HTML is rendered.
 - AC-6: visual evidence proves desktop/mobile layout, final agent state, no occlusion, and no viewport bleed.
@@ -173,7 +176,7 @@ Implementation result:
 - Green: the same focused suite passed 6/6 and `npm run build` completed successfully.
 - Browser green: `npm run test:e2e` passed the real revision 7 -> 12 flow through a native-shaped `document.modelContext.registerTool` harness, verified five registrations, the locked 18:30 dinner, and no horizontal overflow at 390px.
 - Visual evidence inspected: `artifacts/sidequest-desktop.png` (1440px) and `artifacts/sidequest-mobile.png` (390px). A low-contrast reset label found during inspection was corrected and both screenshots were regenerated.
-- Timeline, accessible map route list, Leaflet markers, and polyline derive from one presenter route; completed/skipped stops stay in history but leave the active route.
+- Timeline, accessible map route list, Google Maps preview, and Google/Apple launch URLs derive from one presenter route; completed/skipped stops stay in history but leave the active route.
 
 ### 5 [x] Complete delivery files, full gates, visual QA, and simplification rounds
 
@@ -207,7 +210,7 @@ Implementation result:
 - Round 5 — React and physical UI: critique found map semantics, rotated marker numbers, and sub-44px map controls. Change: added an accessible region, readable circular markers, and 44px brand/source/map/zoom targets. E2E passed and final desktop/mobile screenshots were inspected again.
 - The public repository, MIT license, and Vercel production deployment are verified. Real ChatGPT/Chrome discovery, video recording, and Devpost submission remain explicitly pending manual release actions in README.
 
-### 6 [~] Connect and deploy the public repository on Vercel
+### 6 [ ] Connect the public repository to the deployed Vercel project
 
 Description: Add the minimum Vercel contract, connect the authenticated Vercel project to the public GitHub repository, deploy production, and record only externally verified release facts.
 
@@ -233,9 +236,66 @@ Implementation result:
 - Browser verification rendered the deployed mission at 1440px and 390px with no horizontal overflow.
 - Git connection is pending because the Vercel GitHub integration does not yet have access to the repository; the authenticated project settings are ready for the explicit permission step.
 
+Status:
+
+- Production is complete. The remaining GitHub permission step was paused when the user explicitly reprioritized the usability problem.
+
+### 7 [~] Make first use and every interactive control unmistakable
+
+Description: Replace the visually flat three-column dashboard with a clean Bauhaus day view inspired by the supplied reference. A first-time visitor should see one current object, one clear action hierarchy, and explicit navigation to secondary information without needing a walkthrough.
+
+Acceptance criteria:
+
+- AC-1: the application uses a texture-free, shadow-free Bauhaus canvas with black typography, large date numerals, one soft-coral action/status accent, generous negative space, flat controls, and no gradients or Material-style elevation.
+- AC-2: exactly one workspace (`Plan`, `Context`, `Route`, or `History`) is visible at a time; the floating menu exposes the current choice without occupying the canvas when closed.
+- AC-3: the Plan expands exactly one item at a time; clicking a compact row title opens it directly, with no redundant `View` control or selected-row decoration.
+- AC-4: the expanded item uses concise visible action labels (`Mark done`, `Skip`, `Restore`, and `View on map`) while its selected state is conveyed only by the coral time/status color.
+- AC-5: mobile uses the same single-focus hierarchy with no horizontal overflow, clipping, occlusion, or overlapping controls.
+- AC-6: human actions still dispatch declared `ViewAction` variants through the same store, and the five-tool WebMCP contract is unchanged.
+- AC-7: every new or changed visible string remains English-only by the documented P0 decision and comes from `src/copy.ts`.
+- AC-8: desktop and 390px evidence shows the literal calendar hierarchy: editable board title, large date, sparse two-column rows, one expanded item, and floating menu/add actions.
+- AC-9: the schedule and requirements use Motion for React `Reorder`; the whole unlocked row is the drag surface with no dedicated handle, only actively dragged content moves, and one domain commit occurs at drag end while locked rows remain fixed.
+- AC-10: requirements are persisted ordered items that can be added, crossed out/restored, and dragged; crossed items remain visible with a strikethrough rather than disappearing.
+- AC-11: route order updates from the canonical schedule, while immutable history cannot be reordered or edited.
+- AC-12: every item exposes a frameless lock/unlock icon with an accessible text alternative; locking prevents status changes and dragging without hiding the disabled actions, unlocking restores them, and an agent cannot override the human-owned lock.
+- AC-13: the board title, item titles, and requirement labels edit inline without changing visual style; item and requirement creation use one-line inline inputs and no modal, card, or framed form.
+- AC-14: the route workspace renders a real Google Maps preview; clicking it opens Google Maps, an adjacent action opens Apple Maps, and no OpenStreetMap tile or straight-line distance remains.
+
+Tests:
+
+- AC-1/5/8 -> browser regression: `sidequest.spec.ts > completes and captures the Sidequest killer flow`; evidence replaces `artifacts/sidequest-desktop.png` and `artifacts/sidequest-mobile.png`. The visual style itself requires inspected browser evidence rather than a unit test.
+- AC-2/3/4 -> integration regression: `App.test.tsx > keeps one focused workspace with explicit controls`; unit coverage is skipped because the behavior is the composed rendered experience.
+- AC-6 -> existing integration: `App.test.tsx > uses the shared store for a human Done action` plus `webmcp.test.ts > exposes a bounded atomic catalog`.
+- AC-7 -> copy gate: `copy.test.ts > keeps the exact demo prompt and mission positioning`; this prototype intentionally supports English only and has no generated locale set.
+- AC-9/11 -> unit/integration: `mission.test.ts > reorders every future stop once and preserves locked time`, `App.test.tsx > exposes draggable operational lists`, and the existing route-order presenter assertion; browser drag coverage is added to the E2E flow.
+- AC-10 -> unit/integration: `mission.test.ts > edits an ordered constraint checklist` and `App.test.tsx > edits requirements through the shared store`.
+- AC-12 -> unit/integration: `mission.test.ts > lets the human control a stop lock` and `App.test.tsx > exposes stop locks as explicit controls`.
+- AC-13 -> integration: `App.test.tsx > adds and edits plan items inline` and `App.test.tsx > edits requirements through the shared store`.
+- AC-14 -> integration: `MissionMap.test.tsx > previews Google Maps and offers both map providers`; browser evidence verifies the rendered Google preview.
+
+Before implementation gate:
+
+- [x] Existing rendered desktop evidence and `App.tsx`, `MissionMap.tsx`, `app.css`, `copy.ts`, ViewModel, and tests inspected at commit `06be1ec`.
+- [x] The usability feedback and supplied Bauhaus reference are represented by AC-1 through AC-5 and AC-8; no product or domain decision remains open.
+- [x] File ownership is limited to the single UI task; no parallel work or conflicting edit set exists.
+- [x] `npm run test -- src/App.test.tsx src/copy.test.ts` ran red: the `Plan` tab was absent and the copy contract still returned `Copy replanning prompt` instead of the explicit ChatGPT action.
+
+Sources/References: `src/App.tsx`, `src/MissionWorkspace.tsx`, `src/MissionMap.tsx`, `src/app.css`, `src/copy.ts`, `src/App.test.tsx`, `src/MissionMap.test.tsx`, `e2e/sidequest.spec.ts`, desktop/mobile artifacts.
+
+External reference: current official Motion documentation specifies `npm install motion`, imports from `motion/react`, and the controlled `Reorder.Group` / `Reorder.Item` API.
+
+Implementation result:
+
+- Behavioral red recorded: the initial focused run passed the explicit-copy test and failed 4/6 App tests on the missing single-workspace interaction, draggable lists, editable requirements, and panel-scoped history.
+- The UI now follows the supplied calendar reference literally: white canvas, editable title, oversized coral date, weekday/month counterweight, sparse time/title rows, one expanded item, and two frameless floating actions. No visible borders, shadows, gradients, cards, drag handles, selected bars, or title-hover colors remain.
+- Plan items and operating requirements reorder with controlled Motion `Reorder.Group` / `Reorder.Item` spring movement. The whole unlocked row is draggable; lock ownership, add, cross/restore, rename, status, and reorder mutations all pass through the shared typed store.
+- The route adapter no longer uses Leaflet, OpenStreetMap, polylines, or straight-line distance. It renders a Google Maps preview whose click opens Google Maps and exposes an Apple Maps alternative.
+- Full green: `npm run check` passed 36/36 unit/integration/contract tests, strict TypeScript and the Vite production build, plus both Chromium interaction flows 2/2.
+- Five simplification rounds: (1) kept all edits in the existing `MissionAction` gate; (2) kept panel selection as one closed ADT; (3) split workspace and maps rendering from composition; (4) removed unused timeline metadata after the final visual reduction; (5) kept reorder preview local to React and committed exactly once at drag end. Each changed slice was followed by its focused tests.
+
 ## Risks and dependencies
 
-- Leaflet tiles have no SLA; the timeline remains complete and the map label states its limited role.
+- Google/Apple map content depends on their network services; the timeline remains complete when external maps are unavailable.
 - Browser WebMCP is experimental; all platform coupling stays in one adapter and manual mode is a first-class state.
 - Real in-app browser WebMCP discovery cannot be proven by the native-shaped automated harness alone.
 - The deadline makes P1 polish, authentication, live research, routing, and additional missions unacceptable scope expansion.

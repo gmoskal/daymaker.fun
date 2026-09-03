@@ -76,6 +76,99 @@ describe("mission", () => {
     )
   })
 
+  it("lets the human control a stop lock", () => {
+    const locked = expectApplied(
+      apply({
+        type: "SetStopLock",
+        value: {
+          actor: "human",
+          input: {
+            expectedRevision: 6,
+            locked: true,
+            stopId: "biokovo-hike",
+          },
+        },
+      }),
+    ).mission
+
+    expect(locked.stops.find((stop) => stop.id === "biokovo-hike")).toMatchObject({
+      locked: true,
+    })
+    expectRejected(
+      apply(
+        {
+          type: "SetStopLock",
+          value: {
+            actor: "agent",
+            input: {
+              expectedRevision: 7,
+              locked: false,
+              stopId: "biokovo-hike",
+            },
+          },
+        },
+        locked,
+      ),
+      "FORBIDDEN_ACTION",
+    )
+  })
+
+  it("edits an ordered constraint checklist", () => {
+    const added = expectApplied(
+      apply({
+        type: "AddConstraint",
+        value: {
+          actor: "human",
+          input: { expectedRevision: 6, label: "avoid steep climbs" },
+        },
+      }),
+    ).mission
+    const newConstraint = added.context.constraints.at(-1)
+    if (newConstraint === undefined) throw new Error("Expected added constraint")
+
+    const crossed = expectApplied(
+      apply(
+        {
+          type: "ToggleConstraint",
+          value: {
+            actor: "human",
+            input: {
+              constraintId: newConstraint.id,
+              expectedRevision: 7,
+            },
+          },
+        },
+        added,
+      ),
+    ).mission
+    const reordered = expectApplied(
+      apply(
+        {
+          type: "ReorderConstraints",
+          value: {
+            actor: "human",
+            input: {
+              expectedRevision: 8,
+              orderedConstraintIds: [
+                newConstraint.id,
+                ...crossed.context.constraints
+                  .filter((constraint) => constraint.id !== newConstraint.id)
+                  .map((constraint) => constraint.id),
+              ],
+            },
+          },
+        },
+        crossed,
+      ),
+    ).mission
+
+    expect(reordered.context.constraints[0]).toMatchObject({
+      id: newConstraint.id,
+      label: "avoid steep climbs",
+      status: "crossed",
+    })
+  })
+
   it("validates raw input at the domain boundary", () => {
     expectRejected(apply(stopAction({ status: "removed" })), "INVALID_INPUT")
   })

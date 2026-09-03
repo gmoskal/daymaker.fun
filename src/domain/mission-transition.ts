@@ -1,6 +1,14 @@
 import {
+  AddBoardItemInputSchema,
+  AddMissionConstraintInputSchema,
   AddMissionStopInputSchema,
+  ReorderMissionConstraintsInputSchema,
   ReorderMissionStopsInputSchema,
+  RenameMissionConstraintInputSchema,
+  RenameMissionStopInputSchema,
+  SetMissionStopLockInputSchema,
+  SetMissionTitleInputSchema,
+  ToggleMissionConstraintInputSchema,
   UpdateDayContextInputSchema,
   UpdateMissionStopInputSchema,
   type Actor,
@@ -24,7 +32,7 @@ type ApplyParams<TAction extends MissionAction> = {
   mission: Mission
 }
 
-type MissionPatch = Pick<Mission, "context" | "stops">
+type MissionPatch = Pick<Mission, "context" | "stops" | "title">
 
 type CommitParams = {
   actor: Actor
@@ -98,7 +106,12 @@ const applyContext = ({
   const conflict = stale(mission, parsed.data.expectedRevision)
   if (conflict !== null) return conflict
 
-  const { expectedRevision: _expectedRevision, reason, ...context } = parsed.data
+  const {
+    constraints,
+    expectedRevision: _expectedRevision,
+    reason,
+    ...context
+  } = parsed.data
   return commit({
     actor: action.value.actor,
     at: context.currentTime,
@@ -108,7 +121,16 @@ const applyContext = ({
     },
     id,
     mission,
-    patch: { context },
+    patch: {
+      context: {
+        ...context,
+        constraints: constraints.map((label, index) => ({
+          id: `constraint-${slug(label)}-${index + 1}`,
+          label,
+          status: "active",
+        })),
+      },
+    },
   })
 }
 
@@ -170,6 +192,19 @@ const stopId = (mission: Mission, title: string, suffix: string) => {
   let candidate = base
   let sequence = 2
   while (mission.stops.some((stop) => stop.id === candidate)) {
+    candidate = `${base}-${sequence}`
+    sequence += 1
+  }
+  return candidate
+}
+
+const constraintId = (mission: Mission, label: string, suffix: string) => {
+  const base = `constraint-${slug(label)}-${slug(suffix)}`
+  let candidate = base
+  let sequence = 2
+  while (
+    mission.context.constraints.some((constraint) => constraint.id === candidate)
+  ) {
     candidate = `${base}-${sequence}`
     sequence += 1
   }
@@ -285,6 +320,393 @@ const applyReorder = ({
   })
 }
 
+const applyAddConstraint = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<Extract<MissionAction, { type: "AddConstraint" }>>): MissionMutation => {
+  const parsed = AddMissionConstraintInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The new requirement is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can edit the requirement checklist directly.",
+    )
+  if (mission.context.constraints.length >= 6)
+    return rejected(
+      mission,
+      "LIMIT_REACHED",
+      "A mission can contain at most 6 requirements.",
+    )
+  if (
+    mission.context.constraints.some(
+      (constraint) =>
+        constraint.label.toLocaleLowerCase() === parsed.data.label.toLocaleLowerCase(),
+    )
+  )
+    return rejected(mission, "INVALID_INPUT", "That requirement already exists.")
+
+  const added = {
+    id: constraintId(mission, parsed.data.label, id()),
+    label: parsed.data.label,
+    status: "active" as const,
+  }
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      summary: `Added requirement — ${added.label}`,
+      type: "constraints_updated",
+    },
+    id,
+    mission,
+    patch: {
+      context: {
+        ...mission.context,
+        constraints: [...mission.context.constraints, added],
+      },
+    },
+  })
+}
+
+const applyToggleConstraint = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<
+  Extract<MissionAction, { type: "ToggleConstraint" }>
+>): MissionMutation => {
+  const parsed = ToggleMissionConstraintInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The requirement update is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can edit the requirement checklist directly.",
+    )
+
+  const constraint = mission.context.constraints.find(
+    (item) => item.id === parsed.data.constraintId,
+  )
+  if (constraint === undefined)
+    return rejected(
+      mission,
+      "CONSTRAINT_NOT_FOUND",
+      "That requirement is not in this mission.",
+    )
+
+  const status = constraint.status === "active" ? "crossed" : "active"
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      summary: `${status === "crossed" ? "Crossed out" : "Restored"} requirement — ${constraint.label}`,
+      type: "constraints_updated",
+    },
+    id,
+    mission,
+    patch: {
+      context: {
+        ...mission.context,
+        constraints: mission.context.constraints.map((item) =>
+          item.id === constraint.id ? { ...item, status } : item,
+        ),
+      },
+    },
+  })
+}
+
+const applyReorderConstraints = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<
+  Extract<MissionAction, { type: "ReorderConstraints" }>
+>): MissionMutation => {
+  const parsed = ReorderMissionConstraintsInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The requirement order is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can edit the requirement checklist directly.",
+    )
+
+  const currentIds = mission.context.constraints.map((constraint) => constraint.id)
+  if (!sameIdsOnce(currentIds, parsed.data.orderedConstraintIds))
+    return rejected(
+      mission,
+      "INVALID_ORDER",
+      "Include every requirement exactly once.",
+    )
+
+  const constraintsById = new Map(
+    mission.context.constraints.map((constraint) => [constraint.id, constraint]),
+  )
+  const constraints = []
+  for (const constraintId of parsed.data.orderedConstraintIds) {
+    const constraint = constraintsById.get(constraintId)
+    if (constraint === undefined)
+      return rejected(
+        mission,
+        "INVALID_ORDER",
+        "A requirement is no longer in this mission.",
+        true,
+      )
+    constraints.push(constraint)
+  }
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      summary: "Reordered requirements",
+      type: "constraints_updated",
+    },
+    id,
+    mission,
+    patch: { context: { ...mission.context, constraints } },
+  })
+}
+
+const applyStopLock = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<Extract<MissionAction, { type: "SetStopLock" }>>): MissionMutation => {
+  const parsed = SetMissionStopLockInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The stop lock update is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can lock or unlock a stop.",
+    )
+
+  const stop = mission.stops.find((item) => item.id === parsed.data.stopId)
+  if (stop === undefined)
+    return rejected(mission, "STOP_NOT_FOUND", "That stop is not in this mission.")
+
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      stopId: stop.id,
+      summary: `${stop.title} ${parsed.data.locked ? "locked" : "unlocked"}`,
+      type: "stop_lock_updated",
+    },
+    id,
+    mission,
+    patch: {
+      stops: mission.stops.map((item) =>
+        item.id === stop.id ? { ...item, locked: parsed.data.locked } : item,
+      ),
+    },
+  })
+}
+
+const applyTitle = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<Extract<MissionAction, { type: "SetTitle" }>>): MissionMutation => {
+  const parsed = SetMissionTitleInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The title update is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can rename the board directly.",
+    )
+
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      summary: `Renamed board — ${parsed.data.title}`,
+      type: "mission_title_updated",
+    },
+    id,
+    mission,
+    patch: { title: parsed.data.title },
+  })
+}
+
+const applyAddItem = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<Extract<MissionAction, { type: "AddItem" }>>): MissionMutation => {
+  const parsed = AddBoardItemInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The new item is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can add a board item directly.",
+    )
+  if (mission.stops.length >= 8)
+    return rejected(mission, "LIMIT_REACHED", "A board can contain at most 8 items.")
+
+  const added: MissionStop = {
+    durationMinutes: 30,
+    id: stopId(mission, parsed.data.title, id()),
+    kind: "activity",
+    location: mission.context.currentLocation,
+    locked: false,
+    rationale: "Added manually.",
+    startsAt: mission.context.currentTime,
+    status: "planned",
+    title: parsed.data.title,
+    travelMinutesFromPrevious: 0,
+  }
+  const firstLocked = mission.stops.findIndex((stop) => stop.locked)
+  const insertAt = firstLocked === -1 ? mission.stops.length : firstLocked
+  const stops = [
+    ...mission.stops.slice(0, insertAt),
+    added,
+    ...mission.stops.slice(insertAt),
+  ]
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      stopId: added.id,
+      summary: `Added ${added.title}`,
+      type: "stop_added",
+    },
+    id,
+    mission,
+    patch: { stops },
+  })
+}
+
+const applyRenameStop = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<Extract<MissionAction, { type: "RenameStop" }>>): MissionMutation => {
+  const parsed = RenameMissionStopInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The item title is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can rename a board item directly.",
+    )
+  const stop = mission.stops.find((item) => item.id === parsed.data.stopId)
+  if (stop === undefined)
+    return rejected(mission, "STOP_NOT_FOUND", "That item is not in this board.")
+  if (stop.locked)
+    return rejected(
+      mission,
+      "LOCKED_STOP",
+      `${stop.title} is locked and cannot be renamed.`,
+    )
+
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      stopId: stop.id,
+      summary: `Renamed ${stop.title} — ${parsed.data.title}`,
+      type: "stop_updated",
+    },
+    id,
+    mission,
+    patch: {
+      stops: mission.stops.map((item) =>
+        item.id === stop.id ? { ...item, title: parsed.data.title } : item,
+      ),
+    },
+  })
+}
+
+const applyRenameConstraint = ({
+  action,
+  id,
+  mission,
+}: ApplyParams<
+  Extract<MissionAction, { type: "RenameConstraint" }>
+>): MissionMutation => {
+  const parsed = RenameMissionConstraintInputSchema.safeParse(action.value.input)
+  if (!parsed.success)
+    return rejected(mission, "INVALID_INPUT", "The requirement label is invalid.")
+
+  const conflict = stale(mission, parsed.data.expectedRevision)
+  if (conflict !== null) return conflict
+  if (action.value.actor !== "human")
+    return rejected(
+      mission,
+      "FORBIDDEN_ACTION",
+      "Only a person can rename a requirement directly.",
+    )
+  const constraint = mission.context.constraints.find(
+    (item) => item.id === parsed.data.constraintId,
+  )
+  if (constraint === undefined)
+    return rejected(
+      mission,
+      "CONSTRAINT_NOT_FOUND",
+      "That requirement is not in this board.",
+    )
+  if (
+    mission.context.constraints.some(
+      (item) =>
+        item.id !== constraint.id &&
+        item.label.toLocaleLowerCase() === parsed.data.label.toLocaleLowerCase(),
+    )
+  )
+    return rejected(mission, "INVALID_INPUT", "That requirement already exists.")
+
+  return commit({
+    actor: action.value.actor,
+    at: mission.context.currentTime,
+    change: {
+      summary: `Renamed requirement — ${parsed.data.label}`,
+      type: "constraints_updated",
+    },
+    id,
+    mission,
+    patch: {
+      context: {
+        ...mission.context,
+        constraints: mission.context.constraints.map((item) =>
+          item.id === constraint.id ? { ...item, label: parsed.data.label } : item,
+        ),
+      },
+    },
+  })
+}
+
 export const applyMissionAction = ({
   action,
   id,
@@ -299,6 +721,21 @@ export const applyMissionAction = ({
       return applyAdd({ action, id, mission })
     case "ReorderStops":
       return applyReorder({ action, id, mission })
+    case "AddConstraint":
+      return applyAddConstraint({ action, id, mission })
+    case "ToggleConstraint":
+      return applyToggleConstraint({ action, id, mission })
+    case "ReorderConstraints":
+      return applyReorderConstraints({ action, id, mission })
+    case "SetStopLock":
+      return applyStopLock({ action, id, mission })
+    case "SetTitle":
+      return applyTitle({ action, id, mission })
+    case "AddItem":
+      return applyAddItem({ action, id, mission })
+    case "RenameStop":
+      return applyRenameStop({ action, id, mission })
+    case "RenameConstraint":
+      return applyRenameConstraint({ action, id, mission })
   }
 }
-

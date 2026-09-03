@@ -3,10 +3,18 @@ import type { Mission } from "./mission"
 export const SEED_MISSION: Mission = {
   context: {
     constraints: [
-      "car available",
-      "dog with us",
-      "max 20 min drive",
-      "keep dinner at 18:30",
+      { id: "constraint-car", label: "car available", status: "active" },
+      { id: "constraint-dog", label: "dog with us", status: "active" },
+      {
+        id: "constraint-drive",
+        label: "max 20 min drive",
+        status: "active",
+      },
+      {
+        id: "constraint-dinner",
+        label: "keep dinner at 18:30",
+        status: "active",
+      },
     ],
     currentLocation: {
       label: "Bike parking, Baška Voda",

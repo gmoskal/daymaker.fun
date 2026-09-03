@@ -13,10 +13,14 @@ export const STOP_KINDS = [
   "transition",
 ] as const
 export const ENERGY_LEVELS = ["high", "medium", "low"] as const
+export const CONSTRAINT_STATUSES = ["active", "crossed"] as const
 export const ACTORS = ["human", "agent", "system"] as const
 export const EVENT_TYPES = [
   "context_updated",
+  "constraints_updated",
+  "mission_title_updated",
   "stop_updated",
+  "stop_lock_updated",
   "stop_added",
   "stops_reordered",
 ] as const
@@ -37,12 +41,48 @@ const httpsUrl = z
   .url()
   .refine((value) => new URL(value).protocol === "https:", "Use an HTTPS URL")
   .describe("Public HTTPS source URL.")
-const constraintList = z
+const constraintTextList = z
   .array(text(80))
   .max(6)
   .refine((values) => new Set(values).size === values.length, {
     message: "Constraints must be unique",
   })
+
+const identifier = (value: string) =>
+  value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+
+export const MissionConstraintSchema = z.strictObject({
+  id: text(80),
+  label: text(80),
+  status: z.enum(CONSTRAINT_STATUSES),
+})
+
+const storedConstraintSchema = z.union([
+  MissionConstraintSchema,
+  text(80).transform((label) => ({
+    id: `constraint-${identifier(label)}`,
+    label,
+    status: "active" as const,
+  })),
+])
+
+const missionConstraintList = z
+  .array(storedConstraintSchema)
+  .max(6)
+  .refine((values) => new Set(values.map((value) => value.id)).size === values.length, {
+    message: "Constraint IDs must be unique",
+  })
+  .refine(
+    (values) =>
+      new Set(values.map((value) => value.label.toLocaleLowerCase())).size ===
+      values.length,
+    { message: "Constraint labels must be unique" },
+  )
 
 export const GeoPointSchema = z.strictObject({
   label: text(80).describe("Human-readable place or address."),
@@ -72,7 +112,7 @@ export const MissionStopSchema = z.strictObject({
 })
 
 export const DayContextSchema = z.strictObject({
-  constraints: constraintList,
+  constraints: missionConstraintList,
   currentLocation: GeoPointSchema,
   currentTime: dateTime,
   energy: z.enum(ENERGY_LEVELS),
@@ -107,7 +147,7 @@ const ExpectedRevisionSchema = z.strictObject({
 })
 
 export const UpdateDayContextInputSchema = ExpectedRevisionSchema.extend({
-  constraints: constraintList.describe("Current limits the new plan must respect."),
+  constraints: constraintTextList.describe("Current limits the new plan must respect."),
   currentLocation: GeoPointSchema.describe("Where the group is now."),
   currentTime: dateTime,
   energy: z.enum(ENERGY_LEVELS).describe("Current group energy."),
@@ -152,8 +192,44 @@ export const ReorderMissionStopsInputSchema = ExpectedRevisionSchema.extend({
   reason: text(160).describe("Why this order fits the mission."),
 })
 
+export const AddMissionConstraintInputSchema = ExpectedRevisionSchema.extend({
+  label: text(80),
+})
+
+export const ToggleMissionConstraintInputSchema = ExpectedRevisionSchema.extend({
+  constraintId: text(80),
+})
+
+export const ReorderMissionConstraintsInputSchema = ExpectedRevisionSchema.extend({
+  orderedConstraintIds: z.array(text(80)).min(1).max(6),
+})
+
+export const SetMissionStopLockInputSchema = ExpectedRevisionSchema.extend({
+  locked: z.boolean(),
+  stopId: text(80),
+})
+
+export const SetMissionTitleInputSchema = ExpectedRevisionSchema.extend({
+  title: text(80),
+})
+
+export const AddBoardItemInputSchema = ExpectedRevisionSchema.extend({
+  title: text(80),
+})
+
+export const RenameMissionStopInputSchema = ExpectedRevisionSchema.extend({
+  stopId: text(80),
+  title: text(80),
+})
+
+export const RenameMissionConstraintInputSchema = ExpectedRevisionSchema.extend({
+  constraintId: text(80),
+  label: text(80),
+})
+
 export type Mission = z.infer<typeof MissionSchema>
 export type MissionStop = z.infer<typeof MissionStopSchema>
+export type MissionConstraint = z.infer<typeof MissionConstraintSchema>
 export type Actor = z.infer<typeof MissionEventSchema>["actor"]
 export type UpdateDayContextInput = z.infer<
   typeof UpdateDayContextInputSchema
@@ -164,6 +240,26 @@ export type UpdateMissionStopInput = z.infer<
 export type AddMissionStopInput = z.infer<typeof AddMissionStopInputSchema>
 export type ReorderMissionStopsInput = z.infer<
   typeof ReorderMissionStopsInputSchema
+>
+export type AddMissionConstraintInput = z.infer<
+  typeof AddMissionConstraintInputSchema
+>
+export type ToggleMissionConstraintInput = z.infer<
+  typeof ToggleMissionConstraintInputSchema
+>
+export type ReorderMissionConstraintsInput = z.infer<
+  typeof ReorderMissionConstraintsInputSchema
+>
+export type SetMissionStopLockInput = z.infer<
+  typeof SetMissionStopLockInputSchema
+>
+export type SetMissionTitleInput = z.infer<typeof SetMissionTitleInputSchema>
+export type AddBoardItemInput = z.infer<typeof AddBoardItemInputSchema>
+export type RenameMissionStopInput = z.infer<
+  typeof RenameMissionStopInputSchema
+>
+export type RenameMissionConstraintInput = z.infer<
+  typeof RenameMissionConstraintInputSchema
 >
 
 type ActionValue<TInput> = {
@@ -176,12 +272,28 @@ export type MissionAction =
   | { type: "UpdateStop"; value: ActionValue<UpdateMissionStopInput> }
   | { type: "AddStop"; value: ActionValue<AddMissionStopInput> }
   | { type: "ReorderStops"; value: ActionValue<ReorderMissionStopsInput> }
+  | { type: "AddConstraint"; value: ActionValue<AddMissionConstraintInput> }
+  | { type: "ToggleConstraint"; value: ActionValue<ToggleMissionConstraintInput> }
+  | {
+      type: "ReorderConstraints"
+      value: ActionValue<ReorderMissionConstraintsInput>
+    }
+  | { type: "SetStopLock"; value: ActionValue<SetMissionStopLockInput> }
+  | { type: "SetTitle"; value: ActionValue<SetMissionTitleInput> }
+  | { type: "AddItem"; value: ActionValue<AddBoardItemInput> }
+  | { type: "RenameStop"; value: ActionValue<RenameMissionStopInput> }
+  | {
+      type: "RenameConstraint"
+      value: ActionValue<RenameMissionConstraintInput>
+    }
 
 export const MISSION_ERROR_CODES = [
   "INVALID_INPUT",
   "STALE_REVISION",
   "STOP_NOT_FOUND",
+  "CONSTRAINT_NOT_FOUND",
   "LOCKED_STOP",
+  "FORBIDDEN_ACTION",
   "INVALID_ORDER",
   "LIMIT_REACHED",
 ] as const
@@ -205,4 +317,3 @@ export type MissionMutation =
       value: { change: MissionChange; mission: Mission }
     }
   | { type: "rejected"; value: MissionError }
-

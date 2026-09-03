@@ -1,9 +1,9 @@
-# Sidequest — DayOps for real life
+# daymaker.fun — DayOps for real life
 
 > Product document and submission narrative  
 > Research status: September 2, 2026  
 > Submission deadline: **September 3, 2026, 22:00 CEST (GMT+2)**  
-> Recommended submission name: **Sidequest**  
+> Recommended submission name: **daymaker.fun**
 > Product category: **live day operations / human–agent collaboration**
 
 ## Decision in one sentence
@@ -14,32 +14,32 @@ We are building a single screen where a human and an agent maintain a day plan t
 
 Real-world plans fall apart when they meet weather, fatigue, closed venues, low fuel, or delays. A traditional planner preserves the original plan, while an agent chat produces another block of text that the user must manually transfer into a map, list, and calendar.
 
-**Sidequest** is a shared “mission for the day.” On one screen, the human sees the context, stop order, statuses, and map. An agent visiting the page discovers five WebMCP tools. It can read the current state, update the context, change a stop's status, add a new stop, and reorder the plan. Every action immediately changes the same interface the human is watching.
+**daymaker.fun** is a shared “mission for the day.” On one screen, the human sees the context, stop order, statuses, and map. An agent visiting the page discovers five WebMCP tools. It can read the current state, update the context, change a stop's status, add a new stop, and reorder the plan. Every action immediately changes the same interface the human is watching.
 
 Killer demo:
 
 > “We finished the gravel ride. We're tired, so skip the hike. It is 15:10 and we're back at the car. Find a good snorkeling spot within 20 minutes, add it before dinner, and plan a fuel stop on the way. Keep dinner at 18:30.”
 
-The agent reads Sidequest's state, researches current places and sources, marks the hike as skipped, adds a beach and fuel station, changes the order, and updates the map and timeline live. This is not another trip-plan generator. It is the operational layer for the moment when **the plan meets reality**.
+The agent reads daymaker.fun's state, researches current places and sources, marks the hike as skipped, adds a beach and fuel station, changes the order, and updates the map and timeline live. This is not another trip-plan generator. It is the operational layer for the moment when **the plan meets reality**.
 
 ## Name and positioning
 
 ### Recommendation
 
-**Product name:** Sidequest  
+**Product name:** daymaker.fun
 **Descriptor:** DayOps for real life  
 **Tagline:** Your day changed. Your plan should too.  
 **Plain-English summary:** A live day plan shared by a human and an agent.
 
-“Sidequest” is emotional, concise, and works well in an outdoor demo. “DayOps” describes the category more accurately, but sounds like a B2B tool. We therefore use it as the descriptor rather than the primary name.
+“daymaker.fun” is emotional, concise, and works well in an outdoor demo. “DayOps” describes the category more accurately, but sounds like a B2B tool. We therefore use it as the descriptor rather than the primary name.
 
 ### One-liner
 
-Sidequest is a shared live mission board where people report what changed in the real world and their agent researches, replans, and updates the same visible day plan through WebMCP.
+daymaker.fun is a shared live mission board where people report what changed in the real world and their agent researches, replans, and updates the same visible day plan through WebMCP.
 
 ### 30-second pitch
 
-Day plans do not break inside planning apps—they break in the real world. You finish an activity late, it gets too hot, the group is tired, or the car needs fuel. An agent can find new options, but today it usually returns text that you must copy into a map and schedule yourself. Sidequest gives the human and the agent one live object: a mission. The agent reads its current state and uses WebMCP to update the visible timeline and map. The human stays in control; the agent handles the tedious replanning.
+Day plans do not break inside planning apps—they break in the real world. You finish an activity late, it gets too hot, the group is tired, or the car needs fuel. An agent can find new options, but today it usually returns text that you must copy into a map and schedule yourself. daymaker.fun gives the human and the agent one live object: a mission. The agent reads its current state and uses WebMCP to update the visible timeline and map. The human stays in control; the agent handles the tedious replanning.
 
 ## WHY / HOW / WHAT
 
@@ -59,9 +59,9 @@ The most exhausting part of a spontaneous day is not a lack of information. It i
 
 Today's workflow is fragmented across chat, search, maps, notes, and human memory. An agent can reason and research, but without structured access to the current plan it does not know the execution state. Without structured write access, its answer remains a suggestion rather than an updated operation.
 
-### HOW — how Sidequest solves the problem
+### HOW — how daymaker.fun solves the problem
 
-Sidequest maintains one visible, shared representation of the day:
+daymaker.fun maintains one visible, shared representation of the day:
 
 1. **The human updates reality** — they mark an activity as completed or tell the agent what changed.
 2. **The agent reads the live state** — time, location, energy, constraints, statuses, and fixed commitments.
@@ -128,9 +128,9 @@ WebMCP turns these operations into explicit contracts while the human continues 
 
 ## Differentiation from existing planners
 
-OpenAI's official showcase already includes WanderNote, described as a shared way to turn travel notes into an editable itinerary. Sidequest must therefore clearly avoid the “AI trip planner” position.
+OpenAI's official showcase already includes WanderNote, described as a shared way to turn travel notes into an editable itinerary. daymaker.fun must therefore clearly avoid the “AI trip planner” position.
 
-| Traditional trip planner / WanderNote | Sidequest |
+| Traditional trip planner / WanderNote | daymaker.fun |
 |---|---|
 | Creates or refines a travel plan | Responds to change while the plan is being executed |
 | The target plan is the central object | The current operational state is the central object |
@@ -141,7 +141,7 @@ OpenAI's official showcase already includes WanderNote, described as a shared wa
 
 The most important positioning line:
 
-> **WanderNote helps plan the trip. Sidequest rescues the day when the trip stops going to plan.**
+> **WanderNote helps plan the trip. daymaker.fun rescues the day when the trip stops going to plan.**
 
 ## Product principles
 
@@ -158,7 +158,7 @@ The most important positioning line:
 
 ### Header and hidden menu
 
-- Sidequest logo;
+- daymaker.fun logo;
 - editable mission name;
 - WebMCP status: `Connected`, `Unavailable`, or `Checking`;
 - hidden-menu actions for `New plan` and `Load demo`;
@@ -345,7 +345,7 @@ We just finished the gravel ride and we're tired. Skip the hike.
 It is 15:10 and we're back at the car in Baška Voda.
 Find a good snorkeling stop within 20 minutes, add it before dinner,
 and make sure we can fuel up on the way. Keep our 18:30 dinner unchanged.
-Use reliable sources and update the Sidequest board, not just the chat.
+Use reliable sources and update the daymaker.fun board, not just the chat.
 ```
 
 ### Expected tool sequence
@@ -377,7 +377,7 @@ The map changes from the original route to the new one, the hike turns gray, and
 ### Expected agent response
 
 ```text
-Updated the Sidequest board. I skipped the Biokovo hike, added Punta Rata
+Updated the daymaker.fun board. I skipped the Biokovo hike, added Punta Rata
 for a lower-effort swim/snorkel stop, added INA Makarska-Ratac for fuel,
 and reordered the remaining stops. Your 18:30 dinner is unchanged.
 Both new stops include their sources on the board.
@@ -388,7 +388,7 @@ Both new stops include their sources on the board.
 If the agent cannot access web search in the recording environment, provide verified candidates while still letting it read the state and independently perform every WebMCP operation:
 
 ```text
-Update the current Sidequest mission using these verified candidates:
+Update the current daymaker.fun mission using these verified candidates:
 - Punta Rata beach, 43.370062, 16.922775, source:
   https://brela.hr/en/beaches/the-punta-rata-beach
 - INA Makarska-Ratac, Vukovarska 135, source:
@@ -476,7 +476,7 @@ Value: the same DayOps pattern can later support field work without changing the
 
 ### Project name
 
-Sidequest
+daymaker.fun
 
 ### Tagline
 
@@ -484,7 +484,7 @@ Your day changed. Your plan should too.
 
 ### Short description
 
-Sidequest is a shared live mission board for the moment when a real-world plan stops matching reality. A person updates what actually happened; their agent reads the current mission, researches alternatives on the open web, and uses WebMCP to update the same visible timeline and map.
+daymaker.fun is a shared live mission board for the moment when a real-world plan stops matching reality. A person updates what actually happened; their agent reads the current mission, researches alternatives on the open web, and uses WebMCP to update the same visible timeline and map.
 
 ### Inspiration
 
@@ -494,23 +494,23 @@ We wanted to close that loop. The human should report reality. The agent should 
 
 ### What it does
 
-Sidequest turns a day into a live mission with context, constraints, a timeline, a map, sources, and an activity log. In our core demo, the user completes a gravel ride, says the group is tired, asks to skip a hike, find a snorkeling stop within 20 minutes, add fuel, and preserve an 18:30 dinner.
+daymaker.fun turns a day into a live mission with context, constraints, a timeline, a map, sources, and an activity log. In our core demo, the user completes a gravel ride, says the group is tired, asks to skip a hike, find a snorkeling stop within 20 minutes, add fuel, and preserve an 18:30 dinner.
 
 The agent reads the current mission state, finds suitable places, updates the context, skips the hike, adds the new stops with source links, and reorders the plan. Every change appears immediately in the interface the human is watching.
 
-Unlike a trip planner, Sidequest is not primarily about generating an itinerary. It is a real-time operations layer for recovering a day after conditions change.
+Unlike a trip planner, daymaker.fun is not primarily about generating an itinerary. It is a real-time operations layer for recovering a day after conditions change.
 
 ### Why WebMCP
 
 Without WebMCP, the agent could recommend a new plan but would not have a reliable, structured way to read the current state or apply the result to the user's interface. DOM clicking would be brittle and the chat answer would drift away from the plan.
 
-Sidequest exposes five focused WebMCP tools: read the mission, update current context, update an existing stop, add a stop, and reorder remaining stops. These tools reuse the exact same domain operations as the human UI. WebMCP therefore provides the shared state and action layer that makes the product possible.
+daymaker.fun exposes five focused WebMCP tools: read the mission, update current context, update an existing stop, add a stop, and reorder remaining stops. These tools reuse the exact same domain operations as the human UI. WebMCP therefore provides the shared state and action layer that makes the product possible.
 
 ### How we built it
 
-Sidequest is a local-first React and TypeScript application built with Vite. A small domain store is the single source of truth for the human UI and WebMCP handlers. Runtime schemas validate every tool input, and optimistic revision checks prevent an agent from overwriting a newer human change. Motion powers controlled list reordering, Google Maps provides the location preview, Google and Apple Maps provide external launch targets, and mission state plus a compact audit log are persisted in localStorage.
+daymaker.fun is a local-first React and TypeScript application built with Vite. A small domain store is the single source of truth for the human UI and WebMCP handlers. Runtime schemas validate every tool input, and optimistic revision checks prevent an agent from overwriting a newer human change. Motion powers controlled list reordering, Google Maps provides the location preview, Google and Apple Maps provide external launch targets, and mission state plus a compact audit log are persisted in localStorage.
 
-The WebMCP integration uses the imperative `document.modelContext.registerTool()` API in the top-level document, feature-detects support, and degrades gracefully to the normal human interface in other browsers. No custom model, API key, or backend is required: the browser agent brings the intelligence; Sidequest provides trustworthy, visible actions on the live page.
+The WebMCP integration uses the imperative `document.modelContext.registerTool()` API in the top-level document, feature-detects support, and degrades gracefully to the normal human interface in other browsers. No custom model, API key, or backend is required: the browser agent brings the intelligence; daymaker.fun provides trustworthy, visible actions on the live page.
 
 ### Challenges
 
@@ -531,7 +531,7 @@ Agent-native UX is not chat placed next to an app. It is a well-designed shared 
 
 ### What's next
 
-Next, Sidequest could add collaborative missions, live location with explicit consent, weather and transit adapters, richer route evaluation, and reusable mission templates for family logistics, events, road trips, and field teams. The core would remain the same: humans report reality, agents absorb the replanning work, and both stay aligned through one visible mission.
+Next, daymaker.fun could add collaborative missions, live location with explicit consent, weather and transit adapters, richer route evaluation, and reusable mission templates for family logistics, events, road trips, and field teams. The core would remain the same: humans report reality, agents absorb the replanning work, and both stay aligned through one visible mission.
 
 ## Mapping the narrative to judging criteria
 
@@ -550,7 +550,7 @@ Visual: the prepared mission after the gravel ride, with the hike and dinner on 
 
 Voice-over:
 
-> “Plans don't fail in planning apps. They fail in the real world. Sidequest is a live mission board for the moment your day changes.”
+> “Plans don't fail in planning apps. They fail in the real world. daymaker.fun is a live mission board for the moment your day changes.”
 
 ### 0:15–0:35 — human action
 
@@ -568,7 +568,7 @@ Paste the core prompt into ChatGPT/Codex next to the open page.
 
 Show the tool calls or Recent site tools panel while the page changes at the same time.
 
-> “The agent first reads the live mission. It researches suitable options, then calls Sidequest's focused WebMCP tools. The hike is skipped. New source-backed stops appear. The route is reordered.”
+> “The agent first reads the live mission. It researches suitable options, then calls daymaker.fun's focused WebMCP tools. The hike is skipped. New source-backed stops appear. The route is reordered.”
 
 ### 1:35–1:55 — result
 
@@ -580,13 +580,13 @@ The map fits the new bounds, the timeline shows the new order, and dinner remain
 
 Brief split screen: a `document.modelContext.registerTool` excerpt, the five tool names, and the Connected badge.
 
-> “Sidequest uses the imperative WebMCP API in the top-level page. The human UI and agent tools call the same validated domain operations, with revision checks preventing stale writes. No custom model or backend is required.”
+> “daymaker.fun uses the imperative WebMCP API in the top-level page. The human UI and agent tools call the same validated domain operations, with revision checks preventing stale writes. No custom model or backend is required.”
 
 ### 2:20–2:35 — close
 
 Visual: the final mission.
 
-> “Trip planners help plan the trip. Sidequest rescues the day when the trip stops going to plan.”
+> “Trip planners help plan the trip. daymaker.fun rescues the day when the trip stops going to plan.”
 
 ## Submission materials
 
@@ -613,7 +613,7 @@ Open the live URL in ChatGPT's built-in browser and use GPT-5.6 Sol or Terra.
 A first visit opens a blank current-day plan. Use “Copy prompt for ChatGPT” to
 create a real plan, or choose “Load demo” from the hidden menu for the repeatable
 Baška Voda scenario. In the demo, click “Done” on the gravel ride and ask the
-agent to update the open Sidequest page. You can inspect the five registered
+agent to update the open daymaker.fun page. You can inspect the five registered
 actions under Site tools. To test in Chrome 149+, enable
 chrome://flags/#enable-webmcp-testing and restart Chrome. Choose “New plan” to
 return to a blank board. No account, API key, or payment is required.
@@ -621,7 +621,7 @@ return to a blank board. No account, API key, or payment is required.
 
 ## Final product checklist
 
-- [ ] The name is `Sidequest` everywhere, with `DayOps for real life` as the descriptor.
+- [ ] The name is `daymaker.fun` everywhere, with `DayOps for real life` as the descriptor.
 - [ ] The hero describes change during the day, not trip creation.
 - [ ] One screen shows context, timeline, map, and activity log.
 - [ ] The killer demo begins with manually completing the gravel ride.
@@ -642,7 +642,7 @@ return to a blank board. No account, API key, or payment is required.
 - [Official WebMCP Challenge rules](https://webmcp.devpost.com/rules) — deadline, repository requirements, and the four equally weighted judging criteria.
 - [Challenge FAQ and resources](https://webmcp.devpost.com/resources) — live URL, public repository with a license, sub-three-minute video, and judge testing expectations.
 - [OpenAI: Site tools](https://learn.chatgpt.com/docs/webmcp) — using WebMCP in the in-app browser, current limitations, and required testing environment.
-- [OpenAI WebMCP showcase](https://developers.openai.com/showcase?view=webmcp-apps) — including WanderNote, against which Sidequest is positioned as live replanning rather than trip planning.
+- [OpenAI WebMCP showcase](https://developers.openai.com/showcase?view=webmcp-apps) — including WanderNote, against which daymaker.fun is positioned as live replanning rather than trip planning.
 - [Chrome: WebMCP](https://developer.chrome.com/docs/ai/webmcp) — current status, origin trial, local flag, and progressive enhancement.
 - [Chrome: WebMCP best practices](https://developer.chrome.com/docs/ai/webmcp/best-practices) — small non-overlapping tools, dynamic registration, runtime validation, and evals.
 - [Chrome: WebMCP tool security](https://developer.chrome.com/docs/ai/webmcp/secure-tools) — annotations, tool exposure, and recommended description/response budgets.

@@ -1,4 +1,4 @@
-# Sidequest — technical execution plan
+# daymaker.fun — technical execution plan
 
 > Implementation plan for Codex  
 > Research status: September 2, 2026  
@@ -7,7 +7,7 @@
 
 ## 0. Execution directive
 
-Build a static, local-first React + TypeScript application called Sidequest. It presents one day mission on a shared context + timeline + map + activity log screen. The UI and five imperative WebMCP tools must use the exact same store and domain functions. Do not add a backend, authentication, a custom chat, LLM calls, external search inside the app, a directions API, or multi-mission support.
+Build a static, local-first React + TypeScript application called daymaker.fun. It presents one day mission on a shared context + timeline + map + activity log screen. The UI and five imperative WebMCP tools must use the exact same store and domain functions. Do not add a backend, authentication, a custom chat, LLM calls, external search inside the app, a directions API, or multi-mission support.
 
 Deliver this vertical slice first:
 
@@ -122,8 +122,8 @@ This prevents drift between the tool description and actual validation. For comp
 ## 4. Minimal scaffold
 
 ```bash
-npm create vite@latest sidequest -- --template react-ts
-cd sidequest
+npm create vite@latest daymaker -- --template react-ts
+cd daymaker
 npm install
 npm install zod motion
 npm install -D webmcp-types vitest jsdom \
@@ -184,7 +184,7 @@ The most important architectural rule:
 ## 6. Proposed repository tree
 
 ```text
-sidequest/
+daymaker/
 ├── public/
 │   └── favicon.svg
 ├── src/
@@ -362,7 +362,7 @@ type MissionStore = {
 - `getSnapshot()` must return the same object reference until the next mutation so that `useSyncExternalStore` works correctly.
 - After a successful command: create a new immutable snapshot, increment the revision, append an event, write localStorage, and notify listeners.
 - `newPlan()` replaces state with a blank current-day mission, while `loadDemo()` installs an exact deep clone of the seed—including `revision: 6` and an empty activity log. Both notify subscribers and remain scenario controls rather than mission mutations.
-- Persistence key: `sidequest:mission:v1`.
+- Persistence key: `daymaker.fun:mission:v1`.
 - If localStorage contains an invalid or outdated payload, remove only that key and use a blank current-day mission; do not clear all localStorage.
 - Every method first parses input with Zod, then checks the revision, then enforces invariants.
 
@@ -403,7 +403,7 @@ store.updateStop(
 **Description:**
 
 ```text
-Read the current Sidequest mission, including revision, time, location,
+Read the current daymaker.fun mission, including revision, time, location,
 energy, constraints, stable stop IDs, statuses, planned times, locked
 commitments, coordinates, and source links. Use before changing the mission.
 ```
@@ -909,7 +909,7 @@ Fresh-plan and demo actions should:
 
 - start a first visit with a valid blank mission for the current day;
 - ask for confirmation before replacing non-empty work;
-- overwrite only `sidequest:mission:v1`;
+- overwrite only `daymaker.fun:mission:v1`;
 - let `Load demo` restore the active gravel ride and revision 6;
 - let `New plan` return to a blank board without removing unrelated browser data.
 
@@ -1109,7 +1109,7 @@ Example paraphrases:
 2. “The gravel is complete. Make the rest of today lower effort without moving our 18:30 reservation.”
 3. “Replace the hike with water time within a 20-minute drive and put a gas stop into the plan.”
 4. “It's 15:10 at the car. Replan the board around low energy and the fixed dinner.”
-5. “Update Sidequest, not just this chat: skip hiking, find snorkeling, add fuel, preserve dinner.”
+5. “Update daymaker.fun, not just this chat: skip hiking, find snorkeling, add fuel, preserve dinner.”
 
 ## 18. Deployment
 
@@ -1271,7 +1271,7 @@ Do not require a judge to build the repository. The README must make the complet
 
 ### Before coding
 
-- [ ] Read this entire document and `01-sidequest-product-en.md`.
+- [ ] Read this entire document and `01-daymaker-product-en.md`.
 - [ ] Inspect the existing repository, package manager, AGENTS.md files, and dirty files.
 - [ ] Do not delete user changes.
 - [ ] Reconfirm the current `document.modelContext` in official documentation if the implementation differs from the example.
@@ -1334,8 +1334,8 @@ Do not require a judge to build the repository. The README must make the complet
 ## 23. Ready-to-use Codex starting prompt
 
 ```text
-Implement Sidequest from the two project documents in this repository:
-01-sidequest-product-en.md and 02-sidequest-technical-execution-en.md.
+Implement daymaker.fun from the two project documents in this repository:
+01-daymaker-product-en.md and 02-daymaker-technical-execution-en.md.
 
 Start by inspecting the repository, package manager, AGENTS.md files, and current
 changes. Preserve all user work. Build only the P0 vertical slice first: the

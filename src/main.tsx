@@ -7,13 +7,14 @@ import { App } from "./App"
 import { PERSONAL_MISSION_ID } from "./domain/mission"
 import { createBlankMission } from "./domain/seed"
 import { consumeNewPlanEntry } from "./planning-entry"
+import { PRODUCT_NAME } from "./product"
 import { readSessionUrl } from "./session-link"
 import { createMissionStore, type StoragePort } from "./store"
 import { registerMissionTools } from "./webmcp"
 
 const root = document.querySelector<HTMLDivElement>("#root")
 
-if (root === null) throw new Error("Sidequest root element is missing")
+if (root === null) throw new Error(`${PRODUCT_NAME} root element is missing`)
 
 const memoryStorage: StoragePort = {
   getItem: () => null,

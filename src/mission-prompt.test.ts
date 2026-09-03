@@ -89,7 +89,7 @@ describe("mission prompt", () => {
     expect(prompt).not.toContain("If the live board is blank")
     expect(prompt).not.toContain("preserve its current Needs")
     expect(prompt).toContain("sessionUrl")
-    expect(prompt).toContain("[Open updated Daymaker plan]")
+    expect(prompt).toContain("[Open updated daymaker.fun plan]")
     expect(prompt).toContain("Do not finish without the clickable link")
   })
 

@@ -15,7 +15,7 @@ const installWebMcpHarness = async (page: Page) => {
   await page.addInitScript(() => {
     localStorage.clear()
     const registered = new Map<string, { execute: (input: unknown) => unknown }>()
-    Object.assign(window, { __copiedText: "", __sidequestTools: registered })
+    Object.assign(window, { __copiedText: "", __daymakerTools: registered })
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: {
@@ -50,9 +50,9 @@ const executeTool = (page: Page, name: string, input: unknown) =>
     async ({ input, name }) => {
       const registered = (
         window as typeof window & {
-          __sidequestTools: Map<string, { execute: (value: unknown) => unknown }>
+          __daymakerTools: Map<string, { execute: (value: unknown) => unknown }>
         }
-      ).__sidequestTools
+      ).__daymakerTools
       const definition = registered.get(name)
       if (definition === undefined) throw new Error(`Missing tool ${name}`)
       return definition.execute(input)
@@ -71,8 +71,8 @@ const waitForTools = async (page: Page) => {
       page.evaluate(
         () =>
           (
-            window as typeof window & { __sidequestTools: Map<string, unknown> }
-          ).__sidequestTools.size,
+            window as typeof window & { __daymakerTools: Map<string, unknown> }
+          ).__daymakerTools.size,
       ),
     )
     .toBe(5)
@@ -181,7 +181,7 @@ test("shows only the two free-form Needs examples without overflow", async ({ pa
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(390)
-  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-demo-menu.png" })
+  await page.screenshot({ fullPage: true, path: "artifacts/daymaker-demo-menu.png" })
 })
 
 test("opens the concise About explanation", async ({ page }) => {
@@ -189,7 +189,7 @@ test("opens the concise About explanation", async ({ page }) => {
   await page.getByRole("link", { name: "About" }).click()
 
   await expect(page).toHaveURL(/\/about$/)
-  await expect(page.getByRole("heading", { name: "How Daymaker works" }))
+  await expect(page.getByRole("heading", { name: "How daymaker.fun works" }))
     .toBeVisible()
   await expect(page.getByRole("listitem")).toHaveCount(4)
   await expect(page.getByRole("link", { name: "Back to Needs" })).toBeVisible()
@@ -264,7 +264,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   })
   expect(initialCopyButtonStyle.backgroundColor).toBe("rgb(210, 31, 43)")
   expect(initialCopyButtonStyle.height).toBeGreaterThanOrEqual(44)
-  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-brief.png" })
+  await page.screenshot({ fullPage: true, path: "artifacts/daymaker-brief.png" })
   await page.setViewportSize({ height: 844, width: 390 })
   expect(
     await page.evaluate(() => getComputedStyle(document.documentElement).fontSize),
@@ -274,7 +274,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
     .toBeLessThanOrEqual(390)
   await page.screenshot({
     fullPage: true,
-    path: "artifacts/sidequest-brief-mobile.png",
+    path: "artifacts/daymaker-brief-mobile.png",
   })
   await page.setViewportSize({ height: 900, width: 1100 })
   await initialCopyButton.click()
@@ -361,7 +361,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
     .getByRole("button", { name: "Make quiet lunch non-negotiable" })
     .click()
   await page.getByRole("button", { name: "Remove practical parking at every stop" }).click()
-  await page.screenshot({ fullPage: true, path: "artifacts/sidequest-needs.png" })
+  await page.screenshot({ fullPage: true, path: "artifacts/daymaker-needs.png" })
   await copyChanges.click()
   await expect(
     page.getByRole("button", { name: "Changes copied for ChatGPT" }),
@@ -406,7 +406,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   expect(addAlignment?.controlDelta).toBeLessThan(1)
   await page.screenshot({
     fullPage: true,
-    path: "artifacts/sidequest-needs-add-mobile.png",
+    path: "artifacts/daymaker-needs-add-mobile.png",
   })
   await mobileNewNeed.press("Escape")
 })
@@ -574,7 +574,7 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
     .toBeLessThanOrEqual(1100)
   await page.screenshot({
     fullPage: true,
-    path: "artifacts/sidequest-needs-schedule.png",
+    path: "artifacts/daymaker-needs-schedule.png",
   })
 
   await page.setViewportSize({ height: 844, width: 390 })
@@ -597,7 +597,7 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
   expect(mobileControlsOverlap).toBe(false)
   await page.screenshot({
     fullPage: true,
-    path: "artifacts/sidequest-needs-schedule-mobile.png",
+    path: "artifacts/daymaker-needs-schedule-mobile.png",
   })
 })
 
@@ -655,7 +655,7 @@ test("transfers the complete proposal to an empty browser through its session li
   await expect(receivingPage.locator('[data-testid^="stop-"]')).toHaveCount(3)
   expect(
     await receivingPage.evaluate(() =>
-      localStorage.getItem("sidequest:mission:v1"),
+      localStorage.getItem("daymaker.fun:mission:v1"),
     ),
   ).toBeNull()
 

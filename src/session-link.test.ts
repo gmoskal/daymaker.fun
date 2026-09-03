@@ -21,7 +21,7 @@ describe("portable session links", () => {
     }
     const link = await toSessionUrl({
       mission,
-      pageUrl: "https://sidequest.example/schedule",
+      pageUrl: "https://daymaker.example/schedule",
     })
     const url = new URL(link)
     const payload = new URLSearchParams(url.hash.slice(1)).get("session")
@@ -39,7 +39,7 @@ describe("portable session links", () => {
   it("is deterministic for the same mission and route", async () => {
     const input = {
       mission: SEED_MISSION,
-      pageUrl: "https://sidequest.example/needs",
+      pageUrl: "https://daymaker.example/needs",
     }
 
     await expect(toSessionUrl(input)).resolves.toBe(await toSessionUrl(input))
@@ -48,7 +48,7 @@ describe("portable session links", () => {
   it("loads a link copied from Markdown with escaped base64url characters", async () => {
     const link = await toSessionUrl({
       mission: SEED_MISSION,
-      pageUrl: "https://sidequest.example/schedule",
+      pageUrl: "https://daymaker.example/schedule",
     })
     const markdownText = link.replaceAll("_", "\\_").replaceAll("-", "\\-")
 
@@ -72,7 +72,7 @@ describe("portable session links", () => {
     }
     const link = await toSessionUrl({
       mission,
-      pageUrl: "https://sidequest.example/schedule",
+      pageUrl: "https://daymaker.example/schedule",
     })
 
     await expect(readSessionUrl(link)).resolves.toEqual({
@@ -83,11 +83,11 @@ describe("portable session links", () => {
 
   it("rejects malformed, oversized, and schema-invalid payloads", async () => {
     await expect(
-      readSessionUrl("https://sidequest.example/needs#session=%25"),
+      readSessionUrl("https://daymaker.example/needs#session=%25"),
     ).resolves.toEqual({ type: "invalid" })
     await expect(
       readSessionUrl(
-        `https://sidequest.example/needs#session=${"a".repeat(MAX_SESSION_PAYLOAD_CHARS + 1)}`,
+        `https://daymaker.example/needs#session=${"a".repeat(MAX_SESSION_PAYLOAD_CHARS + 1)}`,
       ),
     ).resolves.toEqual({ type: "invalid" })
 
@@ -96,7 +96,7 @@ describe("portable session links", () => {
         ...SEED_MISSION,
         schemaVersion: 2,
       } as unknown as typeof SEED_MISSION,
-      pageUrl: "https://sidequest.example/needs",
+      pageUrl: "https://daymaker.example/needs",
     })
     await expect(readSessionUrl(invalidSchema)).resolves.toEqual({
       type: "invalid",
@@ -105,7 +105,7 @@ describe("portable session links", () => {
 
   it("ignores URLs without a shared session", async () => {
     await expect(
-      readSessionUrl("https://sidequest.example/needs"),
+      readSessionUrl("https://daymaker.example/needs"),
     ).resolves.toEqual({ type: "none" })
   })
 })

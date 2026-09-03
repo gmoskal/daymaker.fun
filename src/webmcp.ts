@@ -12,6 +12,7 @@ import {
 } from "./domain/mission"
 import { BLANK_LOCATION_LABEL, BLANK_MISSION_TITLE } from "./domain/seed"
 import { chronologicalStops } from "./domain/mission-transition"
+import { PRODUCT_NAME } from "./product"
 import { toSessionUrl } from "./session-link"
 import type { MissionStore } from "./store"
 
@@ -214,7 +215,7 @@ const TOOL_CATALOG = [
   tool({
     annotations: { readOnlyHint: true, untrustedContentHint: true },
     description:
-      "Read the current Sidequest needs and proposed schedule: revision, brief, needs, stable stop IDs, times, places, locks, sources, and its portable session URL. Use before changing it.",
+      `Read the current ${PRODUCT_NAME} needs and proposed schedule: revision, brief, needs, stable stop IDs, times, places, locks, sources, and its portable session URL. Use before changing it.`,
     execute: (store) => toMissionState(store.getSnapshot()),
     name: "get_mission_state",
     schema: EmptyInputSchema,

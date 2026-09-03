@@ -13,7 +13,7 @@ import {
   type DemoMissionId,
 } from "./domain/seed"
 
-export const MISSION_STORAGE_KEY = "sidequest:mission:v1"
+export const MISSION_STORAGE_KEY = "daymaker.fun:mission:v1"
 
 export type StoragePort = Pick<Storage, "getItem" | "removeItem" | "setItem">
 

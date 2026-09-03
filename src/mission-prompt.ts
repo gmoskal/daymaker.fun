@@ -1,4 +1,4 @@
-import { COPY, SIDEQUEST_URL } from "./copy"
+import { COPY } from "./copy"
 import type { Mission } from "./domain/mission"
 import { chronologicalStops } from "./domain/mission-transition"
 import {
@@ -7,6 +7,7 @@ import {
   isDemoMissionId,
 } from "./domain/seed"
 import { newPlanEntryUrl } from "./planning-entry"
+import { PRODUCT_URL } from "./product"
 import { toSessionUrl } from "./session-link"
 import {
   DEFAULT_RESEARCH_DEPTH,
@@ -69,7 +70,7 @@ export const toMissionPrompt = (
   researchDepth: ResearchDepth = DEFAULT_RESEARCH_DEPTH,
   target: MissionPromptTarget = {
     type: "create",
-    url: newPlanEntryUrl(SIDEQUEST_URL),
+    url: newPlanEntryUrl(PRODUCT_URL),
   },
 ) =>
   [
@@ -84,7 +85,7 @@ export const toMissionPrompt = (
       ? COPY.promptCreateProtocol
       : COPY.promptUpdateProtocol.replace(
           "{newPlanUrl}",
-          newPlanEntryUrl(SIDEQUEST_URL),
+          newPlanEntryUrl(PRODUCT_URL),
         ),
     COPY.promptResultProtocol,
     COPY.promptSnapshot,
@@ -100,7 +101,7 @@ export const toMissionHandoffPrompt = async (
 
   const sessionUrl = await toSessionUrl({
     mission,
-    pageUrl: new URL("/schedule", SIDEQUEST_URL).toString(),
+    pageUrl: new URL("/schedule", PRODUCT_URL).toString(),
   })
   return toMissionPrompt(mission, researchDepth, {
     type: "update",

@@ -1,15 +1,15 @@
-# Sidequest — DayOps for real life
+# daymaker.fun — DayOps for real life
 
 > Your day changed. Your plan should too.
 
-Sidequest turns ordinary travel needs into an editable planning brief and a source-backed schedule. The person writes or clicks together **Needs**; ChatGPT structures them, researches suitable places, and writes a fresh, read-only **Proposed schedule** to the Sidequest page it opens through WebMCP Site Tools.
+daymaker.fun turns ordinary travel needs into an editable planning brief and a source-backed schedule. The person writes or clicks together **Needs**; ChatGPT structures them, researches suitable places, and writes a fresh, read-only **Proposed schedule** to the daymaker.fun page it opens through WebMCP Site Tools.
 
 This repository is an English-only entry for [The WebMCP Challenge](https://webmcp.devpost.com/).
 
 ## Submission status
 
 - Production URL: [daymaker.fun](https://daymaker.fun)
-- Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
+- Public repository: [github.com/gmoskal/daymaker.fun](https://github.com/gmoskal/daymaker.fun)
 - Local release: v0.4.0
 - Production deployment: v0.4.0 live and verified
 - Automatic Git deployments: pending GitHub/Vercel repository permission
@@ -20,9 +20,9 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 1. Open **Needs** and describe what the plan must accomplish. This initial description is required; the placeholder shows a complete example.
 2. Choose **Quick**, **Normal**, or **Deep** research above **Copy to ChatGPT**, then copy and paste the self-contained handoff into ChatGPT on mobile or desktop. Normal is the default; the device remembers the last selection.
-3. ChatGPT continues in Work and opens the one-shot public Sidequest `/needs?new=1` planning URL. The page clears any unrelated browser-local board itself before registering Site Tools, consumes the marker, and leaves the canonical URL at `/needs`.
-4. ChatGPT reads that new blank board, initializes it from the copied input, asks concise questions only if an essential fact is missing, researches suitable places, and writes the best-fitting **Proposed schedule**. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated Sidequest plan** link.
-   Questions, progress updates, and the final answer use the language of your request; Sidequest keeps proper names, sources, tool values, and the session link unchanged.
+3. ChatGPT continues in Work and opens the one-shot public daymaker.fun `/needs?new=1` planning URL. The page clears any unrelated browser-local board itself before registering Site Tools, consumes the marker, and leaves the canonical URL at `/needs`.
+4. ChatGPT reads that new blank board, initializes it from the copied input, asks concise questions only if an essential fact is missing, researches suitable places, and writes the best-fitting **Proposed schedule**. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated daymaker.fun plan** link.
+   Questions, progress updates, and the final answer use the language of your request; daymaker.fun keeps proper names, sources, tool values, and the session link unchanged.
 5. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Must keep** / **Can adapt**.
 6. There are two ways to iterate. Edit Needs on the board, choose **Copy changes to ChatGPT**, and paste the update back into the chat; or describe what should change directly in ChatGPT. The handoff carries the same session ID and the human Needs delta, so ChatGPT preserves unaffected stops and updates only what depends on the change. A mismatched ID starts a new session instead of touching an unrelated plan.
 7. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it to review the generated title, date, primary city/area, and items. The proposal is read-only for people: click anywhere on one or more rows to expand details and map links. The complete proposal also has one Google Maps route.
@@ -37,7 +37,7 @@ The small **About** link in the footer opens `/about` with the complete four-ste
 
 ## Why WebMCP
 
-A normal assistant can return an itinerary as chat text. Sidequest makes the input directly editable and the generated result durable:
+A normal assistant can return an itinerary as chat text. daymaker.fun makes the input directly editable and the generated result durable:
 
 - the page and agent share one typed mission store;
 - the agent can read the latest brief, fixed needs, stop IDs, locks, places, sources, and revision;
@@ -47,7 +47,7 @@ A normal assistant can return an itinerary as chat text. Sidequest makes the inp
 - every write uses optimistic concurrency, so stale agents cannot silently overwrite newer human changes;
 - the Needs editor and proposal review still work without WebMCP.
 
-Sidequest is not a chat client and does not run a remote MCP server. ChatGPT remains the language and research surface. The open page registers five imperative `document.modelContext.registerTool` tools and acts as the shared planning artifact.
+daymaker.fun is not a chat client and does not run a remote MCP server. ChatGPT remains the language and research surface. The open page registers five imperative `document.modelContext.registerTool` tools and acts as the shared planning artifact.
 
 ## The five tools
 
@@ -132,12 +132,12 @@ The browser tests cover the two-example menu, long free-form and structured Need
 
 Visual evidence:
 
-- `artifacts/sidequest-brief.png`
-- `artifacts/sidequest-brief-mobile.png`
-- `artifacts/sidequest-needs.png`
-- `artifacts/sidequest-needs-add-mobile.png`
-- `artifacts/sidequest-needs-schedule.png`
-- `artifacts/sidequest-needs-schedule-mobile.png`
+- `artifacts/daymaker-brief.png`
+- `artifacts/daymaker-brief-mobile.png`
+- `artifacts/daymaker-needs.png`
+- `artifacts/daymaker-needs-add-mobile.png`
+- `artifacts/daymaker-needs-schedule.png`
+- `artifacts/daymaker-needs-schedule-mobile.png`
 
 ## Manual browser checks
 
@@ -160,7 +160,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and a returned snapshot link survives reload.
-- [ ] Confirm ChatGPT renders the final returned `sessionUrl` as a clickable **Open updated Sidequest plan** link.
+- [ ] Confirm ChatGPT renders the final returned `sessionUrl` as a clickable **Open updated daymaker.fun plan** link.
 - [ ] Confirm a stale revision is rejected and copied fixed requirements are recreated without retaining unrelated old stops.
 - [ ] Check per-item Google/Apple Maps and the complete Google Maps schedule.
 - [x] Verify the local build at desktop and 390 px widths.
@@ -178,7 +178,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 
 ## Limitations
 
-Sidequest is a focused hackathon prototype: one in-memory plan per tab, portable snapshot links, two optional Needs examples, an English UI, and outbound map links. It does not provide accounts, real-time collaboration, live tab sync, GPS tracking, reservations, turn-by-turn directions, or its own chat interface. ChatGPT performs research; Google and Apple Maps require network access.
+daymaker.fun is a focused hackathon prototype: one in-memory plan per tab, portable snapshot links, two optional Needs examples, an English UI, and outbound map links. It does not provide accounts, real-time collaboration, live tab sync, GPS tracking, reservations, turn-by-turn directions, or its own chat interface. ChatGPT performs research; Google and Apple Maps require network access.
 
 ## References
 
@@ -189,4 +189,4 @@ Sidequest is a focused hackathon prototype: one in-memory plan per tab, portable
 
 ## License
 
-[MIT](LICENSE) © 2026 Sidequest contributors.
+[MIT](LICENSE) © 2026 daymaker.fun contributors.

@@ -1,9 +1,9 @@
-# TODO 01 — Sidequest P0
+# TODO 01 — daymaker.fun P0
 
 > Date: 2026-09-03
 > Status: v0.2.7 live on daymaker.fun with two-way feedback, portable plan iterations, and strict response-language handoff; automatic Vercel Git connection permission pending
-> Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
-> Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
+> Scope: one local-first daymaker.fun mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
+> Analysis base: `01-daymaker-product-en.md`, `02-daymaker-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
 > Technical note: English is the only submission language in P0; WebMCP is progressive enhancement and the normal UI remains usable without it.
 
@@ -101,7 +101,7 @@ Acceptance criteria:
 Tests:
 
 - AC-1/2 -> `configuration gate` (`npm run build`); no unit test because these are compiler/package contracts.
-- AC-3 -> `mission applies a valid action` and `registers the Sidequest tool catalog`; integration coverage follows in tasks 2 and 3.
+- AC-3 -> `mission applies a valid action` and `registers the daymaker.fun tool catalog`; integration coverage follows in tasks 2 and 3.
 
 Sources/References: `package.json`, `tsconfig*.json`, `vite.config.ts`, `playwright.config.ts`.
 
@@ -120,7 +120,7 @@ Acceptance criteria:
 - AC-1: Valid context, stop, add, and reorder actions increment revision exactly once and record the actor.
 - AC-2: stale, malformed, missing-stop, locked-stop, invalid-order, and limit errors do not mutate or persist state.
 - AC-3: dinner remains locked at 18:30; every future stop appears exactly once after reorder.
-- AC-4: explicit demo loading restores revision 6, the active gravel ride, and an empty event log; invalid persisted data removes only the Sidequest key and falls back to a blank plan.
+- AC-4: explicit demo loading restores revision 6, the active gravel ride, and an empty event log; invalid persisted data removes only the daymaker.fun key and falls back to a blank plan.
 - AC-5: human Done/Skip/Undo use the same action path as WebMCP.
 
 Tests:
@@ -180,7 +180,7 @@ Tests:
 
 - AC-1/2/4/5 -> unit: `view-model.test.ts > presents each mission state`; integration: `app.test.tsx > renders and controls the mission`.
 - AC-3 -> integration: `app.test.tsx > synchronizes selection and secure sources`.
-- AC-6 -> E2E: `sidequest.spec.ts > completes and captures the killer flow`; evidence: `artifacts/sidequest-desktop.png`, `artifacts/sidequest-mobile.png`.
+- AC-6 -> E2E: `daymaker.spec.ts > completes and captures the killer flow`; evidence: `artifacts/daymaker-desktop.png`, `artifacts/daymaker-mobile.png`.
 - Copy gate -> `npm run test -- src/copy.test.ts`; other locales are intentionally unsupported in P0.
 
 Sources/References: `src/view-model.ts`, `src/App.tsx`, `src/MissionMap.tsx`, `src/app.css`, `src/copy.ts`.
@@ -190,7 +190,7 @@ Implementation result:
 - Behavioral red: `npm run test -- src/copy.test.ts src/view-model.test.ts src/App.test.tsx` failed 6/6 assertions against the UI skeleton, covering copy, screen projection, manual status change, source links, and fixture restoration.
 - Green: the same focused suite passed 6/6 and `npm run build` completed successfully.
 - Browser green: `npm run test:e2e` passed the real revision 7 -> 12 flow through a native-shaped `document.modelContext.registerTool` harness, verified five registrations, the locked 18:30 dinner, and no horizontal overflow at 390px.
-- Visual evidence inspected: `artifacts/sidequest-desktop.png` (1440px) and `artifacts/sidequest-mobile.png` (390px). A low-contrast scenario-control label found during inspection was corrected and both screenshots were regenerated.
+- Visual evidence inspected: `artifacts/daymaker-desktop.png` (1440px) and `artifacts/daymaker-mobile.png` (390px). A low-contrast scenario-control label found during inspection was corrected and both screenshots were regenerated.
 - Timeline, accessible map route list, Google Maps preview, and Google/Apple launch URLs derive from one presenter route; completed/skipped stops stay in history but leave the active route.
 
 ### 5 [x] Complete delivery files, full gates, visual QA, and simplification rounds
@@ -232,7 +232,7 @@ Description: Add the minimum Vercel contract, connect the authenticated Vercel p
 Acceptance criteria:
 
 - AC-1: `vercel.json` builds the Vite application into `dist` and supplies the same security-header policy as the existing hosting contract.
-- AC-2: the Vercel project is connected to `github.com/gmoskal/sidequest-webmcp`, and its production URL responds successfully over public HTTPS.
+- AC-2: the Vercel project is connected to `github.com/gmoskal/daymaker.fun`, and its production URL responds successfully over public HTTPS.
 - AC-3: README records the verified production URL and no longer describes deployment as pending.
 
 Tests:
@@ -253,7 +253,7 @@ Implementation result:
 
 Status:
 
-- Production v0.2.0 is complete. The remaining blocker is granting the Vercel GitHub integration access to `gmoskal/sidequest-webmcp`.
+- Production v0.2.0 is complete. The remaining blocker is granting the Vercel GitHub integration access to `gmoskal/daymaker.fun`.
 
 ### 7 [x] Make first use and every interactive control unmistakable
 
@@ -278,7 +278,7 @@ Acceptance criteria:
 
 Tests:
 
-- AC-1/5/8 -> browser regression: `sidequest.spec.ts > completes and captures the Sidequest killer flow`; evidence replaces `artifacts/sidequest-desktop.png` and `artifacts/sidequest-mobile.png`. The visual style itself requires inspected browser evidence rather than a unit test.
+- AC-1/5/8 -> browser regression: `daymaker.spec.ts > completes and captures the daymaker.fun killer flow`; evidence replaces `artifacts/daymaker-desktop.png` and `artifacts/daymaker-mobile.png`. The visual style itself requires inspected browser evidence rather than a unit test.
 - AC-2/3/4 -> integration regression: `App.test.tsx > keeps one focused workspace with explicit controls`; unit coverage is skipped because the behavior is the composed rendered experience.
 - AC-6 -> existing integration: `App.test.tsx > uses the shared store for a human Done action` plus `webmcp.test.ts > exposes a bounded atomic catalog`.
 - AC-7 -> copy gate: `copy.test.ts > keeps the exact demo prompt and mission positioning`; this prototype intentionally supports English only and has no generated locale set.
@@ -295,7 +295,7 @@ Before implementation gate:
 - [x] File ownership is limited to the single UI task; no parallel work or conflicting edit set exists.
 - [x] `npm run test -- src/App.test.tsx src/copy.test.ts` ran red: the `Plan` tab was absent and the copy contract still returned `Copy replanning prompt` instead of the explicit ChatGPT action.
 
-Sources/References: `src/App.tsx`, `src/MissionWorkspace.tsx`, `src/MissionMap.tsx`, `src/app.css`, `src/copy.ts`, `src/App.test.tsx`, `src/MissionMap.test.tsx`, `e2e/sidequest.spec.ts`, desktop/mobile artifacts.
+Sources/References: `src/App.tsx`, `src/MissionWorkspace.tsx`, `src/MissionMap.tsx`, `src/app.css`, `src/copy.ts`, `src/App.test.tsx`, `src/MissionMap.test.tsx`, `e2e/daymaker.spec.ts`, desktop/mobile artifacts.
 
 External reference: current official Motion documentation specifies `npm install motion`, imports from `motion/react`, and the controlled `Reorder.Group` / `Reorder.Item` API.
 
@@ -310,7 +310,7 @@ Implementation result:
 
 ### 8 [x] Make a fresh personal plan the default and explain the chat boundary
 
-Description: Replace the implicit demo-first experience with a blank current-day plan and one concise explanation of the product boundary: ChatGPT is the conversation and reasoning surface, while Sidequest exposes WebMCP tools and persists the shared result.
+Description: Replace the implicit demo-first experience with a blank current-day plan and one concise explanation of the product boundary: ChatGPT is the conversation and reasoning surface, while daymaker.fun exposes WebMCP tools and persists the shared result.
 
 Acceptance criteria:
 
@@ -365,7 +365,7 @@ Tests:
 
 - AC-3/4/5/7/11 -> `App.test.tsx > exposes persistent side tabs without technical state`, `App.test.tsx > keeps the selected workspace in the browser route`, `App.test.tsx > reveals one add field from its contextual plus`, and `App.test.tsx > opens one complete item action menu`.
 - AC-6 -> `mission.test.ts > lets a person delete an item through the transition gate` plus `App.test.tsx > deletes an item from its action menu`; the existing WebMCP catalog test continues to assert exactly five tools.
-- AC-1/2/8/11 -> `sidequest.spec.ts > preserves readable schedule hierarchy and one item menu` with computed-style assertions and captured `artifacts/sidequest-item-menu.png`; visual inspection remains required because numeric style assertions cannot prove composition quality.
+- AC-1/2/8/11 -> `daymaker.spec.ts > preserves readable schedule hierarchy and one item menu` with computed-style assertions and captured `artifacts/daymaker-item-menu.png`; visual inspection remains required because numeric style assertions cannot prove composition quality.
 - AC-9 -> `copy.test.ts > keeps the exact demo prompt and mission positioning` and `App.test.tsx > explains the plan interaction in the blank state`.
 - AC-10 -> `MissionMap.test.tsx > previews Google Maps and offers both map providers` plus the killer-flow Route assertion.
 - AC-11 copy gate -> `npm run test -- src/copy.test.ts src/App.test.tsx`; no locale/codegen command exists because this repository intentionally supports English only.
@@ -410,7 +410,7 @@ Acceptance criteria:
 - AC-2: the San Francisco sample includes a postal return, Ferry Plaza errand, Main Library return, noon camera pickup, and a locked evening commitment with realistic locations, time windows, constraints, and official sources.
 - AC-3: the Barcelona sample includes NOMAD specialty coffee, a Bogatell swim, a later city activity, and a locked timed commitment, with realistic route coordinates, constraints, and official sources.
 - AC-4: `Load demo` opens one flat, accessible menu; selecting a sample replaces the current mission through `MissionStore`, closes the menu, returns to `/plan`, and `New plan` restores the blank state.
-- AC-5: the menu is usable at desktop and 390 px, has no card border, frame, shadow, or gradient, does not occlude its trigger, and captures visual evidence in `artifacts/sidequest-demo-menu.png`.
+- AC-5: the menu is usable at desktop and 390 px, has no card border, frame, shadow, or gradient, does not occlude its trigger, and captures visual evidence in `artifacts/daymaker-demo-menu.png`.
 - AC-6: all new visible English labels and descriptions live in `src/copy.ts`; this P0 deliberately supports English only, so there is no locale generator to run.
 - AC-7: the sample catalog does not add a second domain store, change persistence format, or alter the exactly-five WebMCP tool catalog.
 
@@ -418,7 +418,7 @@ Tests:
 
 - AC-1/2/3 -> unit/integration: `store.test.ts > loads each named demo from the typed catalog`; UI reinforcement: `App.test.tsx > loads a selected sample from the demo menu`.
 - AC-4/6 -> integration: `App.test.tsx > loads a selected sample from the demo menu`; copy gate: `npm run test -- src/copy.test.ts src/App.test.tsx`.
-- AC-5 -> E2E: `sidequest.spec.ts > opens the flat demo catalog without viewport overflow` plus `artifacts/sidequest-demo-menu.png`; unit testing is intentionally skipped because final composition and occlusion require the real browser.
+- AC-5 -> E2E: `daymaker.spec.ts > opens the flat demo catalog without viewport overflow` plus `artifacts/daymaker-demo-menu.png`; unit testing is intentionally skipped because final composition and occlusion require the real browser.
 - AC-7 -> existing `webmcp.test.ts > registers exactly five definitions` and full `npm run check`.
 
 Sources/References: `src/domain/seed.ts`, `src/store.ts`, `src/view-model.ts`, `src/useMissionViewModel.ts`, `src/App.tsx`, `src/copy.ts`, `src/app.css`, official SFPL/USPS/Glass Key/Ferry Plaza/NOMAD/Barcelona beach pages.
@@ -436,7 +436,7 @@ Implementation result:
 - Green: `npm run check` passed 48/48 Vitest tests, the strict TypeScript/Vite production build, and 4/4 Chromium E2E tests.
 - Source of truth: `DEMO_MISSIONS` and its derived `DemoMissionId` own the three immutable snapshots; `MissionStore.loadDemo` clones the selected mission and publishes through the existing persistence/subscription path.
 - Copy gate: sample labels, descriptions, confirmation text, and scenario prompts live in `src/copy.ts`; `npm run test -- src/copy.test.ts src/App.test.tsx` passed as part of the 48-test gate. English remains the only intentional P0 locale, so there is no codegen command.
-- Visual evidence inspected: `artifacts/sidequest-demo-menu.png`, `artifacts/sidequest-san-francisco.png`, and `artifacts/sidequest-barcelona.png` at 390 px show no clipping, trigger occlusion, border/card/shadow, or horizontal overflow.
+- Visual evidence inspected: `artifacts/daymaker-demo-menu.png`, `artifacts/daymaker-san-francisco.png`, and `artifacts/daymaker-barcelona.png` at 390 px show no clipping, trigger occlusion, border/card/shadow, or horizontal overflow.
 
 ### 11 [x] Let the agent create titled plans from complete copied context
 
@@ -484,9 +484,9 @@ Tests:
   context`; integration: `App.test.tsx > copies complete demo context`.
 - AC-5/6 -> integration: `App.test.tsx > starts a new plan without confirmation
   and copies selected demo context`.
-- AC-7 -> browser: `sidequest.spec.ts > copies complete demo context and starts
+- AC-7 -> browser: `daymaker.spec.ts > copies complete demo context and starts
   fresh without an app modal`; evidence:
-  `artifacts/sidequest-full-context-copy.png`. Unit-only visual proof is skipped
+  `artifacts/daymaker-full-context-copy.png`. Unit-only visual proof is skipped
   because clipboard behavior and viewport composition require a real browser.
 - AC-9 -> integration: `App.test.tsx > shows the latest release at the page
   bottom`; the same AC-7 browser evidence verifies placement and occlusion.
@@ -494,7 +494,7 @@ Tests:
 Sources/References: `src/domain/mission.ts`, `src/domain/mission-transition.ts`,
 `src/webmcp.ts`, `src/copy.ts`, new `src/mission-prompt.ts`, `src/view-model.ts`,
 `src/useMissionViewModel.ts`, `src/App.test.tsx`, `src/webmcp.test.ts`,
-`e2e/sidequest.spec.ts`, official OpenAI Site Tools documentation.
+`e2e/daymaker.spec.ts`, official OpenAI Site Tools documentation.
 
 Before implementation gate:
 
@@ -528,12 +528,12 @@ Implementation result:
   lifecycle/error paths. No second state model or sixth tool was introduced.
 - `npm run check` passed 55/55 Vitest tests, the strict TypeScript/Vite build,
   and 5/5 Chromium tests. The inspected 390px evidence is
-  `artifacts/sidequest-full-context-copy.png`; it verifies the long copy label,
+  `artifacts/daymaker-full-context-copy.png`; it verifies the long copy label,
   modal-free reset, and unobstructed borderless `v0.1.1` release marker.
 
 ### 12 [x] Make Needs the human input and Proposed schedule the agent output
 
-Description: Reframe Sidequest around one clear contract: the person edits a
+Description: Reframe daymaker.fun around one clear contract: the person edits a
 planning brief and must-haves in Needs, while the agent creates a Proposed
 schedule and researches its places. Remove Route as a workspace; maps remain
 available from every generated schedule item and for the complete schedule.
@@ -587,8 +587,8 @@ Tests:
 - AC-7 -> `copy.test.ts > keeps Needs and Proposed schedule terminology`;
   locale generation is skipped because this repository intentionally has one
   English copy object and no localization generator.
-- AC-8 -> browser: `sidequest.spec.ts > edits Needs and opens the generated
-  schedule`; evidence: `artifacts/sidequest-needs-schedule.png`.
+- AC-8 -> browser: `daymaker.spec.ts > edits Needs and opens the generated
+  schedule`; evidence: `artifacts/daymaker-needs-schedule.png`.
 - AC-9/10 -> domain: fixed/remove need transition tests; unit:
   `mission-prompt.test.ts > asks the agent to structure Needs and regenerate`;
   integration: `App.test.tsx > edits all forms of Needs`.
@@ -632,8 +632,8 @@ Implementation result:
   the layout projection so details never overlap and typography does not scale.
 - Green: 66/66 unit and integration tests, TypeScript/Vite production build,
   and 4/4 Chromium flows pass. Desktop and 390 px evidence is stored in
-  `artifacts/sidequest-needs.png`, `artifacts/sidequest-needs-schedule.png`, and
-  `artifacts/sidequest-needs-schedule-mobile.png`.
+  `artifacts/daymaker-needs.png`, `artifacts/daymaker-needs-schedule.png`, and
+  `artifacts/daymaker-needs-schedule-mobile.png`.
 
 ### 13 [x] Make the Needs input and primary handoff action unmistakable
 
@@ -652,8 +652,8 @@ Acceptance criteria:
   button and stays disabled until the required initial description is non-empty.
   Clipboard behavior and feedback continue to come from `src/copy.ts`.
 - AC-3: the textarea scrollbar and copy action remain visible, unobstructed, and
-  within a 390px viewport; evidence updates `artifacts/sidequest-needs.png`.
-- AC-4: every handoff always contains the Sidequest instructions and retained
+  within a 390px viewport; evidence updates `artifacts/daymaker-needs.png`.
+- AC-4: every handoff always contains the daymaker.fun instructions and retained
   free-form description. It omits `needs` in the initial brief stage, then
   includes the current post-edit active `needs` array in the structured stage;
   no
@@ -686,12 +686,12 @@ Acceptance criteria:
 
 Tests:
 
-- AC-1/2/3 -> browser: `sidequest.spec.ts > edits Needs and copies the current
+- AC-1/2/3 -> browser: `daymaker.spec.ts > edits Needs and copies the current
   handoff` verifies real textarea overflow, computed scrollbar color, filled CTA
   geometry, clipboard output, and 390px overflow; unit-level CSS testing is
   skipped because it would only assert implementation text rather than rendered
-  behavior. Evidence: `artifacts/sidequest-brief.png` and
-  `artifacts/sidequest-brief-mobile.png`.
+  behavior. Evidence: `artifacts/daymaker-brief.png` and
+  `artifacts/daymaker-brief-mobile.png`.
 - AC-2 -> integration: existing `App.test.tsx > copies editable Needs for the
   agent` verifies the real clipboard boundary and feedback state.
 - AC-4/5/6 -> unit: `mission-prompt.test.ts > copies planning input by stage`,
@@ -705,7 +705,7 @@ Tests:
   verifies the absent day metadata, pace, and fake title plus the disabled plan;
   `exposes maps from every located schedule item` verifies the plan-only date
   and location with no current-time line. Browser evidence covers both stages.
-- AC-9 -> browser: `sidequest.spec.ts > shows only the two free-form Needs
+- AC-9 -> browser: `daymaker.spec.ts > shows only the two free-form Needs
   examples without overflow` verifies the downward white menu; desktop/mobile
   evidence verifies its position above the day.
 - AC-10 -> unit: `mission-prompt.test.ts > asks the agent to structure Needs and
@@ -720,7 +720,7 @@ Sources/References: `src/domain/mission.ts`, `src/domain/mission-transition.ts`,
 `src/domain/seed.ts`, `src/store.ts`, `src/mission-prompt.ts`, `src/webmcp.ts`,
 `src/view-model.ts`, `src/useMissionViewModel.ts`, `src/App.tsx`,
 `src/MissionWorkspace.tsx`, `src/app.css`, their focused tests, and
-`e2e/sidequest.spec.ts`.
+`e2e/daymaker.spec.ts`.
 
 Before implementation gate:
 
@@ -758,8 +758,8 @@ Implementation result:
   pure transition, migration, prompt projection, and React action lifecycle.
   `npm run check` passes 68/68 Vitest tests, the strict TypeScript/Vite build,
   and 4/4 Chromium flows. Desktop/mobile evidence is stored in
-  `artifacts/sidequest-brief*.png`, `artifacts/sidequest-needs*.png`, and
-  `artifacts/sidequest-demo-menu.png`; the final live local Needs DOM was also
+  `artifacts/daymaker-brief*.png`, `artifacts/daymaker-needs*.png`, and
+  `artifacts/daymaker-demo-menu.png`; the final live local Needs DOM was also
   inspected in the in-app browser.
 - Production deployment `dpl_HjKqhBToQKPfvZZ6rRAJihwC64Y5` is READY and
   aliased at `https://sidequest-webmcp-eta.vercel.app`; the served bundle was
@@ -807,7 +807,7 @@ Tests:
 
 Sources/References: `src/domain/mission.ts`, `src/domain/seed.ts`, `src/store.ts`,
 `src/view-model.ts`, `src/App.tsx`, `src/copy.ts`, their focused tests,
-`e2e/sidequest.spec.ts`, package metadata, and deployment documentation.
+`e2e/daymaker.spec.ts`, package metadata, and deployment documentation.
 
 Before implementation gate:
 
@@ -835,8 +835,8 @@ Implementation result:
 - Focused green: 52/52 store, presenter, App, prompt, copy, and WebMCP tests.
   Full `npm run check`: 72/72 Vitest tests, strict TypeScript/Vite build, and
   4/4 Chromium flows.
-- Desktop and 390px evidence under `artifacts/sidequest-brief*.png` and
-  `artifacts/sidequest-needs-schedule*.png` shows the real `15:44 CEST`-style
+- Desktop and 390px evidence under `artifacts/daymaker-brief*.png` and
+  `artifacts/daymaker-needs-schedule*.png` shows the real `15:44 CEST`-style
   marker unobstructed at the bottom.
 - Mature-TypeScript simplification round 1 kept timestamp truth only on
   `Mission`; round 2 kept the clock at the store boundary and formatting in the
@@ -942,18 +942,18 @@ Tests:
   unlock through the real store.
 - AC-4 -> browser: the existing `edits Needs and copies the current handoff`
   flow checks the 390px document width and refreshes
-  `artifacts/sidequest-needs-mobile.png`.
+  `artifacts/daymaker-needs-mobile.png`.
 - AC-5 -> unit: `copy.test.ts > keeps the agent handoff and mission positioning
   explicit`; a separate i18n codegen gate is skipped because this repository's
   declared P0 locale is English-only and `src/copy.ts` is its copy mechanism.
 
 Sources/References: `src/copy.ts`, `src/MissionWorkspace.tsx`, `src/App.test.tsx`,
-`src/copy.test.ts`, `e2e/sidequest.spec.ts`, and the existing `fixed` field in
+`src/copy.test.ts`, `e2e/daymaker.spec.ts`, and the existing `fixed` field in
 `src/domain/mission.ts`.
 
 Before implementation gate:
 
-- [x] Design direction: retain Sidequest's bold-clarity Bauhaus system, pure
+- [x] Design direction: retain daymaker.fun's bold-clarity Bauhaus system, pure
   neutrals, one red semantic accent, and no added legend, icon, border, panel,
   background, shadow, or animation.
 - [x] Existing copy, accessible labels, mutation route, and 390px constraint
@@ -967,7 +967,7 @@ Implementation result:
 - `Must keep / Can adapt` now explain planning consequence while the canonical
   WebMCP `fixed` boolean and copied JSON remain unchanged.
 - The real 390px browser flow has no horizontal overflow; the labels remain on
-  one line in `artifacts/sidequest-needs-add-mobile.png`.
+  one line in `artifacts/daymaker-needs-add-mobile.png`.
 - Included in the 66/66 unit/integration and 4/4 Chromium v0.2.3 gate.
 
 ### 17 [x] Make Proposed schedule a read-only expandable result
@@ -1010,7 +1010,7 @@ Tests:
 
 Sources/References: `src/view-model.ts`, `src/useMissionViewModel.ts`,
 `src/MissionWorkspace.tsx`, `src/App.tsx`, `src/app.css`, their colocated tests,
-and `e2e/sidequest.spec.ts`.
+and `e2e/daymaker.spec.ts`.
 
 Before implementation gate:
 
@@ -1035,8 +1035,8 @@ Implementation result:
 - The overall label is the concise primary area (`Baška Voda` in evidence),
   item rows show precise places, and the prompt requires a primary city/area
   plus a short, specific, playful generated title.
-- Desktop and 390px evidence in `artifacts/sidequest-needs-schedule.png` and
-  `artifacts/sidequest-needs-schedule-mobile.png` shows two open items, neutral
+- Desktop and 390px evidence in `artifacts/daymaker-needs-schedule.png` and
+  `artifacts/daymaker-needs-schedule-mobile.png` shows two open items, neutral
   times, no overlap, and no human plan controls.
 - Five mature-typescript simplification rounds: (1) separated expansion from
   Domain State; (2) narrowed human ViewActions to Needs and inspection; (3)
@@ -1078,7 +1078,7 @@ Implementation result:
 - The new grid uses the exact 38px control column and 10px list gap. Browser
   geometry proves both the plus/checkbox and input/Need-label offsets differ by
   less than one pixel at 390px.
-- `artifacts/sidequest-needs-add-mobile.png` shows the borderless input with the
+- `artifacts/daymaker-needs-add-mobile.png` shows the borderless input with the
   list font and lighter placeholder. Enter and Escape remain covered.
 - Final v0.2.3 gate: 66/66 unit/integration tests, TypeScript/Vite build, and
   4/4 Chromium tests passed.
@@ -1117,7 +1117,7 @@ Acceptance criteria:
   plan and that later edits do not synchronize automatically between copies.
 - AC-9: every successful WebMCP mutation returns a `sessionUrl` representing
   the post-write mission; the copied protocol requires ChatGPT to render the
-  final returned URL as a clickable `Open updated Sidequest plan` link.
+  final returned URL as a clickable `Open updated daymaker.fun plan` link.
 - AC-10: the read tool also returns the current `sessionUrl`, so an unchanged
   board can always be handed off without adding a sixth WebMCP tool.
 
@@ -1130,7 +1130,7 @@ Tests:
   session` proves persistence and invalid-data preservation.
 - AC-6 -> integration: `App.test.tsx > copies a complete session link from the
   footer` checks the rendered action and decoded clipboard state.
-- AC-7 -> browser: `sidequest.spec.ts > transfers the complete proposal to an
+- AC-7 -> browser: `daymaker.spec.ts > transfers the complete proposal to an
   empty browser through its session link` verifies import, URL cleanup, and
   reload at 390px and desktop widths.
 - AC-9/10 -> integration: `webmcp.test.ts > returns a refreshed portable link
@@ -1160,7 +1160,7 @@ Implementation result:
   route as a small borderless utility; every successful WebMCP read and write
   returns a post-operation link, with no sixth tool or backend.
 - The handoff now explicitly requires the exact final `sessionUrl` as
-  `[Open updated Sidequest plan](...)`; it no longer ends with ambiguous prose
+  `[Open updated daymaker.fun plan](...)`; it no longer ends with ambiguous prose
   telling the person to open a tab that is not linked.
 - Full gate: 73/73 Vitest tests, strict TypeScript/Vite build, and 5/5 Chromium
   flows. The new browser flow creates a proposal, opens the returned link in an
@@ -1186,7 +1186,7 @@ Implementation result:
 
 Description: Make the copied planning protocol keep questions, progress
 summaries, and the final answer in the language of the person's request, even
-though Sidequest's protocol wrapper and UI copy remain English.
+though daymaker.fun's protocol wrapper and UI copy remain English.
 
 Acceptance criteria:
 
@@ -1227,7 +1227,7 @@ Sources/References: `src/copy.ts`, `src/copy.test.ts`,
 Before implementation gate:
 
 - [x] Language source fixed: the person's brief/Needs request, not the English
-  Sidequest protocol wrapper.
+  daymaker.fun protocol wrapper.
 - [x] Fallback fixed: the person's latest message when the request is mixed or
   ambiguous.
 - [x] Named unit and integration assertions observed red before production
@@ -1320,11 +1320,11 @@ Implementation result:
   still observed the Vercel alias in the canonical constant, generated handoff,
   and README.
 - Focused green: the canonical copy, prompt, delivery, and footer-version suites
-  passed 13/13 tests after `SIDEQUEST_URL` changed once at its source.
+  passed 13/13 tests after `PRODUCT_URL` changed once at its source.
 - Full local gate: `npm run check` passed 74/74 Vitest tests, the strict
   TypeScript/Vite build, and 5/5 Chromium flows.
 - Mature-TypeScript round 1 retained no domain state for a deployment address.
-  Round 2 traced the copied handoff through the existing `SIDEQUEST_URL`
+  Round 2 traced the copied handoff through the existing `PRODUCT_URL`
   boundary and kept portable session links based on the page actually opened.
   Round 3 rejected a second environment/config service for one public constant.
   Round 4 required no new helper, wrapper, type, or cast. Round 5 required no
@@ -1359,16 +1359,16 @@ Acceptance criteria:
 
 Tests:
 
-- AC-1/2 -> browser: `sidequest.spec.ts > edits Needs and copies the current
+- AC-1/2 -> browser: `daymaker.spec.ts > edits Needs and copies the current
   handoff` asserts the computed root size at 1100px and 390px plus the existing
   mobile overflow contract.
 - AC-3 -> review: focused CSS diff contains one responsive root declaration.
-- AC-4 -> browser evidence: `artifacts/sidequest-brief.png` and
-  `artifacts/sidequest-brief-mobile.png`.
+- AC-4 -> browser evidence: `artifacts/daymaker-brief.png` and
+  `artifacts/daymaker-brief-mobile.png`.
 - Unit coverage is skipped because this is a CSS rendering contract; the real
   Chromium computed style and screenshots exercise the affected boundary.
 
-Sources/References: `src/app.css`, `e2e/sidequest.spec.ts`, existing visual
+Sources/References: `src/app.css`, `e2e/daymaker.spec.ts`, existing visual
 evidence under `artifacts/`.
 
 Before implementation gate:
@@ -1385,7 +1385,7 @@ Implementation result:
 - Focused green: the same real Chromium flow passed with an 18px desktop root,
   16px mobile root, and no 390px overflow.
 - Full gate: 74/74 Vitest tests, strict TypeScript/Vite build, and 5/5 Chromium
-  flows passed. `artifacts/sidequest-brief.png` and its mobile counterpart were
+  flows passed. `artifacts/daymaker-brief.png` and its mobile counterpart were
   inspected with no clipping, overlap, or viewport bleed.
 - Frontend-design kept the chosen direction brutally minimal: one responsive
   root scale raises the complete hierarchy without component overrides,
@@ -1407,7 +1407,7 @@ generated shareable plan link.
 Acceptance criteria:
 
 - AC-1: the copied protocol tells ChatGPT to offer both feedback paths after a
-  plan update: edit Needs on Daymaker and paste `Copy changes to ChatGPT` back,
+  plan update: edit Needs on daymaker.fun and paste `Copy changes to ChatGPT` back,
   or describe changes directly in the current chat and receive a new link.
 - AC-2: the final response says the returned session link can be shared with
   friends.
@@ -1458,7 +1458,7 @@ Implementation result:
   above its date. It reuses the existing gzip/base64url encoder, action, and
   transient copied state; the duplicate footer action was removed.
 - Full local gate: 77/77 Vitest tests, strict TypeScript/Vite build, and 5/5
-  Chromium flows passed. `artifacts/sidequest-needs-schedule.png` and its mobile
+  Chromium flows passed. `artifacts/daymaker-needs-schedule.png` and its mobile
   counterpart show the utility without overlap or horizontal overflow.
 - Mature-TypeScript round 1 confirmed that iteration cannot be derived from the
   event list because a replacement intentionally clears prior events. Round 2
@@ -1486,7 +1486,7 @@ Implementation result:
 - [x] `npm run build` passes with no TypeScript errors.
 - [x] `npm run test:e2e` passes.
 - [x] `npm run check` passes.
-- [x] `artifacts/sidequest-desktop.png` and `artifacts/sidequest-mobile.png` inspected for visibility, occlusion, and overflow.
+- [x] `artifacts/daymaker-desktop.png` and `artifacts/daymaker-mobile.png` inspected for visibility, occlusion, and overflow.
 - [x] Exactly five real WebMCP definitions and output budgets verified.
 - [x] Manual browser/deployment requirements truthfully marked pending or complete.
 

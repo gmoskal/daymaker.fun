@@ -57,7 +57,7 @@ afterEach(() => {
   }
 })
 
-describe("Sidequest app", () => {
+describe("daymaker.fun app", () => {
   it("starts in Needs with two tabs", () => {
     window.history.replaceState(null, "", "/")
     render(<App registration={registration(false)} store={blankStore()} />)
@@ -91,7 +91,7 @@ describe("Sidequest app", () => {
     render(<App registration={registration(false)} store={blankStore()} />)
 
     expect(
-      screen.getByRole("heading", { name: "How Daymaker works" }),
+      screen.getByRole("heading", { name: "How daymaker.fun works" }),
     ).toBeVisible()
     expect(screen.getAllByRole("listitem")).toHaveLength(4)
     expect(screen.getByRole("link", { name: "Back to Needs" }))

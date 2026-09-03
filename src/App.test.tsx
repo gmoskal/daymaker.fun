@@ -94,6 +94,10 @@ describe("daymaker.fun app", () => {
       screen.getByRole("heading", { name: "How daymaker.fun works" }),
     ).toBeVisible()
     expect(screen.getAllByRole("listitem")).toHaveLength(4)
+    expect(screen.getByTitle("daymaker.fun demo video")).toHaveAttribute(
+      "src",
+      "https://www.youtube-nocookie.com/embed/XlG632xwWvs",
+    )
     expect(screen.getByRole("link", { name: "Back to Needs" }))
       .toHaveAttribute("href", "/needs")
   })

@@ -191,6 +191,7 @@ test("opens the concise About explanation", async ({ page }) => {
   await expect(page).toHaveURL(/\/about$/)
   await expect(page.getByRole("heading", { name: "How daymaker.fun works" }))
     .toBeVisible()
+  await expect(page.getByTitle("daymaker.fun demo video")).toBeVisible()
   await expect(page.getByRole("listitem")).toHaveCount(4)
   await expect(page.getByRole("link", { name: "Back to Needs" })).toBeVisible()
 })

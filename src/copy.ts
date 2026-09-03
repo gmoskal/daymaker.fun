@@ -17,6 +17,7 @@ export const COPY = {
   aboutStepRevise:
     "Edit Needs and copy the delta back, or give feedback directly in chat. Matching sessions keep unaffected plan items and each revision returns a new shareable link.",
   aboutTitle: `How ${PRODUCT_NAME} works`,
+  aboutVideoTitle: `${PRODUCT_NAME} demo video`,
   addRequirement: "Add need",
   addRequirementHint: "Add need and press Enter",
   allowNeedToAdapt: "Allow {need} to adapt",

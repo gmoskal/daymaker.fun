@@ -42,6 +42,16 @@ const AboutPage = () => (
       ))}
     </ol>
     <p className="about-privacy">{COPY.aboutPrivacy}</p>
+    <div className="about-video">
+      <iframe
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+        src="https://www.youtube-nocookie.com/embed/XlG632xwWvs"
+        title={COPY.aboutVideoTitle}
+      />
+    </div>
   </main>
 )
 

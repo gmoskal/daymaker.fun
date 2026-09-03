@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: implementation complete and verified
+> Status: implementation and production deployment verified; Git integration in progress
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -24,6 +24,7 @@
 - [x] 3. Implement exactly five WebMCP tools over the same store
 - [x] 4. Implement the responsive expedition-console UI and map
 - [x] 5. Complete delivery files, full gates, visual QA, and simplification rounds
+- [~] 6. Connect and deploy the public repository on Vercel
 
 ## Blocking decisions accepted in this plan
 
@@ -204,13 +205,39 @@ Implementation result:
 - Round 3 — module cohesion: critique found `mission.ts` mixed the public domain language with a 280-line transition engine (489 lines total). Change: schemas/types remain in `mission.ts`; invariants and pure transitions moved to `mission-transition.ts`. Focused tests passed 22/22 and the build passed.
 - Round 4 — functions and assertions: critique found tuple casts and an unmanaged copy-feedback timer. Change: named tuple converters replaced casts; clipboard success/failure now drives feedback without a timer. Focused tests passed 10/10 and the build passed.
 - Round 5 — React and physical UI: critique found map semantics, rotated marker numbers, and sub-44px map controls. Change: added an accessible region, readable circular markers, and 44px brand/source/map/zoom targets. E2E passed and final desktop/mobile screenshots were inspected again.
-- The public repository and MIT license are verified at `github.com/gmoskal/sidequest-webmcp`. Public deployment, real ChatGPT/Chrome discovery, video recording, and Devpost submission remain explicitly pending manual release actions in README.
+- The public repository, MIT license, and Vercel production deployment are verified. Real ChatGPT/Chrome discovery, video recording, and Devpost submission remain explicitly pending manual release actions in README.
+
+### 6 [~] Connect and deploy the public repository on Vercel
+
+Description: Add the minimum Vercel contract, connect the authenticated Vercel project to the public GitHub repository, deploy production, and record only externally verified release facts.
+
+Acceptance criteria:
+
+- AC-1: `vercel.json` builds the Vite application into `dist` and supplies the same security-header policy as the existing hosting contract.
+- AC-2: the Vercel project is connected to `github.com/gmoskal/sidequest-webmcp`, and its production URL responds successfully over public HTTPS.
+- AC-3: README records the verified production URL and no longer describes deployment as pending.
+
+Tests:
+
+- AC-1/3 -> repository contract: `delivery.test.ts > contains the hackathon submission essentials`; behavioral red must precede configuration and README changes.
+- AC-2 -> external integration evidence from the authenticated Vercel CLI plus an anonymous HTTP response and header check; no unit test can prove provider state.
+
+Sources/References: `vercel.json`, `.vercel/project.json`, `README.md`, Vercel project and deployment inspection.
+
+Implementation result:
+
+- Behavioral red: `npm run test -- src/delivery.test.ts` failed first because `vercel.json` was absent, then remained red until README could contain a verified production URL.
+- Configuration green: `npm run build` passed locally and in Vercel using the Vite preset, `npm run build`, and `dist` output.
+- Production deployment `dpl_92FA4zouhQBj8XF4jcPVQ5UHAv2Z` reached `Ready` and was aliased to `https://sidequest-webmcp-eta.vercel.app`.
+- Anonymous HTTPS verification returned `200` with the configured CSP, permissions policy, referrer policy, MIME protection, and clickjacking protection.
+- Browser verification rendered the deployed mission at 1440px and 390px with no horizontal overflow.
+- Git connection is pending because the Vercel GitHub integration does not yet have access to the repository; the authenticated project settings are ready for the explicit permission step.
 
 ## Risks and dependencies
 
 - Leaflet tiles have no SLA; the timeline remains complete and the map label states its limited role.
 - Browser WebMCP is experimental; all platform coupling stays in one adapter and manual mode is a first-class state.
-- Real in-app browser discovery and public deployment cannot be proven by headless tests alone.
+- Real in-app browser WebMCP discovery cannot be proven by the native-shaped automated harness alone.
 - The deadline makes P1 polish, authentication, live research, routing, and additional missions unacceptable scope expansion.
 
 ## Build / test gate
@@ -226,4 +253,4 @@ Implementation result:
 
 ## Out of scope for this iteration
 
-- Backend, authentication, custom chat/LLM, directions, live GPS/weather, reservations, multi-user sync, multiple missions, declarative WebMCP, iframe tools, automatic research, P1 sharing/presentation modes, deployment, Devpost submission, and video recording.
+- Backend, authentication, custom chat/LLM, directions, live GPS/weather, reservations, multi-user sync, multiple missions, declarative WebMCP, iframe tools, automatic research, P1 sharing/presentation modes, Devpost submission, and video recording.

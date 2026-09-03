@@ -8,13 +8,13 @@ This repository implements the Baška Voda demo for [The WebMCP Challenge](https
 
 ## Submission status
 
-- Deployment: pending
+- Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
 - Demo video: pending
 - License: MIT
 - Submission language: English
 
-The application, tests, screenshots, license, hosting configuration, and public repository are complete. A public deployment and public YouTube demo under three minutes still require the participant's hosting and Devpost accounts.
+The application, tests, screenshots, license, hosting configuration, public repository, and production deployment are complete. Automatic GitHub deployments are being connected; a public YouTube demo under three minutes remains pending.
 
 ## Why WebMCP
 
@@ -109,13 +109,13 @@ Visual baselines are committed at:
 
 Automated tests use a native-shaped `document.modelContext.registerTool` harness. Before submission, repeat the following with the actual browser integration:
 
-- [ ] Host the production build on a public HTTPS URL.
+- [x] Host the production build on a public HTTPS URL.
 - [ ] Open it in ChatGPT's in-app browser with Site Tools support and run the demo prompt.
 - [ ] Open it in a Chrome build with WebMCP enabled and confirm all five tools are discoverable.
 - [ ] Confirm every tool result updates the visible board and persists after reload.
 - [ ] Confirm dinner remains locked at 18:30 and a stale revision is rejected cleanly.
 - [ ] Check the public source links and OpenStreetMap attribution.
-- [ ] Verify the deployed site at desktop and 390px mobile widths.
+- [x] Verify the deployed site at desktop and 390px mobile widths.
 
 ## Security and privacy
 
@@ -124,13 +124,13 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - Source URLs must use HTTPS and render with `target="_blank"` plus `rel="noopener noreferrer"`.
 - Completed and skipped stops remain auditable but are excluded from the route.
 - Registration uses one abort signal so partial failure removes the full tool surface.
-- Netlify configuration supplies a CSP, permissions policy, MIME protection, referrer policy, and clickjacking protection.
+- Vercel and Netlify configurations supply a CSP, permissions policy, MIME protection, referrer policy, and clickjacking protection.
 
 ## Limitations
 
 Sidequest is intentionally a focused hackathon prototype: one deterministic mission, local browser persistence, English UI, overview mapping, and no authentication or multi-user sync. It does not provide live GPS, live weather, directions, reservations, automatic web research, or a custom chat interface. OpenStreetMap tiles require network access and are not an offline guarantee.
 
-WebMCP remains progressive enhancement. Actual discovery in ChatGPT/Chrome, public deployment, the demo video, and Devpost submission are manual release steps.
+WebMCP remains progressive enhancement. Actual discovery in ChatGPT/Chrome, the demo video, and Devpost submission are manual release steps.
 
 ## References
 

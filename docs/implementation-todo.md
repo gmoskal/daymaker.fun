@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: v0.2.6 live on daymaker.fun with strict response-language handoff and larger desktop typography; automatic Vercel Git connection permission pending
+> Status: v0.2.7 live on daymaker.fun with two-way feedback, portable plan iterations, and strict response-language handoff; automatic Vercel Git connection permission pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -1467,6 +1467,10 @@ Implementation result:
   Round 4 reused `CopySessionLink` and removed the obsolete footer copy path.
   Round 5 removed the dead technical revision projection and all temporary test
   casts; no new component, hook, context, effect, or service was introduced.
+- Production deployment `dpl_4nisLUmejwT626V2FZEdiVcT5gDy` reached `READY`
+  and is aliased at `https://daymaker.fun`. Both apex and `www` returned HTTP
+  200; public asset `index-2tTy7Prp.js` contains v0.2.7, both feedback paths,
+  the friend-sharing instruction, and the iteration label contract.
 
 ## Risks and dependencies
 

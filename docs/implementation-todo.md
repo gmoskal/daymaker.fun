@@ -246,7 +246,7 @@ Implementation result:
 
 - Behavioral red: `npm run test -- src/delivery.test.ts` failed first because `vercel.json` was absent, then remained red until README could contain a verified production URL.
 - Configuration green: `npm run build` passed locally and in Vercel using the Vite preset, `npm run build`, and `dist` output.
-- Production deployment `dpl_9ynveDQx1YteHqeLjZgXEvqzZfwh` reached `Ready` and was aliased to `https://sidequest-webmcp-eta.vercel.app`; the served bundle contains v0.2.0 and the two Needs examples.
+- Production deployment `dpl_9ynveDQx1YteHqeLjZgXEvqzZfwh` reached `Ready` and was aliased to `https://daymaker.fun`; the served bundle contains v0.2.0 and the two Needs examples.
 - Anonymous HTTPS verification returned `200` with the configured CSP, permissions policy, referrer policy, MIME protection, and clickjacking protection.
 - Browser verification rendered the deployed mission at 1440px and 390px with no horizontal overflow.
 - Vercel Git settings show `gmoskal/daymaker.fun` as connected to the `daymaker.fun` project. Automatic deployments are enabled for future pushes.
@@ -762,7 +762,7 @@ Implementation result:
   `artifacts/daymaker-demo-menu.png`; the final live local Needs DOM was also
   inspected in the in-app browser.
 - Production deployment `dpl_HjKqhBToQKPfvZZ6rRAJihwC64Y5` is READY and
-  aliased at `https://sidequest-webmcp-eta.vercel.app`; the served bundle was
+  aliased at `https://daymaker.fun`; the served bundle was
   checked for the v0.2.1 marker and final handoff instruction.
 
 ### 14 [x] Show the real persisted update time
@@ -844,7 +844,7 @@ Implementation result:
   new multi-input helpers to named parameter objects and removed test casts;
   round 5 kept React as a one-field Screen renderer with no ticking effect.
 - Production deployment `dpl_8P4ExGkicMzp91yzaRFZV3Ap6AP8` is READY and
-  aliased at `https://sidequest-webmcp-eta.vercel.app`. A clean 390px browser
+  aliased at `https://daymaker.fun`. A clean 390px browser
   write persisted `2026-09-03T13:46:07.727Z` and rendered
   `v0.2.2 · updated 3 Sep 2026 · 15:46 CEST`.
 
@@ -1176,7 +1176,7 @@ Implementation result:
   boolean and one click effect; no context, service, or new component was
   justified.
 - Production deployment `dpl_BeJuaeEp2SsWCAGN1tWZ5ZxBBDE3` is `READY` and
-  aliased at `https://sidequest-webmcp-eta.vercel.app`. The public asset
+  aliased at `https://daymaker.fun`. The public asset
   `index-C5ZncSXC.js` contains v0.2.4, the mandatory clickable-link protocol,
   and portable URL result copy. A production Site Tool write returned a
   608-character link for revision 1; a separate empty browser imported it at
@@ -1252,7 +1252,7 @@ Implementation result:
   use. Round 5 found no React, component, state, effect, or file-structure change
   justified by this contract-only update.
 - Production deployment `dpl_L4JZ9eMTBHRT5XmDe26jZwfvfKfu` reached `READY`
-  and is aliased at `https://sidequest-webmcp-eta.vercel.app`. Public asset
+  and is aliased at `https://daymaker.fun`. Public asset
   `index-BQQJgeUW.js` contains v0.2.5, both language-selection rules, and the
   exact-session-link preservation rule.
 - Regression reopened after a real English demo handoff still produced Polish

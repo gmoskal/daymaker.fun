@@ -261,6 +261,11 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   const initialCopied = await page.evaluate(
     () => (window as typeof window & { __copiedText: string }).__copiedText,
   )
+  expect(initialCopied).toContain(
+    "https://sidequest-webmcp-eta.vercel.app/needs",
+  )
+  expect(initialCopied).toContain("continue in Work")
+  expect(initialCopied).toContain("If the live board is blank")
   expect(initialCopied).toContain("Keep the 16:00 hotel check-in fixed")
   expect(initialCopied).not.toContain('"needs"')
 

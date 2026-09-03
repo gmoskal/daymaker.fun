@@ -165,6 +165,7 @@ export const MissionSchema = z.strictObject({
   stops: z.array(MissionStopSchema).max(8),
   timezone: text(80),
   title: text(80),
+  updatedAt: dateTime,
 })
 
 const ExpectedRevisionSchema = z.strictObject({

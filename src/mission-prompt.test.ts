@@ -46,6 +46,25 @@ describe("mission prompt", () => {
     expect(prompt).not.toContain("Untitled plan")
   })
 
+  it("bootstraps a fresh mobile Work board instead of stopping at the mode handoff", () => {
+    const mission = createBlankMission(
+      new Date("2026-09-03T10:15:00Z"),
+      "Europe/Warsaw",
+    )
+    mission.context.brief = "Find a calm swim and excellent coffee."
+    const prompt = toMissionPrompt(mission)
+
+    expect(prompt).toContain(
+      "https://sidequest-webmcp-eta.vercel.app/needs",
+    )
+    expect(prompt).toContain("continue in Work")
+    expect(prompt).toContain("Do not stop")
+    expect(prompt).toContain("If the live board is blank")
+    expect(prompt).toContain("bootstrap it from the copied planning input")
+    expect(prompt).toContain("Do not discard the copied brief")
+    expect(prompt).toContain("using the live revision")
+  })
+
   it("asks the agent to structure Needs and regenerate every time", () => {
     const prompt = toMissionPrompt(SEED_MISSION)
 

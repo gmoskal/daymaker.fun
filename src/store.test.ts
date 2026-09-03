@@ -88,6 +88,60 @@ describe("mission store", () => {
     expect(notifications).toBe(1)
   })
 
+  it("timestamps only accepted publications with the injected clock", () => {
+    const memory = memoryStorage()
+    const times = [
+      "2026-09-03T13:42:00.000Z",
+      "2026-09-03T13:43:00.000Z",
+      "2026-09-03T13:44:00.000Z",
+    ]
+    const now = () => new Date(times.shift() ?? "invalid")
+    const params = {
+      id: () => "store-id",
+      mission: SEED_MISSION,
+      now,
+      storage: memory.storage,
+    }
+    const store = createMissionStore(params)
+
+    const accepted = store.dispatch({
+      type: "UpdateStop",
+      value: {
+        actor: "human",
+        input: {
+          expectedRevision: 6,
+          reason: "Completed outside the app.",
+          status: "completed",
+          stopId: "gravel-loop",
+        },
+      },
+    })
+    const acceptedAt = store.getSnapshot().updatedAt
+    const rejected = store.dispatch({
+      type: "UpdateStop",
+      value: {
+        actor: "agent",
+        input: {
+          expectedRevision: 6,
+          reason: "Stale request.",
+          status: "skipped",
+          stopId: "biokovo-hike",
+        },
+      },
+    })
+
+    expect(accepted.type).toBe("applied")
+    expect(acceptedAt).toBe("2026-09-03T13:42:00.000Z")
+    expect(rejected.type).toBe("rejected")
+    expect(store.getSnapshot().updatedAt).toBe(acceptedAt)
+
+    store.loadDemo()
+    expect(store.getSnapshot().updatedAt).toBe("2026-09-03T13:43:00.000Z")
+    store.newPlan()
+    expect(store.getSnapshot().updatedAt).toBe("2026-09-03T13:44:00.000Z")
+    expect(memory.writes).toHaveLength(3)
+  })
+
   it("does not persist or notify for a rejected action", () => {
     const memory = memoryStorage()
     const store = createMissionStore({
@@ -162,11 +216,38 @@ describe("mission store", () => {
     expect(memory.removals).toEqual([])
   })
 
+  it("migrates a stored mission without updatedAt at load time", () => {
+    const legacy = structuredClone(SEED_MISSION) as Omit<Mission, "updatedAt"> & {
+      updatedAt?: string
+    }
+    delete legacy.updatedAt
+    const memory = memoryStorage({
+      [MISSION_STORAGE_KEY]: JSON.stringify(legacy),
+    })
+
+    const loaded = loadMission(
+      memory.storage,
+      new Date("2026-09-03T13:42:00.000Z"),
+      "Europe/Warsaw",
+    )
+    const reloaded = loadMission(
+      memory.storage,
+      new Date("2026-09-03T14:10:00.000Z"),
+      "Europe/Warsaw",
+    )
+
+    expect(loaded.updatedAt).toBe("2026-09-03T13:42:00.000Z")
+    expect(reloaded.updatedAt).toBe(loaded.updatedAt)
+    expect(memory.removals).toEqual([])
+    expect(memory.writes).toEqual([MISSION_STORAGE_KEY])
+  })
+
   it("switches explicitly between a new plan and the deterministic demo", () => {
     const memory = memoryStorage()
     const store = createMissionStore({
       id: () => "store-id",
       mission: { ...SEED_MISSION, revision: 12 },
+      now: () => new Date("2026-09-03T13:23:00.000Z"),
       storage: memory.storage,
     })
 

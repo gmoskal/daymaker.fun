@@ -27,12 +27,20 @@ export type MissionStore = {
 type CreateMissionStoreParams = {
   id: () => string
   mission: Mission
+  now?: () => Date
   storage: StoragePort
 }
 
-const withPlanningStage = (value: unknown) => {
+type WithMissionDefaultsParams = {
+  observedAt: Date
+  value: unknown
+}
+
+const withMissionDefaults = ({ observedAt, value }: WithMissionDefaultsParams) => {
   if (typeof value !== "object" || value === null) return value
   const mission = value as Record<string, unknown>
+  if (mission.updatedAt === undefined)
+    mission.updatedAt = observedAt.toISOString()
   const context = mission.context
   if (typeof context !== "object" || context === null) return value
   const storedContext = context as Record<string, unknown>
@@ -53,8 +61,14 @@ export const loadMission = (
   if (stored === null) return createBlankMission(now, timezone)
 
   try {
-    const parsed = MissionSchema.safeParse(withPlanningStage(JSON.parse(stored)))
-    if (parsed.success) return parsed.data
+    const parsed = MissionSchema.safeParse(
+      withMissionDefaults({ observedAt: now, value: JSON.parse(stored) }),
+    )
+    if (parsed.success) {
+      const normalized = JSON.stringify(parsed.data)
+      if (normalized !== stored) storage.setItem(MISSION_STORAGE_KEY, normalized)
+      return parsed.data
+    }
   } catch {
     // Invalid local data falls through to the one-key recovery below.
   }
@@ -66,26 +80,44 @@ export const loadMission = (
 export const createMissionStore = ({
   id,
   mission,
+  now = () => new Date(),
   storage,
 }: CreateMissionStoreParams): MissionStore => {
   let snapshot = structuredClone(mission)
   const listeners = new Set<() => void>()
 
-  const publish = (next: Mission) => {
-    snapshot = next
+  const publish = ({
+    mission: next,
+    publishedAt = now(),
+  }: {
+    mission: Mission
+    publishedAt?: Date
+  }) => {
+    snapshot = { ...next, updatedAt: publishedAt.toISOString() }
     storage.setItem(MISSION_STORAGE_KEY, JSON.stringify(snapshot))
     listeners.forEach((listener) => listener())
+    return snapshot
   }
 
   return {
     dispatch: (action) => {
       const mutation = applyMissionAction({ action, id, mission: snapshot })
-      if (mutation.type === "applied") publish(mutation.value.mission)
-      return mutation
+      if (mutation.type === "rejected") return mutation
+      return {
+        type: "applied",
+        value: {
+          ...mutation.value,
+          mission: publish({ mission: mutation.value.mission }),
+        },
+      }
     },
     getSnapshot: () => snapshot,
-    loadDemo: (demoId = DEMO_MISSION_ID) => publish(createDemoMission(demoId)),
-    newPlan: () => publish(createBlankMission()),
+    loadDemo: (demoId = DEMO_MISSION_ID) =>
+      publish({ mission: createDemoMission(demoId) }),
+    newPlan: () => {
+      const publishedAt = now()
+      publish({ mission: createBlankMission(publishedAt), publishedAt })
+    },
     subscribe: (listener) => {
       listeners.add(listener)
       return () => listeners.delete(listener)

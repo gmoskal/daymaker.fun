@@ -36,6 +36,7 @@ export const createBlankMission = (
   stops: [],
   timezone,
   title: BLANK_MISSION_TITLE,
+  updatedAt: now.toISOString(),
 })
 
 // A generated schedule fixture used by domain and interaction tests. It is not
@@ -143,6 +144,7 @@ export const SEED_MISSION: Mission = {
   ],
   timezone: "Europe/Zagreb",
   title: "Baška Voda Adventure",
+  updatedAt: "2026-09-03T13:23:00.000Z",
 }
 
 export const PALERMO_ARRIVAL_MISSION: Mission = {
@@ -167,6 +169,7 @@ export const PALERMO_ARRIVAL_MISSION: Mission = {
   stops: [],
   timezone: "Europe/Rome",
   title: "Palermo arrival",
+  updatedAt: "2026-09-03T13:23:00.000Z",
 }
 
 export const CROATIA_GRAVEL_MISSION: Mission = {
@@ -191,6 +194,7 @@ export const CROATIA_GRAVEL_MISSION: Mission = {
   stops: [],
   timezone: "Europe/Zagreb",
   title: "South Croatia gravel day",
+  updatedAt: "2026-09-03T13:23:00.000Z",
 }
 
 export const DEMO_MISSIONS = {

@@ -44,6 +44,7 @@ type AgentMission = {
   stops: AgentStop[]
   tz: string
   title: string | null
+  updatedAt: string
 }
 
 export type ToolMutationResult =
@@ -165,6 +166,7 @@ const toMissionState = (mission: Mission): MissionStateResult => ({
     stops: mission.stops.map(toAgentStop),
     title: mission.title === BLANK_MISSION_TITLE ? null : mission.title,
     tz: mission.timezone,
+    updatedAt: mission.updatedAt,
   },
   ok: true,
   revision: mission.revision,

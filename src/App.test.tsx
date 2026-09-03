@@ -172,12 +172,36 @@ describe("Sidequest app", () => {
     expect(within(date).queryByText("15:10")).not.toBeInTheDocument()
   })
 
-  it("shows the latest release at the page bottom", () => {
-    render(<App registration={registration(false)} store={blankStore()} />)
+  it("refreshes the footer after an accepted human update", () => {
+    window.history.replaceState(null, "", "/needs")
+    const mission = createBlankMission(
+      new Date("2026-09-03T13:23:00.000Z"),
+      "Europe/Warsaw",
+    )
+    const params = {
+      id: () => "ui-id",
+      mission,
+      now: () => new Date("2026-09-03T13:42:00.000Z"),
+      storage,
+    }
+    const missionStore = createMissionStore(params)
+    const { container } = render(
+      <App registration={registration(false)} store={missionStore} />,
+    )
+    const marker = container.querySelector(".release-marker")
+    const before = marker?.textContent
 
-    expect(
-      screen.getByText("v0.2.1 · updated 3 Sep 2026 · 15:23 CEST"),
-    ).toBeVisible()
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "1 · Describe your needs" }),
+      { target: { value: "Plan one calm afternoon." } },
+    )
+    fireEvent.blur(
+      screen.getByRole("textbox", { name: "1 · Describe your needs" }),
+    )
+
+    expect(marker).toBeVisible()
+    expect(marker?.textContent).not.toBe(before)
+    expect(marker?.textContent).toContain("15:42 CEST")
   })
 
   it("starts with Proposed schedule disabled and keeps the demo optional", () => {

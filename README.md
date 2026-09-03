@@ -2,7 +2,7 @@
 
 > Your day changed. Your plan should too.
 
-Sidequest turns ordinary travel needs into an editable, source-backed schedule. The person writes or clicks together **Needs**; ChatGPT structures them, researches suitable places, and writes a fresh **Proposed schedule** back to the same page through WebMCP Site Tools.
+Sidequest turns ordinary travel needs into an editable, source-backed schedule. The person writes or clicks together **Needs**; ChatGPT structures them, researches suitable places, and writes a fresh **Proposed schedule** to the Sidequest page it opens through WebMCP Site Tools.
 
 This repository is an English-only entry for [The WebMCP Challenge](https://webmcp.devpost.com/).
 
@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.1
-- Production deployment: v0.2.1 live
+- Local release: v0.2.2
+- Production deployment: v0.2.1 live; v0.2.2 pending verification
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -19,11 +19,12 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 ## How to use it
 
 1. Open **Needs** and describe what the plan must accomplish. This initial description is required; the placeholder shows a complete example.
-2. Choose **Copy to ChatGPT** and paste the result into a conversation that can open Sidequest with Site Tools.
-3. ChatGPT asks concise questions if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** back to the page.
-4. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Fixed**.
-5. A human Needs edit unlocks **Copy changes to ChatGPT**. Paste it to regenerate the proposal. Changes made directly by ChatGPT already appear on the page and do not require another copy.
-6. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it to review the plan date, starting location, and generated items. Each item opens its place in Google Maps or Apple Maps; the schedule also has one complete Google Maps route.
+2. Choose **Copy to ChatGPT** and paste the self-contained handoff into ChatGPT on mobile or desktop.
+3. ChatGPT continues in Work, opens the public Sidequest `/needs` page, and calls `get_mission_state`. If that browser opens a blank board, it initializes it from the copied planning input instead of discarding the description because its local revision differs.
+4. ChatGPT asks concise questions if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** to the page it opened with Site Tools.
+5. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Fixed**.
+6. A human Needs edit unlocks **Copy changes to ChatGPT**. Paste it to regenerate the proposal. Changes made by ChatGPT through the opened board's Site Tools appear there directly and do not require another copy.
+7. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it on that board to review the plan date, starting location, and generated items. Each item opens its place in Google Maps or Apple Maps; the schedule also has one complete Google Maps route.
 
 **Load demo** contains two input examples, not prebuilt schedules:
 
@@ -36,7 +37,7 @@ A normal assistant can return an itinerary as chat text. Sidequest makes the res
 
 - the page and agent share one typed mission store;
 - the agent can read the latest brief, fixed needs, stop IDs, locks, places, sources, and revision;
-- every accepted tool write appears immediately in the visible page and persists locally;
+- every accepted tool write appears immediately in the page opened by Work, persists locally there, and updates the real footer timestamp;
 - every write uses optimistic concurrency, so stale agents cannot silently overwrite newer human changes;
 - the full manual UI still works without WebMCP.
 
@@ -83,9 +84,9 @@ Key files:
 
 ### State and session identity
 
-There is no account or backend session. The app reads one mission from `sidequest:mission:v1` in `localStorage`. Each accepted human or agent mutation updates memory and persists the same mission. State survives reloads on the same origin and browser profile; another browser, device, private window, or profile has a separate plan.
+There is no account or backend session. The app reads one mission from `sidequest:mission:v1` in `localStorage`. Each accepted human or agent mutation updates memory, stamps the actual wall-clock time, and persists the same mission. State survives reloads on the same origin and browser profile; another browser, device, private window, or profile has a separate plan.
 
-WebMCP tools close over the live store belonging to the open document. A human edit is visible to the next `get_mission_state`. Copied JSON is only a conversation snapshot; the agent must read the live revision before writing.
+WebMCP tools close over the live store belonging to the open document. A human edit on that board is visible to the next `get_mission_state`. The copied JSON is both a conversation snapshot and the bootstrap payload for a blank page opened by mobile or desktop Work. Once bootstrapped, the agent uses the live revision for every write. The original browser and the Work browser do not pretend to share localStorage; review and continue editing on the page Work opened.
 
 Already-open duplicate tabs do not live-sync in this prototype. Reload before switching editing between tabs. Multi-device identity and collaboration require a backend and are outside this focused build.
 

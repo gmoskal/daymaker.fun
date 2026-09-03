@@ -127,6 +127,7 @@ export type MissionScreen = {
     type: "LoadDemo" | "NewPlan"
   }
   revision: string
+  updateMarker: string
   webMcp: { label: string; tone: "neutral" | "positive" | "warning" }
   workspace: MissionWorkspaceScreen
 }
@@ -136,8 +137,24 @@ type PresentMissionParams = {
   mission: Mission
   panel: MissionPanel
   selectedStopId: string | null
+  viewerTimeZone?: string
   webMcp: WebMcpState
 }
+
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const
 
 const clock = (dateTime: string, timezone: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -148,6 +165,35 @@ const clock = (dateTime: string, timezone: string) =>
   }).format(new Date(dateTime))
 const titleCase = (value: string) =>
   `${value.charAt(0).toUpperCase()}${value.slice(1)}`
+
+type FormatUpdateMarkerParams = {
+  timezone: string
+  updatedAt: string
+}
+
+const formatUpdateMarker = ({
+  timezone,
+  updatedAt,
+}: FormatUpdateMarkerParams) => {
+  const value = new Date(updatedAt)
+  const dateParts = new Intl.DateTimeFormat("en-CA", {
+    day: "numeric",
+    month: "numeric",
+    timeZone: timezone,
+    year: "numeric",
+  }).formatToParts(value)
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    dateParts.find((item) => item.type === type)?.value ?? ""
+  const month = MONTHS[Number(part("month")) - 1] ?? ""
+  const time = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    hourCycle: "h23",
+    minute: "2-digit",
+    timeZone: timezone,
+    timeZoneName: "short",
+  }).format(value)
+  return `${COPY.release} · ${COPY.updated} ${Number(part("day"))} ${month} ${part("year")} · ${time}`
+}
 
 const focusedStopId = (mission: Mission, selectedStopId: string | null) => {
   if (mission.stops.some((stop) => stop.id === selectedStopId))
@@ -296,6 +342,7 @@ export const presentMission = ({
   mission,
   panel,
   selectedStopId,
+  viewerTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   webMcp,
 }: PresentMissionParams): MissionScreen => {
   const selected = focusedStopId(mission, selectedStopId)
@@ -321,6 +368,10 @@ export const presentMission = ({
         ? { label: COPY.newPlan, type: "NewPlan" }
         : { label: COPY.loadDemo, type: "LoadDemo" },
     revision: `REV ${String(mission.revision).padStart(2, "0")}`,
+    updateMarker: formatUpdateMarker({
+      timezone: viewerTimeZone,
+      updatedAt: mission.updatedAt,
+    }),
     webMcp: webMcpBadge(webMcp),
     workspace: workspaceFor(panel, copied, mission, timeline, route),
   }

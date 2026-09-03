@@ -1,7 +1,7 @@
 # TODO 01 — Sidequest P0
 
 > Date: 2026-09-03
-> Status: v0.2.1 Needs-first planning flow deployed; automatic Vercel Git connection permission pending
+> Status: v0.2.2 real update time and Work bootstrap verified locally; production deployment pending
 > Scope: one local-first Sidequest mission, shared human/agent state, exactly five WebMCP tools, responsive one-screen UI, tests and submission-ready repository metadata
 > Analysis base: `01-sidequest-product-en.md`, `02-sidequest-technical-execution-en.md`, live Devpost requirements, current OpenAI Site Tools and Chrome WebMCP documentation
 > Skills: todo-spec, frontend-design, openai-docs, code-review-checklist, mature-typescript, types-driven-design
@@ -32,6 +32,8 @@
 - [x] 11. Let the agent create titled plans from complete copied context
 - [x] 12. Make Needs the human input and Proposed schedule the agent output
 - [x] 13. Make the Needs input and primary handoff action unmistakable
+- [~] 14. Show the real persisted update time
+- [~] 15. Bootstrap the mobile Work page from the copied handoff
 
 ## Blocking decisions accepted in this plan
 
@@ -755,6 +757,148 @@ Implementation result:
 - Production deployment `dpl_HjKqhBToQKPfvZZ6rRAJihwC64Y5` is READY and
   aliased at `https://sidequest-webmcp-eta.vercel.app`; the served bundle was
   checked for the v0.2.1 marker and final handoff instruction.
+
+### 14 [~] Show the real persisted update time
+
+Description: Replace the static footer example with the actual time of the last
+accepted mission publication. Keep one persisted timestamp shared by human UI
+actions and WebMCP writes; a reload must display the same value instead of
+pretending that page load was a plan change.
+
+Acceptance criteria:
+
+- AC-1: `Mission.updatedAt` is an ISO date-time and is the only source for the
+  footer update marker.
+- AC-2: every accepted store publication, including human actions, WebMCP
+  actions, loading a sample, and starting a new plan, stamps the injected wall
+  clock; rejected actions neither stamp, persist, nor notify.
+- AC-3: a legacy stored v1 mission without `updatedAt` is retained and receives
+  the load observation time once; subsequent reloads retain the persisted
+  value.
+- AC-4: the presenter formats the stored instant in the viewer's local timezone
+  with date, 24-hour time, and an explicit zone abbreviation. No timestamp is
+  hardcoded in copy or JSX.
+- AC-5: the footer refreshes after a real accepted UI write and remains quiet,
+  borderless, unobstructed, and within the desktop and 390px layouts.
+- AC-6: release metadata advances to v0.2.2 and the production deployment serves
+  the dynamic marker at the existing public URL.
+
+Tests:
+
+- AC-1/2 -> unit: `store.test.ts > timestamps only accepted publications with
+  the injected clock` and the existing persistence/notification tests.
+- AC-2 -> integration: the existing `webmcp.test.ts` mutation tests exercise the
+  same store publication path; the store test explicitly covers rejection.
+- AC-3 -> unit: `store.test.ts > migrates a stored mission without updatedAt at
+  load time`.
+- AC-4 -> unit: `view-model.test.ts > formats the persisted update time in the
+  viewer timezone`.
+- AC-5 -> integration: `App.test.tsx > refreshes the footer after an accepted
+  human update`; Playwright's Needs flow and desktop/mobile screenshots verify
+  placement and overflow.
+- AC-6 -> build/deploy gate plus a production response and rendered-page check.
+
+Sources/References: `src/domain/mission.ts`, `src/domain/seed.ts`, `src/store.ts`,
+`src/view-model.ts`, `src/App.tsx`, `src/copy.ts`, their focused tests,
+`e2e/sidequest.spec.ts`, package metadata, and deployment documentation.
+
+Before implementation gate:
+
+- [x] Static timestamp source confirmed in `COPY.release`; footer render and
+  current store publication path inspected on the clean v0.2.1 worktree.
+- [x] Decision: the timestamp means the last accepted mission publication, not
+  component render time, release build time, mission-local time, or a ticking
+  clock.
+- [x] Decision: formatting uses the viewer timezone while the stored source is
+  an absolute ISO instant.
+- [x] Named store, migration, presenter, and App tests observed red on the
+  intended behavior before production edits.
+
+Implementation result:
+
+- Red: the focused run reported 6 intended failures and 39 passes. The store
+  returned no timestamp, legacy storage did not migrate it, the presenter had
+  no update marker, the App footer stayed at the static `15:23`, and the copied
+  prompt did not describe the Work bootstrap.
+- `Mission.updatedAt` is now the single persisted fact. The store owns the wall
+  clock, stamps only accepted publications, returns the stamped mission, and
+  preserves one-time migration of older localStorage values.
+- The pure presenter formats the stored instant in the viewer timezone. The
+  React view renders that resolved string and contains no date/time literal.
+- Focused green: 52/52 store, presenter, App, prompt, copy, and WebMCP tests.
+  Full `npm run check`: 72/72 Vitest tests, strict TypeScript/Vite build, and
+  4/4 Chromium flows.
+- Desktop and 390px evidence under `artifacts/sidequest-brief*.png` and
+  `artifacts/sidequest-needs-schedule*.png` shows the real `15:44 CEST`-style
+  marker unobstructed at the bottom. Production evidence remains pending.
+- Mature-TypeScript simplification round 1 kept timestamp truth only on
+  `Mission`; round 2 kept the clock at the store boundary and formatting in the
+  presenter; round 3 avoided a new service or parallel state; round 4 converted
+  new multi-input helpers to named parameter objects and removed test casts;
+  round 5 kept React as a one-field Screen renderer with no ticking effect.
+
+### 15 [~] Bootstrap the mobile Work page from the copied handoff
+
+Description: Make the intended mobile flow executable without claiming that
+two browser sandboxes share localStorage. A person copies one self-contained
+handoff into ChatGPT; ChatGPT opens the public Needs route in Work, reads its
+Site Tools, and uses the copied planning input to initialize a newly opened
+blank board before generating the proposal.
+
+Acceptance criteria:
+
+- AC-1: the first handoff instruction links directly to the public `/needs`
+  route and explicitly tells ChatGPT to continue in Work, open the page, invoke
+  Site Tools, and not stop at an explanation of those requirements.
+- AC-2: the protocol calls `get_mission_state` after opening the page and says
+  that a blank live board must be bootstrapped from the copied planning input
+  using the live revision.
+- AC-3: a revision mismatch between the copied snapshot and a fresh browser
+  must not discard the copied brief. An already populated live board remains
+  authoritative for its current Needs and locked commitments.
+- AC-4: the workflow still uses the existing five tools, needs no backend,
+  login, cross-browser localStorage claim, confirmation modal, or sixth tool.
+- AC-5: after writes, ChatGPT tells the person to review Proposed schedule on
+  the page it opened; the real persisted update marker provides visible write
+  confirmation.
+
+Tests:
+
+- AC-1/2/3/5 -> unit: `mission-prompt.test.ts > bootstraps a fresh mobile Work
+  board instead of stopping at the mode handoff`.
+- AC-1/5 -> copy contract: `copy.test.ts > keeps the agent handoff and mission
+  positioning explicit`.
+- AC-4 -> integration: `webmcp.test.ts > exposes a bounded atomic catalog`
+  remains exactly five; no new server or persistence adapter is introduced.
+
+Sources/References: `src/copy.ts`, `src/mission-prompt.ts`, their tests,
+`src/webmcp.ts`, `README.md`, and the public production Needs route.
+
+Before implementation gate:
+
+- [x] Reproduced response classified correctly: moving to Work can be required,
+  but that message alone is not a tool call or successful plan write.
+- [x] Constraint verified: the Vercel project has no shared storage environment
+  configured, and separate mobile/browser sandboxes cannot share localStorage.
+- [x] Decision: preserve the simple local-first architecture and make the copied
+  planning snapshot the explicit bootstrap payload for the Work-opened page.
+- [x] Named prompt/copy regressions observed red before production edits.
+
+Implementation result:
+
+- Red: the prompt/copy tests showed that the handoff opened only the base URL,
+  did not continue in Work, and gave no rule for a blank board in a fresh
+  browser sandbox.
+- The handoff now opens the public `/needs` route, tells ChatGPT to continue in
+  Work instead of stopping at an explanation, reads the live board, and
+  bootstraps a blank instance from the copied description using its live
+  revision. A populated board still protects current Needs and locks.
+- The on-page hint names both mobile and desktop. README now states the real
+  localStorage boundary and tells the person to review the page opened by Work;
+  no backend sync or shared-browser claim was introduced.
+- Unit/integration green is included in the 72/72 full run. The real clipboard
+  path asserts `/needs`, Work, and blank-board bootstrap; Chromium remains 4/4
+  at desktop and 390px. Production evidence remains pending.
 
 ## Risks and dependencies
 

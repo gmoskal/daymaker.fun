@@ -161,7 +161,7 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
         workspace={screen.workspace}
       />
 
-      <small className="release-marker">{COPY.release}</small>
+      <small className="release-marker">{screen.updateMarker}</small>
     </main>
   )
 }

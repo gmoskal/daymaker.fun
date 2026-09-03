@@ -28,6 +28,27 @@ describe("mission presenter", () => {
       throw new Error("Expected Needs screen")
   })
 
+  it("formats the persisted update time in the viewer timezone", () => {
+    const mission = {
+      ...SEED_MISSION,
+      updatedAt: "2026-09-03T13:42:00.000Z",
+    }
+    const input = {
+      copied: false,
+      mission,
+      panel: "context" as const,
+      selectedStopId: null,
+      viewerTimeZone: "Europe/Warsaw",
+      webMcp: { type: "connected" as const },
+    }
+
+    const screen = presentMission(input)
+
+    expect(screen.updateMarker).toBe(
+      "v0.2.2 · updated 3 Sep 2026 · 15:42 CEST",
+    )
+  })
+
   it("presents one focused plan and the true mission state", () => {
     const screen = presentMission({
       copied: false,

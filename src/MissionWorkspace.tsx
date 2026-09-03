@@ -188,7 +188,7 @@ const StopItem = ({
       data-draggable={stop.draggable}
       data-testid={`stop-${stop.id}`}
       dragListener={stop.draggable}
-      layout="position"
+      layout
       onDragEnd={commit}
       transition={{ damping: 38, stiffness: 520, type: "spring" }}
       value={stop.id}

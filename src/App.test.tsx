@@ -83,6 +83,18 @@ describe("Sidequest app", () => {
     expect(screen.queryByText("Unknown")).not.toBeInTheDocument()
   })
 
+  it("explains the complete workflow on a dedicated About route", () => {
+    window.history.replaceState(null, "", "/about")
+    render(<App registration={registration(false)} store={blankStore()} />)
+
+    expect(
+      screen.getByRole("heading", { name: "How Daymaker works" }),
+    ).toBeVisible()
+    expect(screen.getAllByRole("listitem")).toHaveLength(4)
+    expect(screen.getByRole("link", { name: "Back to Needs" }))
+      .toHaveAttribute("href", "/needs")
+  })
+
   it("copies editable Needs for the agent", async () => {
     window.history.replaceState(null, "", "/needs")
     const missionStore = blankStore()
@@ -97,6 +109,7 @@ describe("Sidequest app", () => {
       name: "1 · Describe your needs",
     })
     expect(brief).toBeRequired()
+    expect(brief).toHaveAttribute("rows", "7")
     expect(screen.getByRole("button", { name: "Copy to ChatGPT" }))
       .toBeDisabled()
     const researchDepth = screen.getByRole("slider", {
@@ -107,6 +120,13 @@ describe("Sidequest app", () => {
     fireEvent.change(researchDepth, { target: { value: "2" } })
     expect(researchDepth).toHaveAttribute("aria-valuetext", "Deep")
     expect(window.localStorage.getItem(RESEARCH_DEPTH_STORAGE_KEY)).toBe("deep")
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set research depth to Quick" }),
+    )
+    expect(researchDepth).toHaveAttribute("aria-valuetext", "Quick")
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set research depth to Deep" }),
+    )
     fireEvent.change(brief, {
       target: { value: "Find a calm swim and keep dinner fixed." },
     })

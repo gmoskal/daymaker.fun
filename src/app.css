@@ -58,9 +58,14 @@ textarea:focus-visible {
 
 .board-title {
   padding-top: clamp(38px, 7vh, 72px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 }
 
 .board-title h1 {
+  min-width: 0;
   margin: 0;
   font-size: 1rem;
   font-weight: 560;
@@ -578,134 +583,163 @@ textarea:focus-visible {
 }
 
 .research-depth {
-  width: min(100%, 320px);
-  margin: 0 0 22px;
+  flex: 0 0 144px;
+  width: 144px;
+  min-width: 0;
+  margin: 0;
 }
 
 .research-depth-heading {
-  margin-bottom: 9px;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 18px;
+  margin-bottom: 3px;
   color: #7b7b80;
-  font-size: 0.72rem;
+  font-size: 0.58rem;
   font-weight: 600;
-}
-
-.research-depth-heading output {
-  color: var(--ink);
-  font: inherit;
 }
 
 .research-depth-track {
   position: relative;
-  height: 38px;
-  overflow: hidden;
-  border-radius: 19px;
-  background: #ededee;
+  height: 26px;
 }
 
-.research-depth-fill {
+.research-depth-track::before {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 50%;
-  border-radius: inherit;
-  background: var(--accent);
+  z-index: 1;
+  top: 11px;
+  right: 6px;
+  left: 6px;
+  height: 4px;
+  border-radius: 2px;
+  background: #d9d9dc;
+  content: "";
   pointer-events: none;
 }
 
-.research-depth-track[data-depth="quick"] .research-depth-fill {
-  width: 17px;
-}
-
-.research-depth-track[data-depth="deep"] .research-depth-fill {
-  width: calc(100% - 17px);
-}
-
-.research-depth-markers {
+.research-depth-progress {
   position: absolute;
-  inset: 0 17px;
-  display: grid;
+  z-index: 2;
+  top: 11px;
+  left: 6px;
+  width: calc((100% - 12px) / 2);
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #df5963, var(--accent));
+  pointer-events: none;
+}
+
+.research-depth-track[data-depth="quick"] .research-depth-progress {
+  width: 0;
+}
+
+.research-depth-track[data-depth="deep"] .research-depth-progress {
+  width: calc(100% - 12px);
+}
+
+.research-depth-stops {
+  position: absolute;
+  z-index: 0;
+  inset: 0 7px;
+  display: flex;
   align-items: center;
-  grid-template-columns: repeat(3, 1fr);
+  justify-content: space-between;
   pointer-events: none;
 }
 
-.research-depth-markers i {
-  width: 6px;
-  height: 6px;
-  place-self: center;
+.research-depth-stops i {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #aaaab0;
+  background: #c7c7ca;
 }
 
 .research-depth-track input {
   position: absolute;
+  z-index: 3;
   inset: 0;
   width: 100%;
-  height: 38px;
+  height: 26px;
   margin: 0;
   appearance: none;
   background: transparent;
-  cursor: pointer;
+  cursor: ew-resize;
+  touch-action: pan-y;
 }
 
 .research-depth-track input::-webkit-slider-runnable-track {
-  height: 38px;
+  height: 4px;
   background: transparent;
 }
 
 .research-depth-track input::-webkit-slider-thumb {
-  width: 30px;
-  height: 30px;
-  margin-top: 4px;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
   appearance: none;
   border: 0;
   border-radius: 50%;
-  background: #fff;
+  background: var(--accent);
 }
 
 .research-depth-track input::-moz-range-track {
-  height: 38px;
+  height: 4px;
   border: 0;
   background: transparent;
 }
 
 .research-depth-track input::-moz-range-progress {
-  height: 38px;
+  height: 4px;
   background: transparent;
 }
 
 .research-depth-track input::-moz-range-thumb {
-  width: 30px;
-  height: 30px;
+  width: 14px;
+  height: 14px;
   border: 0;
   border-radius: 50%;
-  background: #fff;
+  background: var(--accent);
 }
 
 .research-depth-labels {
-  margin-top: 7px;
+  margin-top: 1px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   color: #aaaab0;
-  font-size: 0.62rem;
+  font-size: 0.54rem;
   font-weight: 550;
 }
 
-.research-depth-labels span:nth-child(2) {
+.research-depth-labels button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.research-depth-labels button:nth-child(2) {
   text-align: center;
 }
 
-.research-depth-labels span:last-child {
+.research-depth-labels button:last-child {
   text-align: right;
 }
 
-.research-depth-labels .is-active {
-  color: var(--ink);
+.research-depth-labels button[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.agent-prompt-actions {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agent-prompt-actions .copy-action {
+  flex: 0 0 auto;
+  padding-right: 12px;
+  padding-left: 12px;
+  white-space: nowrap;
 }
 
 .agent-prompt p {
@@ -837,7 +871,7 @@ textarea:focus-visible {
 .primary-control {
   position: relative;
   z-index: 1000;
-  margin-top: 22px;
+  margin-left: auto;
   display: flex;
   justify-content: flex-end;
 }
@@ -856,6 +890,77 @@ textarea:focus-visible {
   font-size: 0.62rem;
   font-weight: 500;
   letter-spacing: 0.04em;
+}
+
+.app-footer a {
+  color: #9d9da1;
+  font-size: 0.62rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.about-page {
+  width: min(100%, 620px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(42px, 9vh, 90px) clamp(30px, 7vw, 70px) 100px;
+}
+
+.about-back {
+  color: #88888d;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.about-page h1 {
+  max-width: 420px;
+  margin: clamp(62px, 12vh, 110px) 0 24px;
+  font-size: clamp(2.1rem, 7vw, 3.8rem);
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+
+.about-page > p {
+  max-width: 460px;
+  margin: 0;
+  color: #66666b;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.about-page ol {
+  max-width: 480px;
+  margin: 54px 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: about-step;
+}
+
+.about-page li {
+  position: relative;
+  margin: 0 0 30px;
+  padding-left: 42px;
+  color: #4f4f53;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  counter-increment: about-step;
+}
+
+.about-page li::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--accent);
+  content: counter(about-step, decimal-leading-zero);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.about-page .about-privacy {
+  color: #99999e;
+  font-size: 0.72rem;
 }
 
 .primary-action {
@@ -977,6 +1082,12 @@ textarea:focus-visible {
     align-items: flex-start;
     flex-direction: column;
     gap: 5px;
+  }
+
+  .agent-prompt--changes .copy-action {
+    padding-right: 9px;
+    padding-left: 9px;
+    font-size: 0.68rem;
   }
 }
 

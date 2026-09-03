@@ -3,6 +3,21 @@ import type { DemoMissionId } from "./domain/seed"
 export const SIDEQUEST_URL = "https://daymaker.fun"
 
 export const COPY = {
+  about: "About",
+  aboutBack: "Back to Needs",
+  aboutIntro:
+    "Daymaker turns a short description of what you need into an editable brief and a researched, read-only schedule.",
+  aboutPrivacy:
+    "Your board is stored in this browser. A share link contains a portable snapshot, so anyone with that link can open an independent copy without an account or backend.",
+  aboutStepBrief:
+    "Describe the outcome, timing, places, and constraints that matter. Daymaker can turn that text into editable Needs.",
+  aboutStepHandoff:
+    "Choose Quick, Normal, or Deep research, copy the prompt, and paste it into ChatGPT on mobile or desktop.",
+  aboutStepPlan:
+    "ChatGPT opens a fresh Daymaker board through Site Tools, researches the options, and returns a link to the Proposed schedule.",
+  aboutStepRevise:
+    "Edit Needs and copy the changes back, or give feedback directly in chat. Each revision returns a new shareable plan link.",
+  aboutTitle: "How Daymaker works",
   addRequirement: "Add need",
   addRequirementHint: "Add need and press Enter",
   allowNeedToAdapt: "Allow {need} to adapt",
@@ -47,12 +62,14 @@ export const COPY = {
   promptProtocol:
     "The one-shot planning URL clears the previous browser-local board before Site Tools register. Do not inspect, compare, preserve, or clear an earlier plan with a tool call. Call get_mission_state as soon as the page opens to obtain the new blank board's revision. Immediately call update_day_context with the copied planning input, that revision, and with replacePlan: true to initialize this request before research, clarification, or progress narration. After each write, use the returned revision for the next write. Every successful read or write returns a sessionUrl containing the complete current board. After the final successful write, end your response with [Open updated Sidequest plan](sessionUrl), replacing sessionUrl with the exact returned URL. Use the URL returned by the final read only when the requested plan was already written in this turn. Do not finish without the clickable link.",
   promptSnapshot: "Planning input at copy time:",
-  release: "v0.3.0",
-  researchDepth: "Research depth",
+  release: "v0.3.1",
+  researchDepth: "Research",
+  researchDepthAriaLabel: "Research depth",
   updated: "updated",
   planTitle: "Proposed schedule",
   scheduleTitle: "Schedule",
   samplePlans: "Sample plans",
+  setResearchDepth: "Set research depth to {level}",
   tagline: "Your day changed. Your plan should too.",
   webMcpChecking: "Checking site tools…",
   webMcpConnected: "Site tools connected",

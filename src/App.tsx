@@ -22,6 +22,29 @@ type SessionLinkActionProps = {
   label: string
 }
 
+const ABOUT_STEPS = [
+  COPY.aboutStepBrief,
+  COPY.aboutStepHandoff,
+  COPY.aboutStepPlan,
+  COPY.aboutStepRevise,
+] as const
+
+const AboutPage = () => (
+  <main className="about-page">
+    <a className="about-back" href="/needs">
+      {COPY.aboutBack}
+    </a>
+    <h1>{COPY.aboutTitle}</h1>
+    <p>{COPY.aboutIntro}</p>
+    <ol>
+      {ABOUT_STEPS.map((step) => (
+        <li key={step}>{step}</li>
+      ))}
+    </ol>
+    <p className="about-privacy">{COPY.aboutPrivacy}</p>
+  </main>
+)
+
 const SessionLinkAction = (p: SessionLinkActionProps) => (
   <button
     className="session-link-action"
@@ -64,47 +87,46 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
         {screen.missionTitle === "" ? null : (
           <h1>{screen.missionTitle}</h1>
         )}
-      </header>
-
-      <div className="primary-control">
-        {demoMenuOpen && screen.primaryAction.type === "LoadDemo" ? (
-          <div aria-label={COPY.samplePlans} className="demo-menu" role="menu">
-            {DEMO_OPTIONS.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => {
-                  setAddingRequirement(false)
-                  setDemoMenuOpen(false)
-                  dispatch({ demoId: option.id, type: "LoadDemo" })
-                }}
-                role="menuitem"
-                type="button"
-              >
-                <strong>{option.label}</strong>
-                <span>{option.description}</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
-        <button
-          aria-expanded={
-            screen.primaryAction.type === "LoadDemo" ? demoMenuOpen : undefined
-          }
-          className="primary-action"
-          onClick={() => {
-            setAddingRequirement(false)
-            if (screen.primaryAction.type === "LoadDemo") {
-              setDemoMenuOpen((open) => !open)
-              return
+        <div className="primary-control">
+          {demoMenuOpen && screen.primaryAction.type === "LoadDemo" ? (
+            <div aria-label={COPY.samplePlans} className="demo-menu" role="menu">
+              {DEMO_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => {
+                    setAddingRequirement(false)
+                    setDemoMenuOpen(false)
+                    dispatch({ demoId: option.id, type: "LoadDemo" })
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  <strong>{option.label}</strong>
+                  <span>{option.description}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <button
+            aria-expanded={
+              screen.primaryAction.type === "LoadDemo" ? demoMenuOpen : undefined
             }
-            setDemoMenuOpen(false)
-            dispatch(screen.primaryAction)
-          }}
-          type="button"
-        >
-          {screen.primaryAction.label}
-        </button>
-      </div>
+            className="primary-action"
+            onClick={() => {
+              setAddingRequirement(false)
+              if (screen.primaryAction.type === "LoadDemo") {
+                setDemoMenuOpen((open) => !open)
+                return
+              }
+              setDemoMenuOpen(false)
+              dispatch(screen.primaryAction)
+            }}
+            type="button"
+          >
+            {screen.primaryAction.label}
+          </button>
+        </div>
+      </header>
 
       {screen.workspace.type === "context" &&
       screen.workspace.canShareSession ? (
@@ -155,12 +177,19 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
 
       <footer className="app-footer">
         <small className="release-marker">{screen.updateMarker}</small>
+        <a href="/about">{COPY.about}</a>
       </footer>
     </main>
   )
 }
 
-export const App = ({ registration, store }: AppProps) => {
-  const viewModel = useMissionViewModel({ registration, store })
+const MissionApp = (p: AppProps) => {
+  const viewModel = useMissionViewModel({
+    registration: p.registration,
+    store: p.store,
+  })
   return <MissionView {...viewModel} />
 }
+
+export const App = (p: AppProps) =>
+  window.location.pathname === "/about" ? <AboutPage /> : <MissionApp {...p} />

@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [daymaker.fun](https://daymaker.fun)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.3.0
-- Production deployment: v0.3.0 live and verified
+- Local release: v0.3.1
+- Production deployment: v0.3.1 pending verification
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -27,6 +27,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 6. There are two ways to iterate. Edit Needs on the board, choose **Copy changes to ChatGPT**, and paste the update back into the chat; or describe what should change directly in ChatGPT. Either path regenerates the proposal and returns a fresh link.
 7. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it to review the generated title, date, primary city/area, and items. The proposal is read-only for people: click anywhere on one or more rows to expand details and map links. The complete proposal also has one Google Maps route.
 8. As soon as structured Needs exist, their top-left **Copy link to share** action exports the current board. Proposed schedule exposes the same action next to **Iteration N**. Use either self-contained link on another device or share it with friends. Individual tool writes do not inflate the iteration count.
+
+The small **About** link in the footer opens `/about` with the complete four-step workflow and an explanation of local storage and portable session links.
 
 **Load demo** contains two input examples, not prebuilt schedules:
 
@@ -151,6 +153,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - [x] Deploy v0.2.8 and verify immediate replacement of an unrelated live proposal.
 - [x] Deploy v0.2.9 and verify the one-shot local reset, structured-Needs share link, and fictional demo marker.
 - [x] Deploy v0.3.0 and verify Quick / Normal / Deep prompt contracts plus local preference persistence.
+- [ ] Deploy v0.3.1 and verify the compact pointer-draggable research control.
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and survives reload.

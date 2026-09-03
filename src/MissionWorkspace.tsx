@@ -384,7 +384,7 @@ const BriefEditor = ({
             placeholder={COPY.planningBriefPlaceholder}
             ref={field}
             required
-            rows={4}
+            rows={7}
             value={brief}
           />
           {scroll.visible ? (
@@ -401,20 +401,22 @@ const BriefEditor = ({
       </label>
       <aside className="agent-prompt">
         <h3>{COPY.handoffTitle}</h3>
-        <ResearchDepthControl
-          dispatch={dispatch}
-          value={researchDepth}
-        />
-        <button
-          className="control copy-action"
-          disabled={brief.trim() === ""}
-          onClick={() =>
-            dispatch({ brief, prompt, type: "CopyPrompt" })
-          }
-          type="button"
-        >
-          {copyLabel}
-        </button>
+        <div className="agent-prompt-actions">
+          <button
+            className="control copy-action"
+            disabled={brief.trim() === ""}
+            onClick={() =>
+              dispatch({ brief, prompt, type: "CopyPrompt" })
+            }
+            type="button"
+          >
+            {copyLabel}
+          </button>
+          <ResearchDepthControl
+            dispatch={dispatch}
+            value={researchDepth}
+          />
+        </div>
         <p>{COPY.agentHint}</p>
       </aside>
     </div>
@@ -434,17 +436,16 @@ const ResearchDepthControl = (p: ResearchDepthControlProps) => {
     <div className="research-depth">
       <div className="research-depth-heading">
         <span>{COPY.researchDepth}</span>
-        <output>{label}</output>
       </div>
       <div className="research-depth-track" data-depth={p.value}>
-        <span aria-hidden="true" className="research-depth-fill" />
-        <span aria-hidden="true" className="research-depth-markers">
+        <span aria-hidden="true" className="research-depth-progress" />
+        <span aria-hidden="true" className="research-depth-stops">
           {RESEARCH_DEPTHS.map((option) => (
             <i key={option.id} />
           ))}
         </span>
         <input
-          aria-label={COPY.researchDepth}
+          aria-label={COPY.researchDepthAriaLabel}
           aria-valuetext={label}
           max={RESEARCH_DEPTHS.length - 1}
           min={0}
@@ -459,14 +460,19 @@ const ResearchDepthControl = (p: ResearchDepthControlProps) => {
           value={index}
         />
       </div>
-      <div aria-hidden="true" className="research-depth-labels">
+      <div className="research-depth-labels">
         {RESEARCH_DEPTHS.map((option) => (
-          <span
-            className={option.id === p.value ? "is-active" : ""}
+          <button
+            aria-label={COPY.setResearchDepth.replace("{level}", option.label)}
+            aria-pressed={option.id === p.value}
             key={option.id}
+            onClick={() =>
+              p.dispatch({ researchDepth: option.id, type: "SetResearchDepth" })
+            }
+            type="button"
           >
             {option.label}
-          </span>
+          </button>
         ))}
       </div>
     </div>
@@ -501,10 +507,12 @@ const ContextPanel = ({
     return constraint === undefined ? [] : [constraint]
   })
   return (
-    <section aria-labelledby="context-title" className="panel panel--context" id="panel-context" role="tabpanel">
-      <div className="panel-heading">
-        <h2 id="context-title">{COPY.contextTitle}</h2>
-      </div>
+    <section
+      aria-label={COPY.contextTitle}
+      className="panel panel--context"
+      id="panel-context"
+      role="tabpanel"
+    >
       {workspace.stage === "brief" ? (
         <BriefEditor
           copyLabel={workspace.copyLabel}
@@ -558,20 +566,22 @@ const ContextPanel = ({
             ) : null}
           </div>
           <aside className="agent-prompt agent-prompt--changes">
-            <ResearchDepthControl
-              dispatch={dispatch}
-              value={workspace.researchDepth}
-            />
-            <button
-              className="control copy-action"
-              disabled={!workspace.canCopy}
-              onClick={() =>
-                dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
-              }
-              type="button"
-            >
-              {workspace.copyLabel}
-            </button>
+            <div className="agent-prompt-actions">
+              <button
+                className="control copy-action"
+                disabled={!workspace.canCopy}
+                onClick={() =>
+                  dispatch({ prompt: workspace.prompt, type: "CopyPrompt" })
+                }
+                type="button"
+              >
+                {workspace.copyLabel}
+              </button>
+              <ResearchDepthControl
+                dispatch={dispatch}
+                value={workspace.researchDepth}
+              />
+            </div>
             <p>{COPY.changesHint}</p>
           </aside>
         </>

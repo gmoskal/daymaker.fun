@@ -184,6 +184,17 @@ test("shows only the two free-form Needs examples without overflow", async ({ pa
   await page.screenshot({ fullPage: true, path: "artifacts/sidequest-demo-menu.png" })
 })
 
+test("opens the concise About explanation", async ({ page }) => {
+  await page.goto("/")
+  await page.getByRole("link", { name: "About" }).click()
+
+  await expect(page).toHaveURL(/\/about$/)
+  await expect(page.getByRole("heading", { name: "How Daymaker works" }))
+    .toBeVisible()
+  await expect(page.getByRole("listitem")).toHaveCount(4)
+  await expect(page.getByRole("link", { name: "Back to Needs" })).toBeVisible()
+})
+
 test("edits Needs and copies the current handoff", async ({ page }) => {
   await installWebMcpHarness(page)
   await page.setViewportSize({ height: 900, width: 1100 })
@@ -200,7 +211,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
     name: "1 · Describe your needs",
   })
   await expect(brief).toContainText("Palermo Airport")
-  const editedBrief = `${await brief.inputValue()} Keep the 16:00 Hotel Trinacria arrival fixed.`
+  const editedBrief = `${await brief.inputValue()} Keep the 16:00 Hotel Trinacria arrival fixed. ${"Also verify practical timing and opening hours. ".repeat(3)}`
   await brief.fill(editedBrief)
   expect(
     await brief.evaluate((element) => element.scrollHeight > element.clientHeight),
@@ -393,13 +404,62 @@ test("remembers the research depth on this device", async ({ page }) => {
   await page.goto("/")
   const researchDepth = page.getByRole("slider", { name: "Research depth" })
   await expect(researchDepth).toHaveAttribute("aria-valuetext", "Normal")
-  await researchDepth.fill("2")
+  await expect(page.locator(".research-depth-markers")).toHaveCount(0)
+  const sliderBox = await researchDepth.boundingBox()
+  expect(sliderBox).not.toBeNull()
+  expect(sliderBox?.height).toBeLessThanOrEqual(30)
+  if (sliderBox === null) throw new Error("Research slider is not visible")
+  await page.mouse.move(
+    sliderBox.x + sliderBox.width / 2,
+    sliderBox.y + sliderBox.height / 2,
+  )
+  await page.mouse.down()
+  await page.mouse.move(
+    sliderBox.x + sliderBox.width - 3,
+    sliderBox.y + sliderBox.height / 2,
+    { steps: 8 },
+  )
+  await page.mouse.up()
   await expect(researchDepth).toHaveAttribute("aria-valuetext", "Deep")
 
   await page.reload()
 
   await expect(page.getByRole("slider", { name: "Research depth" }))
     .toHaveAttribute("aria-valuetext", "Deep")
+})
+
+test("drags the research depth with a mobile touch gesture", async ({ browser }) => {
+  const context = await browser.newContext({
+    hasTouch: true,
+    isMobile: true,
+    viewport: { height: 844, width: 390 },
+  })
+  const page = await context.newPage()
+  await page.goto("/needs?new=1")
+  const researchDepth = page.getByRole("slider", { name: "Research depth" })
+  const sliderBox = await researchDepth.boundingBox()
+  if (sliderBox === null) throw new Error("Research slider is not visible")
+  const session = await context.newCDPSession(page)
+  const y = sliderBox.y + sliderBox.height / 2
+  const start = sliderBox.x + sliderBox.width / 2
+  const end = sliderBox.x + sliderBox.width - 3
+
+  await session.send("Input.dispatchTouchEvent", {
+    touchPoints: [{ x: start, y }],
+    type: "touchStart",
+  })
+  for (let step = 1; step <= 8; step += 1)
+    await session.send("Input.dispatchTouchEvent", {
+      touchPoints: [{ x: start + ((end - start) * step) / 8, y }],
+      type: "touchMove",
+    })
+  await session.send("Input.dispatchTouchEvent", {
+    touchPoints: [],
+    type: "touchEnd",
+  })
+
+  await expect(researchDepth).toHaveAttribute("aria-valuetext", "Deep")
+  await context.close()
 })
 
 test("agent generates a proposal with item and whole-schedule maps", async ({ page }) => {

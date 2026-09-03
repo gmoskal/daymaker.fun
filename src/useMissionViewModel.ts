@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
+import { copyText } from "./clipboard"
 import { COPY } from "./copy"
 import { BLANK_MISSION_TITLE } from "./domain/seed"
 import { toMissionPrompt } from "./mission-prompt"
@@ -216,7 +217,6 @@ export const useMissionViewModel = ({
           })
           return
         case "CopyPrompt":
-          if (navigator.clipboard === undefined) return
           if (
             action.brief !== undefined &&
             action.brief.trim() !== store.getSnapshot().context.brief
@@ -235,18 +235,16 @@ export const useMissionViewModel = ({
             action.brief === undefined
               ? action.prompt
               : toMissionPrompt(store.getSnapshot(), researchDepth)
-          void navigator.clipboard
-            .writeText(prompt)
+          void copyText(prompt)
             .then(() => setCopied(true))
             .catch(() => setCopied(false))
           return
         case "CopySessionLink":
-          if (navigator.clipboard === undefined) return
           void toSessionUrl({
             mission: store.getSnapshot(),
             pageUrl: window.location.href,
           })
-            .then((url) => navigator.clipboard.writeText(url))
+            .then(copyText)
             .then(() => setSessionLinkCopied(true))
             .catch(() => setSessionLinkCopied(false))
           return

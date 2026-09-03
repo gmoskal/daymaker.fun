@@ -14,6 +14,8 @@ describe("English product copy", () => {
     expect(COPY.promptOpen).toContain("not only in chat")
     expect(COPY.promptOpen).toContain("continue in Work")
     expect(COPY.promptProtocol).toContain("If the live board is blank")
+    expect(COPY.promptProtocol).toContain("sessionUrl")
+    expect(COPY.promptProtocol).toContain("[Open updated Sidequest plan]")
     expect(COPY.planningInstruction).toContain("generate a Proposed schedule")
     expect(COPY.planningInstruction).toContain("primary city or area")
     expect(COPY.planningInstruction).toContain("short, specific, playful title")

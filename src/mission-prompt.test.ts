@@ -63,6 +63,9 @@ describe("mission prompt", () => {
     expect(prompt).toContain("bootstrap it from the copied planning input")
     expect(prompt).toContain("Do not discard the copied brief")
     expect(prompt).toContain("using the live revision")
+    expect(prompt).toContain("sessionUrl")
+    expect(prompt).toContain("[Open updated Sidequest plan]")
+    expect(prompt).toContain("Do not finish without the clickable link")
   })
 
   it("asks the agent to structure Needs and regenerate every time", () => {
@@ -76,7 +79,8 @@ describe("mission prompt", () => {
     expect(prompt).toContain("primary city or area")
     expect(prompt).toContain("most schedule activity happens")
     expect(prompt).toContain("short, specific, playful title")
-    expect(prompt).toContain("open Proposed schedule")
+    expect(prompt).toContain("exact clickable session link")
+    expect(prompt).toContain("final successful write")
   })
 
   it("copies planning input according to its stage", () => {

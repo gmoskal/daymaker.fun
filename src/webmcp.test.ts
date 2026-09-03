@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { SEED_MISSION } from "./domain/seed"
+import { readSessionUrl } from "./session-link"
 import { createMissionStore, type MissionStore, type StoragePort } from "./store"
 import {
   TOOL_NAMES,
@@ -152,6 +153,44 @@ describe("WebMCP", () => {
       revision: 6,
     })
     expect(missionStore.getSnapshot()).toBe(before)
+  })
+
+  it("returns a refreshed portable link after every successful write", async () => {
+    const context = fakeContext()
+    const missionStore = store()
+    await registerMissionTools(missionStore)
+
+    const initial = await execute<MissionStateResult & { sessionUrl: string }>(
+      context,
+      "get_mission_state",
+      {},
+    )
+    const updated = await execute<ToolMutationResult & { sessionUrl: string }>(
+      context,
+      "update_mission_stop",
+      {
+        expectedRevision: 6,
+        reason: "The ride is complete.",
+        status: "completed",
+        stopId: "gravel-loop",
+      },
+    )
+
+    expect(initial.sessionUrl).toContain("/schedule#session=")
+    await expect(readSessionUrl({ url: initial.sessionUrl })).resolves.toMatchObject({
+      mission: { revision: 6 },
+      type: "loaded",
+    })
+    expect(updated).toMatchObject({ ok: true, revision: 7 })
+    await expect(readSessionUrl({ url: updated.sessionUrl })).resolves.toMatchObject({
+      mission: {
+        revision: 7,
+        stops: expect.arrayContaining([
+          expect.objectContaining({ id: "gravel-loop", status: "completed" }),
+        ]),
+      },
+      type: "loaded",
+    })
   })
 
   it("starts a titled replacement plan through update_day_context", async () => {
@@ -352,18 +391,34 @@ describe("WebMCP", () => {
 
     expect(reordered).toMatchObject({ ok: true, revision: 12 })
     expect(final).toMatchObject({ ok: true, revision: 12 })
-    expect(JSON.stringify(final).length).toBeLessThanOrEqual(1_800)
+    const withoutSessionUrl = (
+      value: MissionStateResult | ToolMutationResult,
+    ) => {
+      if (!("sessionUrl" in value)) return value
+      const { sessionUrl: _sessionUrl, ...compact } = value
+      return compact
+    }
+    const outcomes = [
+      initial,
+      contextResult,
+      skipped,
+      beach,
+      fuel,
+      reordered,
+      final,
+    ]
+    expect(JSON.stringify(withoutSessionUrl(final)).length)
+      .toBeLessThanOrEqual(1_800)
     expect(
-      JSON.stringify([
-        initial,
-        contextResult,
-        skipped,
-        beach,
-        fuel,
-        reordered,
-        final,
-      ]).length,
+      JSON.stringify(outcomes.map(withoutSessionUrl)).length,
     ).toBeLessThanOrEqual(4_500)
+    expect(
+      outcomes.every(
+        (outcome) =>
+          outcome.ok === false ||
+          ("sessionUrl" in outcome && outcome.sessionUrl.length <= 8_000),
+      ),
+    ).toBe(true)
     expect(
       missionStore.getSnapshot().stops.find((stop) => stop.id === "dinner")
         ?.startsAt,

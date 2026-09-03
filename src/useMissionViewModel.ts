@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { COPY } from "./copy"
 import { BLANK_MISSION_TITLE } from "./domain/seed"
 import { toMissionPrompt } from "./mission-prompt"
+import { toSessionUrl } from "./session-link"
 import type { MissionStore } from "./store"
 import {
   presentMission,
@@ -41,6 +42,7 @@ export const useMissionViewModel = ({
   )
   const [expandedStopIds, setExpandedStopIds] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
+  const [sessionLinkCopied, setSessionLinkCopied] = useState(false)
   const [panel, setPanel] = useState<MissionPanel>(() =>
     mission.context.stage === "brief" &&
     missionPanelForPath(window.location.pathname) === "plan"
@@ -49,7 +51,10 @@ export const useMissionViewModel = ({
   )
   const [webMcp, setWebMcp] = useState<WebMcpState>({ type: "checking" })
 
-  useEffect(() => setCopied(false), [mission.revision])
+  useEffect(() => {
+    setCopied(false)
+    setSessionLinkCopied(false)
+  }, [mission.revision])
 
   useEffect(() => {
     let active = true
@@ -221,6 +226,16 @@ export const useMissionViewModel = ({
             .then(() => setCopied(true))
             .catch(() => setCopied(false))
           return
+        case "CopySessionLink":
+          if (navigator.clipboard === undefined) return
+          void toSessionUrl({
+            mission: store.getSnapshot(),
+            pageUrl: window.location.href,
+          })
+            .then((url) => navigator.clipboard.writeText(url))
+            .then(() => setSessionLinkCopied(true))
+            .catch(() => setSessionLinkCopied(false))
+          return
         case "NewPlan":
           store.newPlan()
           setExpandedStopIds([])
@@ -240,8 +255,16 @@ export const useMissionViewModel = ({
   return {
     dispatch,
     screen: useMemo(
-      () => presentMission({ copied, expandedStopIds, mission, panel, webMcp }),
-      [copied, expandedStopIds, mission, panel, webMcp],
+      () =>
+        presentMission({
+          copied,
+          expandedStopIds,
+          mission,
+          panel,
+          sessionLinkCopied,
+          webMcp,
+        }),
+      [copied, expandedStopIds, mission, panel, sessionLinkCopied, webMcp],
     ),
   }
 }

@@ -7,6 +7,7 @@ import {
   SEED_MISSION,
   createBlankMission,
 } from "./domain/seed"
+import { readSessionUrl } from "./session-link"
 import { createMissionStore, type StoragePort } from "./store"
 import type { WebMcpRegistration } from "./webmcp"
 
@@ -227,6 +228,29 @@ describe("Sidequest app", () => {
     expect(marker).toBeVisible()
     expect(marker?.textContent).not.toBe(before)
     expect(marker?.textContent).toContain("15:42 CEST")
+  })
+
+  it("copies a complete session link from the footer", async () => {
+    const missionStore = store()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    })
+    render(<App registration={registration(true)} store={missionStore} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy session link" }))
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
+    const link = writeText.mock.calls[0]?.[0] as string
+    expect(new URL(link).pathname).toBe("/schedule")
+    await expect(readSessionUrl({ url: link })).resolves.toEqual({
+      mission: missionStore.getSnapshot(),
+      type: "loaded",
+    })
+    expect(
+      screen.getByRole("button", { name: "Session link copied" }),
+    ).toBeVisible()
   })
 
   it("starts with Proposed schedule disabled and keeps the demo optional", () => {

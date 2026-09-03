@@ -57,6 +57,7 @@ const timeZone = text(80)
   .describe("IANA timezone, such as Europe/Warsaw.")
 const httpsUrl = z
   .url()
+  .max(2_048)
   .refine((value) => new URL(value).protocol === "https:", "Use an HTTPS URL")
   .describe("Public HTTPS source URL.")
 const NeedInputSchema = z.strictObject({

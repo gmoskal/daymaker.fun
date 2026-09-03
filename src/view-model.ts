@@ -36,6 +36,7 @@ export const missionPathFor = (panel: MissionPanel) =>
 
 export type ViewAction =
   | { brief?: string; prompt: string; type: "CopyPrompt" }
+  | { type: "CopySessionLink" }
   | { demoId?: DemoMissionId; type: "LoadDemo" }
   | { type: "NewPlan" }
   | { panel: MissionPanel; type: "SelectPanel" }
@@ -111,6 +112,7 @@ export type MissionScreen = {
     type: "LoadDemo" | "NewPlan"
   }
   revision: string
+  sessionLinkLabel: string
   updateMarker: string
   webMcp: { label: string; tone: "neutral" | "positive" | "warning" }
   workspace: MissionWorkspaceScreen
@@ -121,6 +123,7 @@ type PresentMissionParams = {
   expandedStopIds: string[]
   mission: Mission
   panel: MissionPanel
+  sessionLinkCopied?: boolean
   viewerTimeZone?: string
   webMcp: WebMcpState
 }
@@ -308,6 +311,7 @@ export const presentMission = ({
   expandedStopIds,
   mission,
   panel,
+  sessionLinkCopied = false,
   viewerTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   webMcp,
 }: PresentMissionParams): MissionScreen => {
@@ -337,6 +341,9 @@ export const presentMission = ({
         ? { label: COPY.newPlan, type: "NewPlan" }
         : { label: COPY.loadDemo, type: "LoadDemo" },
     revision: `REV ${String(mission.revision).padStart(2, "0")}`,
+    sessionLinkLabel: sessionLinkCopied
+      ? COPY.copiedSessionLink
+      : COPY.copySessionLink,
     updateMarker: formatUpdateMarker({
       timezone: viewerTimeZone,
       updatedAt: mission.updatedAt,

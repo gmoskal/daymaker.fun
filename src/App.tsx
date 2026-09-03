@@ -118,7 +118,16 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
         workspace={screen.workspace}
       />
 
-      <small className="release-marker">{screen.updateMarker}</small>
+      <footer className="app-footer">
+        <button
+          className="session-link"
+          onClick={() => dispatch({ type: "CopySessionLink" })}
+          type="button"
+        >
+          {screen.sessionLinkLabel}
+        </button>
+        <small className="release-marker">{screen.updateMarker}</small>
+      </footer>
     </main>
   )
 }

@@ -11,6 +11,7 @@ import {
   type MissionMutation,
 } from "./domain/mission"
 import { BLANK_LOCATION_LABEL, BLANK_MISSION_TITLE } from "./domain/seed"
+import { toSessionUrl } from "./session-link"
 import type { MissionStore } from "./store"
 
 const EmptyInputSchema = z.strictObject({})
@@ -52,6 +53,7 @@ export type ToolMutationResult =
       changed: Omit<MissionChange, "summary">
       ok: true
       revision: number
+      sessionUrl: string
       summary: string
     }
   | {
@@ -64,6 +66,7 @@ export type MissionStateResult = {
   mission: AgentMission
   ok: true
   revision: number
+  sessionUrl: string
 }
 
 export type ToolResult = MissionStateResult | ToolMutationResult
@@ -76,7 +79,10 @@ export type WebMcpRegistration = {
 type ToolSpec<TSchema extends z.ZodType> = {
   annotations?: WebMCP.ToolAnnotations
   description: string
-  execute: (store: MissionStore, input: z.infer<TSchema>) => ToolResult
+  execute: (
+    store: MissionStore,
+    input: z.infer<TSchema>,
+  ) => Promise<ToolResult> | ToolResult
   name: string
   schema: TSchema
 }
@@ -99,7 +105,20 @@ const invalidInput = (store: MissionStore): ToolMutationResult => ({
   revision: store.getSnapshot().revision,
 })
 
-const toToolResult = (mutation: MissionMutation): ToolMutationResult => {
+const portablePageUrl = (mission: Mission) => {
+  const url = new URL(window.location.href)
+  url.pathname = mission.context.stage === "brief" ? "/needs" : "/schedule"
+  url.search = ""
+  url.hash = ""
+  return url.toString()
+}
+
+const sessionUrlFor = (mission: Mission) =>
+  toSessionUrl({ mission, pageUrl: portablePageUrl(mission) })
+
+const toToolResult = async (
+  mutation: MissionMutation,
+): Promise<ToolMutationResult> => {
   if (mutation.type === "rejected") {
     const { revision, ...error } = mutation.value
     return { error, ok: false, revision }
@@ -110,6 +129,7 @@ const toToolResult = (mutation: MissionMutation): ToolMutationResult => {
     changed,
     ok: true,
     revision: mutation.value.mission.revision,
+    sessionUrl: await sessionUrlFor(mutation.value.mission),
     summary,
   }
 }
@@ -145,7 +165,7 @@ const toAgentStop = (stop: Mission["stops"][number]): AgentStop => ({
       }),
 })
 
-const toMissionState = (mission: Mission): MissionStateResult => ({
+const toMissionState = async (mission: Mission): Promise<MissionStateResult> => ({
   mission: {
     context: {
       brief: mission.context.brief,
@@ -170,6 +190,7 @@ const toMissionState = (mission: Mission): MissionStateResult => ({
   },
   ok: true,
   revision: mission.revision,
+  sessionUrl: await sessionUrlFor(mission),
 })
 
 const tool = <TSchema extends z.ZodType>(spec: ToolSpec<TSchema>) => ({
@@ -179,7 +200,7 @@ const tool = <TSchema extends z.ZodType>(spec: ToolSpec<TSchema>) => ({
   toDefinition: (store: MissionStore): WebMCP.ModelContextTool => ({
     ...(spec.annotations === undefined ? {} : { annotations: spec.annotations }),
     description: spec.description,
-    execute: (rawInput) => {
+    execute: async (rawInput) => {
       const input = spec.schema.safeParse(rawInput)
       return input.success ? spec.execute(store, input.data) : invalidInput(store)
     },
@@ -192,14 +213,14 @@ const TOOL_CATALOG = [
   tool({
     annotations: { readOnlyHint: true, untrustedContentHint: true },
     description:
-      "Read the current Sidequest needs and proposed schedule: revision, brief, needs, stable stop IDs, times, places, locks, and sources. Use before changing it.",
+      "Read the current Sidequest needs and proposed schedule: revision, brief, needs, stable stop IDs, times, places, locks, sources, and its portable session URL. Use before changing it.",
     execute: (store) => toMissionState(store.getSnapshot()),
     name: "get_mission_state",
     schema: EmptyInputSchema,
   }),
   tool({
     description:
-      "Extract and set Needs plus the planning brief, title, timezone, time, location, and pace. Can replace the proposal atomically. Returns the new revision.",
+      "Extract and set Needs plus the planning brief, title, timezone, time, location, and pace. Can replace the proposal atomically. Returns the new revision and portable session URL.",
     execute: (store, input) =>
       toToolResult(
         store.dispatch({
@@ -212,7 +233,7 @@ const TOOL_CATALOG = [
   }),
   tool({
     description:
-      "Set one existing stop's planned, active, completed, or skipped status by stable ID. Locked commitments stay unchanged. Returns the new board revision.",
+      "Set one existing stop's planned, active, completed, or skipped status by stable ID. Locked commitments stay unchanged. Returns the new revision and portable session URL.",
     execute: (store, input) =>
       toToolResult(
         store.dispatch({
@@ -225,7 +246,7 @@ const TOOL_CATALOG = [
   }),
   tool({
     description:
-      "Add one researched stop with time, duration, coordinates, travel estimate, rationale, and HTTPS source. Updates the board and returns its stop ID and revision.",
+      "Add one researched stop with time, duration, coordinates, travel estimate, rationale, and HTTPS source. Returns its ID, the new revision, and portable session URL.",
     execute: (store, input) =>
       toToolResult(
         store.dispatch({
@@ -238,7 +259,7 @@ const TOOL_CATALOG = [
   }),
   tool({
     description:
-      "Set the order and start times of every active or planned stop. Include each future stop once; locked commitments keep their time. Returns the new revision.",
+      "Set the order and start times of every active or planned stop. Include each future stop once; locked commitments keep their time. Returns the new revision and portable session URL.",
     execute: (store, input) =>
       toToolResult(
         store.dispatch({

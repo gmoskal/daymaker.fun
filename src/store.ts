@@ -16,6 +16,11 @@ export const MISSION_STORAGE_KEY = "sidequest:mission:v1"
 
 export type StoragePort = Pick<Storage, "getItem" | "removeItem" | "setItem">
 
+type ImportSharedMissionParams = {
+  storage: StoragePort
+  value: unknown
+}
+
 export type MissionStore = {
   dispatch: (action: MissionAction) => MissionMutation
   getSnapshot: () => Mission
@@ -50,6 +55,16 @@ const withMissionDefaults = ({ observedAt, value }: WithMissionDefaultsParams) =
   const hasSchedule = Array.isArray(mission.stops) && mission.stops.length > 0
   storedContext.stage = hasNeeds || hasSchedule ? "needs" : "brief"
   return value
+}
+
+export const importSharedMission = ({
+  storage,
+  value,
+}: ImportSharedMissionParams): Mission | null => {
+  const parsed = MissionSchema.safeParse(value)
+  if (!parsed.success) return null
+  storage.setItem(MISSION_STORAGE_KEY, JSON.stringify(parsed.data))
+  return parsed.data
 }
 
 export const loadMission = (

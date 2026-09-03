@@ -679,14 +679,33 @@ textarea:focus-visible {
   justify-content: flex-end;
 }
 
-.release-marker {
+.app-footer {
   position: absolute;
   left: clamp(30px, 7vw, 74px);
   bottom: 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.release-marker,
+.session-link {
   color: #b6b6b9;
   font-size: 0.62rem;
   font-weight: 500;
   letter-spacing: 0.04em;
+}
+
+.session-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.session-link:hover {
+  color: #77777c;
 }
 
 .primary-action {
@@ -796,9 +815,12 @@ textarea:focus-visible {
     font-size: 0.62rem;
   }
 
-  .release-marker {
+  .app-footer {
     left: 54px;
     bottom: 38px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
   }
 }
 

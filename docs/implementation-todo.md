@@ -37,6 +37,7 @@
 - [x] 16. Replace model jargon in the Need priority control
 - [x] 17. Make Proposed schedule a read-only expandable result
 - [x] 18. Align the add-Need interaction with the list
+- [~] 19. Transfer a complete session through a shareable URL
 
 ## Blocking decisions accepted in this plan
 
@@ -1081,6 +1082,69 @@ Implementation result:
 - Production deployment `dpl_HVJ6SSik6Rrz1q47s3V7P1u1sceg` reached `READY`
   and the public alias served asset `index-BB5Jwo5a.js` with the v0.2.3 marker
   and read-only proposal copy.
+
+### 19 [~] Transfer a complete session through a shareable URL
+
+Description: Let a person copy one self-contained link on mobile, send it to
+another person, or open it on desktop without an account, backend, or shared
+browser localStorage. Every successful WebMCP write returns a refreshed link
+so ChatGPT can finish with a real destination instead of prose such as "open
+Proposed schedule".
+
+Acceptance criteria:
+
+- AC-1: `Copy session link` serializes the complete canonical `Mission`,
+  including Needs, proposal, sources, locks, revision, events, and update time.
+- AC-2: the payload is canonical JSON encoded as UTF-8, compressed with gzip,
+  and encoded as unpadded base64url in the URL fragment (`#session=...`), so it
+  is not sent to Vercel as part of the HTTP request.
+- AC-3: opening a valid link on an empty browser validates it with
+  `MissionSchema`, imports it into that browser's localStorage, preserves the
+  current `/needs` or `/schedule` route, and removes the payload from the
+  visible URL after bootstrap.
+- AC-4: malformed, oversized, or schema-invalid payloads never overwrite valid
+  local data and are removed from the visible URL.
+- AC-5: Unicode survives round-trip and the generated link is deterministic for
+  the same mission and page route.
+- AC-6: the action is a small borderless footer utility and does not compete
+  with the primary ChatGPT handoff.
+- AC-7: a browser test clears storage to simulate another device, opens the
+  copied link, sees the complete proposal, and still sees it after reload.
+- AC-8: documentation states that anyone holding the link can read its embedded
+  plan and that later edits do not synchronize automatically between copies.
+- AC-9: every successful WebMCP mutation returns a `sessionUrl` representing
+  the post-write mission; the copied protocol requires ChatGPT to render the
+  final returned URL as a clickable `Open updated Sidequest plan` link.
+- AC-10: the read tool also returns the current `sessionUrl`, so an unchanged
+  board can always be handed off without adding a sixth WebMCP tool.
+
+Tests:
+
+- AC-1/2/4/5 -> unit: `session-link.test.ts` verifies the gzip signature,
+  round-trips the real Unicode fixture, proves deterministic output, and
+  rejects invalid/oversized fragments.
+- AC-3/4 -> store/unit: `store.test.ts > imports only a validated shared
+  session` proves persistence and invalid-data preservation.
+- AC-6 -> integration: `App.test.tsx > copies a complete session link from the
+  footer` checks the rendered action and decoded clipboard state.
+- AC-7 -> browser: `sidequest.spec.ts > transfers the complete proposal to an
+  empty browser through its session link` verifies import, URL cleanup, and
+  reload at 390px and desktop widths.
+- AC-9/10 -> integration: `webmcp.test.ts > returns a refreshed portable link
+  after every successful write` decodes the final tool result and verifies its
+  post-write revision; prompt/copy tests require the clickable-link handoff.
+
+Before implementation gate:
+
+- [x] Boundary decision: URL decoding is a pure adapter; schema validation and
+  persistence remain explicit before React and WebMCP registration.
+- [x] Privacy decision: use a fragment, never a query parameter; clear it with
+  `history.replaceState` after the one-time import.
+- [ ] Named unit/integration assertions observed red before production edits.
+
+Implementation result:
+
+- Pending red/green, cross-browser evidence, size audit, and deployment.
 
 ## Risks and dependencies
 

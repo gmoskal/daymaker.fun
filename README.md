@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.3
-- Production deployment: v0.2.3 live
+- Local release: v0.2.4
+- Production deployment: v0.2.3 live; v0.2.4 pending
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -21,10 +21,11 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 1. Open **Needs** and describe what the plan must accomplish. This initial description is required; the placeholder shows a complete example.
 2. Choose **Copy to ChatGPT** and paste the self-contained handoff into ChatGPT on mobile or desktop.
 3. ChatGPT continues in Work, opens the public Sidequest `/needs` page, and calls `get_mission_state`. If that browser opens a blank board, it initializes it from the copied planning input instead of discarding the description because its local revision differs.
-4. ChatGPT asks concise questions if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** to the page it opened with Site Tools.
+4. ChatGPT asks concise questions if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** to the page it opened with Site Tools. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated Sidequest plan** link.
 5. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Must keep** / **Can adapt**.
-6. A human Needs edit unlocks **Copy changes to ChatGPT**. Paste it to regenerate the proposal. Changes made by ChatGPT through the opened board's Site Tools appear there directly and do not require another copy.
+6. A human Needs edit unlocks **Copy changes to ChatGPT**. Paste it to regenerate the proposal. ChatGPT returns a fresh link after that iteration as well.
 7. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it to review the generated title, date, primary city/area, and items. The proposal is read-only for people: click anywhere on one or more rows to expand details and map links. The complete proposal also has one Google Maps route.
+8. Use the small **Copy session link** action in the footer whenever you want to move the exact current board to another device or send a copy to another person.
 
 **Load demo** contains two input examples, not prebuilt schedules:
 
@@ -38,6 +39,7 @@ A normal assistant can return an itinerary as chat text. Sidequest makes the inp
 - the page and agent share one typed mission store;
 - the agent can read the latest brief, fixed needs, stop IDs, locks, places, sources, and revision;
 - every accepted tool write appears immediately in the page opened by Work, persists locally there, and updates the real footer timestamp;
+- every successful read or write returns a gzip-compressed session link representing that exact revision;
 - every write uses optimistic concurrency, so stale agents cannot silently overwrite newer human changes;
 - the Needs editor and proposal review still work without WebMCP.
 
@@ -75,6 +77,7 @@ Key files:
 - `src/domain/mission-transition.ts` — pure transitions and invariants
 - `src/domain/seed.ts` — blank state, two Needs examples, and a test fixture
 - `src/store.ts` — persistence and subscriptions
+- `src/session-link.ts` — validated JSON → gzip → base64url session snapshots
 - `src/webmcp.ts` — the five Site Tool registrations
 - `src/mission-prompt.ts` — the Needs-only ChatGPT handoff
 - `src/map-links.ts` — Google and Apple Maps URL builders
@@ -84,13 +87,15 @@ Key files:
 
 ### State and session identity
 
-There is no account or backend session. The app reads one mission from `sidequest:mission:v1` in `localStorage`. Each accepted human or agent mutation updates memory, stamps the actual wall-clock time, and persists the same mission. State survives reloads on the same origin and browser profile; another browser, device, private window, or profile has a separate plan.
+There is no account or backend session. The app reads one mission from `sidequest:mission:v1` in `localStorage`. Each accepted human or agent mutation updates memory, stamps the actual wall-clock time, and persists the same mission. State survives reloads on the same origin and browser profile.
 
-WebMCP tools close over the live store belonging to the open document. A human edit on that board is visible to the next `get_mission_state`. The copied JSON is both a conversation snapshot and the bootstrap payload for a blank page opened by mobile or desktop Work. Once bootstrapped, the agent uses the live revision for every write. The original browser and the Work browser do not pretend to share localStorage; review and continue editing on the page Work opened.
+WebMCP tools close over the live store belonging to the open document. A human edit on that board is visible to the next `get_mission_state`. Every successful tool result includes a `sessionUrl` for the resulting revision. The copied protocol requires ChatGPT to render the final one as a clickable link instead of merely saying to open the proposal.
+
+A session link serializes the complete canonical `Mission` as JSON, encodes it as UTF-8, compresses it with gzip, and stores unpadded base64url in `#session=...`. Opening it validates the payload with `MissionSchema`, imports it into that browser's localStorage, keeps the `/needs` or `/schedule` route, and removes the long fragment from the visible address. That makes the link a self-contained cross-device and person-to-person snapshot without a server. The recipient gets an independent copy; later edits do not live-sync, and a new snapshot link represents each new revision.
 
 The page cannot proactively start a new turn in an already open ChatGPT conversation. After a human changes Needs, **Copy changes to ChatGPT** is the explicit handoff; the next agent turn reads the live board before writing. Automatic reverse notifications would require a shared backend and a ChatGPT integration with an event channel.
 
-Already-open duplicate tabs do not live-sync in this prototype. Reload before switching editing between tabs. Multi-device identity and collaboration require a backend and are outside this focused build.
+Already-open duplicate tabs do not live-sync in this prototype. Reload before switching editing between tabs. Real-time collaboration still requires a backend; portable snapshot links do not.
 
 ## Run locally
 
@@ -118,7 +123,7 @@ Run every gate with:
 npm run check
 ```
 
-The browser tests cover the two-example menu, free-form and structured Needs editing, clipboard handoff, five-tool generation, read-only multi-row schedule expansion, Motion animation, map links, desktop layout, and 390 px overflow.
+The browser tests cover the two-example menu, free-form and structured Needs editing, clipboard handoff, five-tool generation, gzip session transfer into an empty browser, persistence after reload, read-only multi-row schedule expansion, Motion animation, map links, desktop layout, and 390 px overflow.
 
 Visual evidence:
 
@@ -139,6 +144,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and survives reload.
+- [ ] Confirm ChatGPT renders the final returned `sessionUrl` as a clickable **Open updated Sidequest plan** link.
 - [ ] Confirm a stale revision is rejected and locked commitments survive regeneration.
 - [ ] Check per-item Google/Apple Maps and the complete Google Maps schedule.
 - [x] Verify the local build at desktop and 390 px widths.
@@ -146,6 +152,8 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 ## Security and privacy
 
 - Planning data stays in the browser; there is no backend, account, analytics, or custom LLM call.
+- A session URL is a bearer snapshot, not encryption: anyone holding the link can decode and read its complete embedded plan. Share it accordingly.
+- Session data is stored in the URL fragment and is not included in the HTTP request sent to Vercel.
 - Strict schemas allowlist tool input; text containing HTML delimiters is rejected.
 - Source URLs require HTTPS and open with `noopener noreferrer`.
 - Completed and skipped items remain auditable but are excluded from the map schedule.
@@ -154,7 +162,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 
 ## Limitations
 
-Sidequest is a focused hackathon prototype: one local plan, two optional Needs examples, English UI, browser persistence, and outbound map links. It does not provide accounts, live tab sync, GPS tracking, reservations, turn-by-turn directions, or its own chat interface. ChatGPT performs research; Google and Apple Maps require network access.
+Sidequest is a focused hackathon prototype: one local plan, portable snapshot links, two optional Needs examples, English UI, browser persistence, and outbound map links. It does not provide accounts, real-time collaboration, live tab sync, GPS tracking, reservations, turn-by-turn directions, or its own chat interface. ChatGPT performs research; Google and Apple Maps require network access.
 
 ## References
 

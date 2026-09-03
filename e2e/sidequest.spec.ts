@@ -8,6 +8,7 @@ type ToolOutcome = {
   changed?: { stopId?: string }
   ok: boolean
   revision: number
+  sessionUrl?: string
 }
 
 const installWebMcpHarness = async (page: Page) => {
@@ -164,6 +165,7 @@ const generateCroatiaProposal = async (page: Page) => {
     title: "Snorkel · Punta Rata Beach",
   })
   expect(swim).toMatchObject({ ok: true, revision: 4 })
+  return swim
 }
 
 test("shows only the two free-form Needs examples without overflow", async ({ page }) => {
@@ -488,4 +490,47 @@ test("keeps the generated proposal read-only", async ({ page }) => {
   await second.locator(".stop-location").click()
   await expect(first).toHaveAttribute("aria-expanded", "true")
   await expect(second).toHaveAttribute("aria-expanded", "true")
+})
+
+test("transfers the complete proposal to an empty browser through its session link", async ({
+  browser,
+  page,
+}) => {
+  await installWebMcpHarness(page)
+  await page.goto("/")
+  await waitForTools(page)
+  const generated = await generateCroatiaProposal(page)
+  expect(generated.sessionUrl).toContain("/schedule#session=")
+
+  const receivingContext = await browser.newContext({
+    viewport: { height: 844, width: 390 },
+  })
+  const receivingPage = await receivingContext.newPage()
+  await receivingPage.goto(generated.sessionUrl ?? "")
+
+  await expect(receivingPage).toHaveURL(/\/schedule$/)
+  expect(receivingPage.url()).not.toContain("#session=")
+  await expect(
+    receivingPage.getByRole("heading", { name: "Gravel Before Brunch" }),
+  ).toBeVisible()
+  await expect(receivingPage.locator('[data-testid^="stop-"]')).toHaveCount(3)
+  const stored = await receivingPage.evaluate(() =>
+    JSON.parse(localStorage.getItem("sidequest:mission:v1") ?? "null"),
+  )
+  expect(stored).toMatchObject({
+    revision: 4,
+    stops: [
+      { title: "20 km shaded gravel loop" },
+      { title: "Lunch · Konoba Panorama" },
+      { title: "Snorkel · Punta Rata Beach" },
+    ],
+  })
+
+  await receivingPage.setViewportSize({ height: 900, width: 1100 })
+  await receivingPage.reload()
+  await expect(receivingPage).toHaveURL(/\/schedule$/)
+  await expect(
+    receivingPage.getByRole("heading", { name: "Gravel Before Brunch" }),
+  ).toBeVisible()
+  await receivingContext.close()
 })

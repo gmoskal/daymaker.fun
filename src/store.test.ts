@@ -10,6 +10,7 @@ import {
 import {
   MISSION_STORAGE_KEY,
   createMissionStore,
+  importSharedMission,
   loadMission,
   type StoragePort,
 } from "./store"
@@ -189,6 +190,29 @@ describe("mission store", () => {
       .toEqual(createBlankMission(new Date("2026-09-03T10:15:00Z"), "UTC"))
     expect(invalid.removals).toEqual([MISSION_STORAGE_KEY])
     expect(invalid.values.get("unrelated")).toBe("preserve me")
+  })
+
+  it("imports only a validated shared session", () => {
+    const current = { ...SEED_MISSION, revision: 9 }
+    const memory = memoryStorage({
+      [MISSION_STORAGE_KEY]: JSON.stringify(current),
+    })
+    const shared = { ...SEED_MISSION, revision: 12, title: "Baška shared" }
+
+    expect(importSharedMission({ storage: memory.storage, value: shared }))
+      .toEqual(shared)
+    expect(JSON.parse(memory.values.get(MISSION_STORAGE_KEY) ?? "null"))
+      .toEqual(shared)
+
+    const storedAfterValidImport = memory.values.get(MISSION_STORAGE_KEY)
+    expect(
+      importSharedMission({
+        storage: memory.storage,
+        value: { ...shared, schemaVersion: 2 },
+      }),
+    ).toBeNull()
+    expect(memory.values.get(MISSION_STORAGE_KEY)).toBe(storedAfterValidImport)
+    expect(memory.removals).toEqual([])
   })
 
   it("migrates a stored mission without a brief", () => {

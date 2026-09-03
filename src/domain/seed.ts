@@ -152,7 +152,7 @@ export const SEED_MISSION: Mission = {
 export const PALERMO_ARRIVAL_MISSION: Mission = {
   context: {
     brief:
-      "I land at Palermo Airport tomorrow morning. I want to rent a car at the airport, drive straight to an excellent breakfast and coffee, see something worthwhile nearby, and check in at [Hotel Trinacria](https://www.booking.com/hotel/it/trinacria-palermo1.html) at 16:00. Find practical parking for every stop.",
+      "Start tomorrow's route at Palermo Airport. Pick up a rental car there, continue to an excellent breakfast and coffee, see something worthwhile nearby, and keep a fixed 16:00 arrival at [Hotel Trinacria](https://www.booking.com/hotel/it/trinacria-palermo1.html). Find practical parking for every stop.",
     constraints: [],
     currentLocation: {
       label: "Palermo Airport",
@@ -178,7 +178,7 @@ export const PALERMO_ARRIVAL_MISSION: Mission = {
 export const CROATIA_GRAVEL_MISSION: Mission = {
   context: {
     brief:
-      "I am staying at [Grand Hotel Slavia](https://www.booking.com/hotel/hr/slavija-baska-voda.html) in Baška Voda. Tomorrow morning I want a 20 km gravel ride and to finish before 10:00. I will drive no more than one hour. Find a shaded route with some asphalt but no main roads. On the way back I want an excellent restaurant, then a snorkeling beach with an interesting seabed. Include designated parking everywhere and tell me when I will return.",
+      "Start tomorrow's route at [Grand Hotel Slavia](https://www.booking.com/hotel/hr/slavija-baska-voda.html) in Baška Voda. Plan a 20 km gravel ride that finishes before 10:00 and requires no more than one hour of driving. Find a shaded route with some asphalt but no main roads, an excellent restaurant for the return, and a snorkeling beach with an interesting seabed. Include designated parking everywhere and calculate the return time.",
     constraints: [],
     currentLocation: {
       label: "Grand Hotel Slavia, Baška Voda",

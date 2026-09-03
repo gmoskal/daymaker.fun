@@ -68,6 +68,9 @@ describe("Sidequest app", () => {
     expect(window.location.pathname).toBe("/needs")
     expect(screen.queryByText("Untitled plan")).not.toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: "Route" })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Copy link to share" }),
+    ).not.toBeInTheDocument()
     const proposed = screen.getByRole("tab", { name: "Proposed schedule" })
     expect(proposed).toHaveAttribute("aria-disabled", "true")
     fireEvent.click(proposed)
@@ -240,7 +243,9 @@ describe("Sidequest app", () => {
     render(<App registration={registration(true)} store={missionStore} />)
 
     expect(screen.getByText("Iteration 1")).toBeVisible()
-    fireEvent.click(screen.getByRole("button", { name: "Copy link" }))
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy link to share" }),
+    )
 
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
     const link = writeText.mock.calls[0]?.[0] as string
@@ -253,6 +258,33 @@ describe("Sidequest app", () => {
       screen.getByRole("button", { name: "Link copied" }),
     ).toBeVisible()
     expect(document.querySelector("footer button")).not.toBeInTheDocument()
+  })
+
+  it("shares structured Needs from a left-aligned action", async () => {
+    window.history.replaceState(null, "", "/needs")
+    const missionStore = store()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    })
+
+    const { container } = render(
+      <App registration={registration(true)} store={missionStore} />,
+    )
+
+    const share = screen.getByRole("button", { name: "Copy link to share" })
+    expect(share.closest(".needs-meta")).toBe(container.querySelector(".needs-meta"))
+    fireEvent.click(share)
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
+    const link = writeText.mock.calls[0]?.[0] as string
+    expect(new URL(link).pathname).toBe("/needs")
+    await expect(readSessionUrl(link)).resolves.toEqual({
+      mission: missionStore.getSnapshot(),
+      type: "loaded",
+    })
+    expect(screen.getByRole("button", { name: "Link copied" })).toBeVisible()
   })
 
   it("starts with Proposed schedule disabled and keeps the demo optional", () => {

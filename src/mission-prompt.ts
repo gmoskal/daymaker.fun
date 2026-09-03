@@ -1,6 +1,11 @@
 import { COPY, SIDEQUEST_URL } from "./copy"
 import type { Mission } from "./domain/mission"
-import { BLANK_LOCATION_LABEL, BLANK_MISSION_TITLE } from "./domain/seed"
+import {
+  BLANK_LOCATION_LABEL,
+  BLANK_MISSION_TITLE,
+  isDemoMissionId,
+} from "./domain/seed"
+import { newPlanEntryUrl } from "./planning-entry"
 
 const planningNeedsFor = (mission: Mission) => {
   const needs = mission.context.constraints
@@ -18,6 +23,7 @@ const planningNeedsFor = (mission: Mission) => {
     missionId: mission.id,
     ...(mission.context.stage === "needs" ? { needs } : {}),
     revision: mission.revision,
+    ...(isDemoMissionId(mission.id) ? { sampleData: true } : {}),
     timezone: mission.timezone,
     ...(mission.title === BLANK_MISSION_TITLE ? {} : { title: mission.title }),
   }
@@ -26,7 +32,7 @@ const planningNeedsFor = (mission: Mission) => {
 export const toMissionPrompt = (mission: Mission) =>
   [
     COPY.promptLanguage,
-    COPY.promptOpen.replace("{url}", `${SIDEQUEST_URL}/needs`),
+    COPY.promptOpen.replace("{url}", newPlanEntryUrl(SIDEQUEST_URL)),
     COPY.planningInstruction,
     COPY.promptProtocol,
     COPY.promptSnapshot,

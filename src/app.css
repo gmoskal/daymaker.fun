@@ -76,10 +76,10 @@ textarea:focus-visible {
   gap: 32px;
 }
 
-.plan-meta {
+.plan-meta,
+.needs-meta {
   margin-top: 18px;
   display: flex;
-  justify-content: flex-end;
   gap: 7px;
   color: #a8a8ac;
   font-size: 0.66rem;
@@ -87,7 +87,15 @@ textarea:focus-visible {
   letter-spacing: 0.035em;
 }
 
-.plan-meta button {
+.plan-meta {
+  justify-content: flex-end;
+}
+
+.needs-meta {
+  justify-content: flex-start;
+}
+
+.session-link-action {
   padding: 0;
   border: 0;
   background: transparent;
@@ -96,7 +104,7 @@ textarea:focus-visible {
   font: inherit;
 }
 
-.plan-meta button:hover {
+.session-link-action:hover {
   color: var(--ink);
 }
 

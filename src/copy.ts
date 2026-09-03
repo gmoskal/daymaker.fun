@@ -12,12 +12,12 @@ export const COPY = {
   changesHint:
     "After you edit Needs here, copy the changes back to ChatGPT. You can also describe feedback directly in ChatGPT and open the new plan link it returns.",
   copyChanges: "Copy changes to ChatGPT",
-  copyPlanLink: "Copy link",
+  copySessionLink: "Copy link to share",
   contextTitle: "Needs",
   copyPrompt: "Copy to ChatGPT",
   copiedPrompt: "Copied for ChatGPT",
   copiedChanges: "Changes copied for ChatGPT",
-  copiedPlanLink: "Link copied",
+  copiedSessionLink: "Link copied",
   editRequirement: "Edit need",
   emptyPlanHint:
     "This proposal is generated from Needs. Copy your needs to ChatGPT to create it. When it is ready, open items for details and maps. Open the complete proposal in Google Maps when you want the whole route.",
@@ -36,18 +36,18 @@ export const COPY = {
   handoffTitle: "2 · Copy to ChatGPT",
   planningBrief: "1 · Describe your needs",
   planningBriefPlaceholder:
-    "Example: I land in Palermo tomorrow morning. Find a rental car, great breakfast and coffee, one nearby sight, parking, and get me to my hotel by 16:00.",
+    "Example: Start tomorrow's route at Palermo Airport. Include a rental car, excellent breakfast and coffee, one nearby sight, parking, and a fixed 16:00 arrival at Hotel Trinacria.",
   planningInstruction:
-    "Treat the copied planning input as a new plan request. Your only goal is to create the most sensible plan that satisfies the person's Needs as completely as possible. If the snapshot contains needs, treat them as the source of truth; otherwise extract concise Needs from the free-form brief. Infer and set the plan date and starting location from that input. Use the concise primary city or area where most schedule activity happens as currentLocation.label, while keeping its coordinates at the practical route starting point. Choose a short, specific, playful title rather than a generic destination/day label. Treat locked commitments listed in the copied planning input as fixed requirements to recreate in the new proposal, and mark non-negotiable Needs as fixed. After the mandatory context reset below, ask concise clarifying questions only if essential information is still missing; otherwise research suitable places and generate a Proposed schedule. After updating, give the person the exact clickable session link specified below. Then explain, in the required response language, that there are two ways to iterate: edit Needs on Daymaker, choose Copy changes to ChatGPT, and paste the copied prompt back into this chat; or give feedback directly in this chat about what should change, after which you will revise the proposal and return another updated session link. Also say that they can share the link with friends.",
+    "Treat the copied planning input as a new plan request. When sampleData is true, its places, links, and times are a fictional product demo rather than the person's private travel data. Your only goal is to create the most sensible plan that satisfies the person's Needs as completely as possible. If the snapshot contains needs, treat them as the source of truth; otherwise extract concise Needs from the free-form brief. Infer and set the plan date and starting location from that input. Use the concise primary city or area where most schedule activity happens as currentLocation.label, while keeping its coordinates at the practical route starting point. Choose a short, specific, playful title rather than a generic destination/day label. Treat locked commitments listed in the copied planning input as fixed requirements to recreate in the new proposal, and mark non-negotiable Needs as fixed. After the automatic board reset below, ask a concise clarifying question only when an essential fact is missing; otherwise research suitable places and generate a Proposed schedule. Keep research bounded and finish in one pass: run independent lookups in parallel, use one strong current source per proposed stop, validate only facts needed to make the plan usable, and do not exhaustively compare alternatives. Do not send intermediate progress narration. After updating, give the person the exact clickable session link specified below. Then explain, in the required response language, that there are two ways to iterate: edit Needs on Daymaker, choose Copy changes to ChatGPT, and paste the copied prompt back into this chat; or give feedback directly in this chat about what should change, after which you will revise the proposal and return another updated session link. Also say that they can share the link with friends.",
   planIteration: "Iteration {number}",
   promptLanguage:
     "LANGUAGE REQUIREMENT: Use only the primary language of the person's free-form brief or Needs in the planning input for every message you send. Do not follow the language of the surrounding conversation, UI, inferred profile, or locale. Ignore earlier messages when choosing the response language. English planning input requires every message to be in English. Polish planning input requires every message to be in Polish. Use that language for all communication, including questions, progress updates, tool-use narration, and the final response. Do not narrate in one language while writing the plan in another. Keep proper names, source titles, and exact tool-returned values unchanged. Do not translate the exact session link.",
   promptOpen:
     "Open {url}, continue in Work, and use its Site Tools. Do not stop after explaining that Work or Site Tools are required; complete the requested changes on the Sidequest board, not only in chat.",
   promptProtocol:
-    "Call get_mission_state as soon as the page opens, before any write. Use the live board only to obtain the current revision. Immediately call update_day_context with the copied planning input, that live revision, and with replacePlan: true, before research, clarification, or progress narration. Do not compare, reconcile, or preserve unrelated content from the live board; replace it even when that board is populated. After each write, use the returned revision for the next write. Every successful read or write returns a sessionUrl containing the complete current board. After the final successful write, end your response with [Open updated Sidequest plan](sessionUrl), replacing sessionUrl with the exact returned URL. Use the URL returned by the final read only when the requested plan was already written in this turn. Do not finish without the clickable link.",
+    "The one-shot planning URL clears the previous browser-local board before Site Tools register. Do not inspect, compare, preserve, or clear an earlier plan with a tool call. Call get_mission_state as soon as the page opens to obtain the new blank board's revision. Immediately call update_day_context with the copied planning input, that revision, and with replacePlan: true to initialize this request before research, clarification, or progress narration. After each write, use the returned revision for the next write. Every successful read or write returns a sessionUrl containing the complete current board. After the final successful write, end your response with [Open updated Sidequest plan](sessionUrl), replacing sessionUrl with the exact returned URL. Use the URL returned by the final read only when the requested plan was already written in this turn. Do not finish without the clickable link.",
   promptSnapshot: "Planning input at copy time:",
-  release: "v0.2.8",
+  release: "v0.2.9",
   updated: "updated",
   planTitle: "Proposed schedule",
   scheduleTitle: "Schedule",
@@ -61,7 +61,7 @@ export const COPY = {
 
 export const DEMO_OPTIONS = [
   {
-    description: "Rental car, breakfast, one sight, parking, and a fixed 16:00 check-in.",
+    description: "Airport car rental, breakfast, one sight, parking, and a fixed hotel arrival.",
     id: "palermo-arrival-demo",
     label: "Palermo arrival",
   },

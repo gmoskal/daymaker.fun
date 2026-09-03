@@ -80,6 +80,7 @@ type PlanWorkspace = {
 type ContextWorkspace = {
   brief: string
   canCopy: boolean
+  canShareSession: boolean
   constraints: ConstraintScreen[]
   copyLabel: string
   prompt: string
@@ -112,7 +113,7 @@ export type MissionScreen = {
     type: "LoadDemo" | "NewPlan"
   }
   planIteration: string
-  planLinkLabel: string
+  sessionLinkLabel: string
   updateMarker: string
   webMcp: { label: string; tone: "neutral" | "positive" | "warning" }
   workspace: MissionWorkspaceScreen
@@ -290,6 +291,9 @@ const workspaceFor = (
           mission.context.stage === "brief"
             ? mission.context.brief.trim() !== ""
             : needsChanged,
+        canShareSession:
+          mission.context.stage === "needs" &&
+          mission.context.constraints.length > 0,
         constraints: mission.context.constraints,
         copyLabel:
           mission.context.stage === "brief"
@@ -344,7 +348,9 @@ export const presentMission = ({
       "{number}",
       String(Math.max(1, mission.planIteration)),
     ),
-    planLinkLabel: sessionLinkCopied ? COPY.copiedPlanLink : COPY.copyPlanLink,
+    sessionLinkLabel: sessionLinkCopied
+      ? COPY.copiedSessionLink
+      : COPY.copySessionLink,
     updateMarker: formatUpdateMarker({
       timezone: viewerTimeZone,
       updatedAt: mission.updatedAt,

@@ -44,7 +44,7 @@ describe("mission presenter", () => {
     const screen = presentMission(input)
 
     expect(screen.updateMarker).toBe(
-      "v0.2.8 · updated 3 Sep 2026 · 15:42 CEST",
+      "v0.2.9 · updated 3 Sep 2026 · 15:42 CEST",
     )
   })
 

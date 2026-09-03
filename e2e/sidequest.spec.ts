@@ -200,7 +200,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
     name: "1 · Describe your needs",
   })
   await expect(brief).toContainText("Palermo Airport")
-  const editedBrief = `${await brief.inputValue()} Keep the 16:00 hotel check-in fixed.`
+  const editedBrief = `${await brief.inputValue()} Keep the 16:00 Hotel Trinacria arrival fixed.`
   await brief.fill(editedBrief)
   expect(
     await brief.evaluate((element) => element.scrollHeight > element.clientHeight),
@@ -262,13 +262,14 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
     () => (window as typeof window & { __copiedText: string }).__copiedText,
   )
   expect(initialCopied).toContain(
-    "https://daymaker.fun/needs",
+    "https://daymaker.fun/needs?new=1",
   )
   expect(initialCopied).toContain("continue in Work")
   expect(initialCopied).toContain(
-    "Use the live board only to obtain the current revision",
+    "planning URL clears the previous browser-local board",
   )
-  expect(initialCopied).toContain("Keep the 16:00 hotel check-in fixed")
+  expect(initialCopied).toContain("Keep the 16:00 Hotel Trinacria arrival fixed")
+  expect(initialCopied).toContain('"sampleData": true')
   expect(initialCopied).not.toContain('"needs"')
 
   const extracted = await executeTool(page, "update_day_context", {
@@ -281,7 +282,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
       { fixed: false, label: "rent a car at Palermo Airport" },
       { fixed: false, label: "excellent breakfast and coffee first" },
       { fixed: false, label: "one worthwhile sight nearby" },
-      { fixed: true, label: "Hotel Trinacria check-in at 16:00" },
+      { fixed: true, label: "Hotel Trinacria arrival at 16:00" },
       { fixed: false, label: "practical parking at every stop" },
     ],
     reason: "Extracted the person's free-form brief into editable Needs.",
@@ -293,6 +294,26 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   await expect(page.getByRole("tab", { name: "Proposed schedule" }))
     .toHaveAttribute("aria-disabled", "false")
   await expect(brief).toHaveCount(0)
+  const needsShare = page.getByRole("button", { name: "Copy link to share" })
+  await expect(needsShare).toBeVisible()
+  expect(
+    await needsShare.evaluate((element) => {
+      const panel = document.querySelector(".panel--context")
+      return panel === null
+        ? null
+        : Math.abs(
+            element.getBoundingClientRect().left -
+              panel.getBoundingClientRect().left,
+          )
+    }),
+  ).toBeLessThan(1)
+  await needsShare.click()
+  await expect(page.getByRole("button", { name: "Link copied" })).toBeVisible()
+  expect(
+    await page.evaluate(
+      () => (window as typeof window & { __copiedText: string }).__copiedText,
+    ),
+  ).toContain("/needs#session=")
   await expect(
     page.getByRole("textbox", {
       name: "Edit need: rent a car at Palermo Airport",
@@ -320,7 +341,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
   const copied = await page.evaluate(
     () => (window as typeof window & { __copiedText: string }).__copiedText,
   )
-  expect(copied).toContain("I land at Palermo Airport tomorrow morning")
+  expect(copied).toContain("Start tomorrow's route at Palermo Airport")
   expect(copied).toContain('"label": "quiet lunch"')
   expect(copied).toContain('"fixed": true')
   expect(copied).toContain("replacePlan: true")
@@ -367,7 +388,7 @@ test("agent generates a proposal with item and whole-schedule maps", async ({ pa
   await page.getByRole("tab", { name: "Proposed schedule" }).click()
   await expect(page).toHaveURL(/\/schedule$/)
   await expect(page.getByText("Iteration 1")).toBeVisible()
-  const copyLink = page.getByRole("button", { name: "Copy link" })
+  const copyLink = page.getByRole("button", { name: "Copy link to share" })
   await expect(copyLink).toBeVisible()
   await copyLink.click()
   await expect(page.getByRole("button", { name: "Link copied" })).toBeVisible()

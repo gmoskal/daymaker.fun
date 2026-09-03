@@ -16,9 +16,11 @@ describe("English product copy", () => {
     expect(COPY.promptOpen).toContain("not only in chat")
     expect(COPY.promptOpen).toContain("continue in Work")
     expect(COPY.promptProtocol).toContain(
-      "Use the live board only to obtain the current revision",
+      "planning URL clears the previous browser-local board",
     )
-    expect(COPY.promptProtocol).toContain("replace it even when that board is populated")
+    expect(COPY.promptProtocol).toContain(
+      "Do not inspect, compare, preserve, or clear an earlier plan with a tool call",
+    )
     expect(COPY.promptProtocol).toContain("sessionUrl")
     expect(COPY.promptProtocol).toContain("[Open updated Sidequest plan]")
     expect(allCopy).toContain("LANGUAGE REQUIREMENT")
@@ -44,6 +46,16 @@ describe("English product copy", () => {
     expect(COPY.planningInstruction).toContain("Copy changes to ChatGPT")
     expect(COPY.planningInstruction).toContain("feedback directly in this chat")
     expect(COPY.planningInstruction).toContain("share the link with friends")
+    expect(COPY.planningInstruction).toContain("finish in one pass")
+    expect(COPY.planningInstruction).toContain(
+      "run independent lookups in parallel",
+    )
+    expect(COPY.planningInstruction).toContain(
+      "one strong current source per proposed stop",
+    )
+    expect(COPY.planningInstruction).toContain(
+      "Do not send intermediate progress narration",
+    )
     expect(COPY.copyPrompt).toBe("Copy to ChatGPT")
     expect(COPY.copyChanges).toBe("Copy changes to ChatGPT")
     expect(COPY.agentHint).toContain("mobile or desktop")
@@ -61,6 +73,6 @@ describe("English product copy", () => {
       "Open the complete proposal in Google Maps",
     )
     expect(COPY.planIteration).toBe("Iteration {number}")
-    expect(COPY.copyPlanLink).toBe("Copy link")
+    expect(COPY.copySessionLink).toBe("Copy link to share")
   })
 })

@@ -4,6 +4,7 @@ import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 
 import { App } from "./App"
+import { consumeNewPlanEntry } from "./planning-entry"
 import { readSessionUrl, withoutSessionFragment } from "./session-link"
 import {
   createMissionStore,
@@ -21,8 +22,14 @@ const start = async () => {
   const shared = await readSessionUrl(pageUrl)
   if (shared.type === "loaded")
     importSharedMission({ storage: localStorage, value: shared.mission })
+  const newPlanPath =
+    shared.type === "none"
+      ? consumeNewPlanEntry({ source: pageUrl, storage: localStorage })
+      : null
   if (shared.type !== "none")
     window.history.replaceState(null, "", withoutSessionFragment(pageUrl))
+  else if (newPlanPath !== null)
+    window.history.replaceState(null, "", newPlanPath)
 
   const store = createMissionStore({
     id: () => crypto.randomUUID().slice(0, 8),

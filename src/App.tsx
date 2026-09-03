@@ -17,6 +17,21 @@ type MissionViewProps = {
   screen: MissionScreen
 }
 
+type SessionLinkActionProps = {
+  dispatch: (action: ViewAction) => void
+  label: string
+}
+
+const SessionLinkAction = (p: SessionLinkActionProps) => (
+  <button
+    className="session-link-action"
+    onClick={() => p.dispatch({ type: "CopySessionLink" })}
+    type="button"
+  >
+    {p.label}
+  </button>
+)
+
 const MissionView = ({ dispatch, screen }: MissionViewProps) => {
   const [addingRequirement, setAddingRequirement] = useState(false)
   const [demoMenuOpen, setDemoMenuOpen] = useState(false)
@@ -91,17 +106,25 @@ const MissionView = ({ dispatch, screen }: MissionViewProps) => {
         </button>
       </div>
 
+      {screen.workspace.type === "context" &&
+      screen.workspace.canShareSession ? (
+        <div className="needs-meta">
+          <SessionLinkAction
+            dispatch={dispatch}
+            label={screen.sessionLinkLabel}
+          />
+        </div>
+      ) : null}
+
       {screen.workspace.type === "plan" ? (
         <>
           <div className="plan-meta">
             <span>{screen.planIteration}</span>
             <span aria-hidden="true">·</span>
-            <button
-              onClick={() => dispatch({ type: "CopySessionLink" })}
-              type="button"
-            >
-              {screen.planLinkLabel}
-            </button>
+            <SessionLinkAction
+              dispatch={dispatch}
+              label={screen.sessionLinkLabel}
+            />
           </div>
           <section
             aria-label={`${screen.date.weekday}, ${screen.date.day} ${screen.date.month} ${screen.date.year}`}

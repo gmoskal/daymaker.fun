@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest"
 
 import { COPY } from "./copy"
 import type { Mission } from "./domain/mission"
-import { SEED_MISSION, createBlankMission } from "./domain/seed"
+import {
+  SEED_MISSION,
+  createBlankMission,
+  createDemoMission,
+} from "./domain/seed"
 import { toMissionPrompt } from "./mission-prompt"
 
 describe("mission prompt", () => {
@@ -32,6 +36,7 @@ describe("mission prompt", () => {
     expect(snapshot).not.toContain('"stops"')
     expect(snapshot).not.toContain('"events"')
     expect(snapshot).not.toContain('"mustHaves"')
+    expect(snapshot).not.toContain('"sampleData"')
     expect(prompt).toContain("generate a Proposed schedule")
   })
 
@@ -55,7 +60,7 @@ describe("mission prompt", () => {
     const prompt = toMissionPrompt(mission)
 
     expect(prompt).toContain(
-      "https://daymaker.fun/needs",
+      "https://daymaker.fun/needs?new=1",
     )
     expect(prompt).toContain("continue in Work")
     expect(prompt).toContain("Do not stop")
@@ -63,13 +68,16 @@ describe("mission prompt", () => {
       "Treat the copied planning input as a new plan request",
     )
     expect(prompt).toContain(
-      "Use the live board only to obtain the current revision",
+      "planning URL clears the previous browser-local board",
+    )
+    expect(prompt).toContain(
+      "Do not inspect, compare, preserve, or clear an earlier plan with a tool call",
     )
     expect(prompt).toContain("Immediately call update_day_context")
     expect(prompt).toContain("with replacePlan: true")
     expect(prompt).toContain("before research, clarification, or progress narration")
     expect(prompt).toContain(
-      "Do not compare, reconcile, or preserve unrelated content from the live board",
+      "to initialize this request",
     )
     expect(prompt).not.toContain("If the live board is blank")
     expect(prompt).not.toContain("preserve its current Needs")
@@ -78,13 +86,26 @@ describe("mission prompt", () => {
     expect(prompt).toContain("Do not finish without the clickable link")
   })
 
+  it("marks bundled examples as fictional sample data", () => {
+    const prompt = toMissionPrompt(
+      createDemoMission("palermo-arrival-demo"),
+    )
+
+    expect(prompt).toContain('"sampleData": true')
+    expect(prompt).toContain(
+      "fictional product demo rather than the person's private travel data",
+    )
+  })
+
   it("asks the agent to structure Needs and regenerate every time", () => {
     const prompt = toMissionPrompt(SEED_MISSION)
 
     expect(prompt).toContain("extract concise Needs from the free-form brief")
     expect(prompt).toContain("replacePlan: true")
     expect(prompt).toContain("only goal")
-    expect(prompt).toContain("ask concise clarifying questions")
+    expect(prompt).toContain(
+      "ask a concise clarifying question only when an essential fact is missing",
+    )
     expect(prompt).toContain("set the plan date and starting location")
     expect(prompt).toContain("primary city or area")
     expect(prompt).toContain("most schedule activity happens")

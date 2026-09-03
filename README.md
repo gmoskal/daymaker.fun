@@ -10,8 +10,8 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 - Production URL: [daymaker.fun](https://daymaker.fun)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.8
-- Production deployment: v0.2.8 live
+- Local release: v0.2.9
+- Production deployment: v0.2.9 pending verification
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT
@@ -20,18 +20,18 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 1. Open **Needs** and describe what the plan must accomplish. This initial description is required; the placeholder shows a complete example.
 2. Choose **Copy to ChatGPT** and paste the self-contained handoff into ChatGPT on mobile or desktop.
-3. ChatGPT continues in Work, opens the public Sidequest `/needs` page, and calls `get_mission_state` only to obtain the current revision. It then immediately calls `update_day_context` with `replacePlan: true`, treating the copied input as a new request and discarding any unrelated proposal already open in that browser.
-4. After that reset, ChatGPT asks concise questions only if an essential fact is missing. Otherwise it extracts an editable Needs list, researches suitable places, and writes the best-fitting **Proposed schedule** to the page it opened with Site Tools. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated Sidequest plan** link.
+3. ChatGPT continues in Work and opens the one-shot public Sidequest `/needs?new=1` planning URL. The page clears any unrelated browser-local board itself before registering Site Tools, consumes the marker, and leaves the canonical URL at `/needs`.
+4. ChatGPT reads that new blank board, initializes it from the copied input, asks concise questions only if an essential fact is missing, researches suitable places, and writes the best-fitting **Proposed schedule**. Every successful Site Tool write returns the complete updated session as a portable link, so ChatGPT finishes with a clickable **Open updated Sidequest plan** link.
    Questions, progress updates, and the final answer use the language of your request; Sidequest keeps proper names, sources, tool values, and the session link unchanged.
 5. After that first update, the description disappears and the structured Needs become the working surface. Add, rename, cross out, remove, reorder, or mark a need **Must keep** / **Can adapt**.
 6. There are two ways to iterate. Edit Needs on the board, choose **Copy changes to ChatGPT**, and paste the update back into the chat; or describe what should change directly in ChatGPT. Either path regenerates the proposal and returns a fresh link.
 7. **Proposed schedule** stays disabled until ChatGPT has set the planning context. Open it to review the generated title, date, primary city/area, and items. The proposal is read-only for people: click anywhere on one or more rows to expand details and map links. The complete proposal also has one Google Maps route.
-8. The top of Proposed schedule shows its human generation count as **Iteration N** and a borderless **Copy link** action. Use that self-contained link on another device or share it with friends. Individual tool writes do not inflate the iteration count.
+8. As soon as structured Needs exist, their top-left **Copy link to share** action exports the current board. Proposed schedule exposes the same action next to **Iteration N**. Use either self-contained link on another device or share it with friends. Individual tool writes do not inflate the iteration count.
 
 **Load demo** contains two input examples, not prebuilt schedules:
 
-- **Palermo arrival** — airport car rental, breakfast and coffee, one nearby sight, parking, and a fixed 16:00 Hotel Trinacria check-in.
-- **South Croatia gravel day** — a 20 km shaded gravel ride before 10:00, limited driving, no main roads, a restaurant, snorkeling, parking, and a calculated return time.
+- **Palermo arrival** — a fictional route starting at Palermo Airport, with car rental, breakfast and coffee, one nearby sight, parking, and a fixed Hotel Trinacria arrival.
+- **South Croatia gravel day** — a fictional route starting at Grand Hotel Slavia, with a shaded 20 km gravel ride, limited driving, quiet roads, a restaurant, snorkeling, parking, and a calculated return time.
 
 ## Why WebMCP
 
@@ -148,6 +148,7 @@ Automated tests use a native-shaped `document.modelContext.registerTool` harness
 - [x] Deploy v0.2.6 and verify `daymaker.fun` over HTTPS.
 - [x] Deploy v0.2.7 and verify the two-way feedback handoff plus plan iteration utility.
 - [x] Deploy v0.2.8 and verify immediate replacement of an unrelated live proposal.
+- [ ] Deploy v0.2.9 and verify the one-shot local reset, structured-Needs share link, and fictional demo marker.
 - [ ] Open the production page in ChatGPT with Site Tools and paste a copied Needs handoff.
 - [ ] Confirm all five tools are discoverable in a compatible Chrome build.
 - [ ] Confirm the generated proposal updates visibly and survives reload.

@@ -39,6 +39,7 @@
 - [x] 18. Align the add-Need interaction with the list
 - [x] 19. Transfer a complete session through a shareable URL
 - [x] 20. Keep ChatGPT's response in the person's language
+- [~] 21. Make daymaker.fun the production domain
 
 ## Blocking decisions accepted in this plan
 
@@ -1243,6 +1244,60 @@ Implementation result:
   and is aliased at `https://sidequest-webmcp-eta.vercel.app`. Public asset
   `index-BQQJgeUW.js` contains v0.2.5, both language-selection rules, and the
   exact-session-link preservation rule.
+
+### 21 [~] Make daymaker.fun the production domain
+
+Description: Attach the purchased `daymaker.fun` domain to the existing Vercel
+project, preserve the current deployment alias, and make the custom HTTPS origin
+the single canonical URL copied into ChatGPT handoffs and delivery docs.
+
+Acceptance criteria:
+
+- AC-1: Vercel reports `daymaker.fun` as configured correctly for the
+  `sidequest-webmcp` production project and serves the current app over HTTPS.
+- AC-2: `www.daymaker.fun` resolves to Vercel and serves or redirects to the
+  same production app instead of Hover's placeholder.
+- AC-3: copied handoffs open `https://daymaker.fun/needs`; the former Vercel
+  alias remains usable but is not duplicated as a second canonical constant.
+- AC-4: README submission metadata names `https://daymaker.fun` as the
+  production URL.
+
+Tests:
+
+- AC-3 -> unit: `copy.test.ts > keeps the agent handoff and mission positioning
+  explicit`; integration: `mission-prompt.test.ts > bootstraps a fresh mobile
+  Work board instead of stopping at the mode handoff` and the copied-prompt E2E.
+- AC-4 -> unit: `delivery.test.ts > documents the public submission metadata`.
+- AC-1/2 -> deployment verification: Vercel domain verification plus HTTPS
+  response checks for the apex and `www` hosts; no unit test can prove external
+  DNS propagation or certificate issuance.
+
+Sources/References: Hover DNS for `daymaker.fun`, Vercel project
+`sidequest-webmcp`, `src/copy.ts`, prompt tests, `README.md`.
+
+Before implementation gate:
+
+- [x] Vercel ownership and target project confirmed before DNS mutation.
+- [x] Hover apex A records set to Vercel's two rank-1 recommended addresses;
+  `www` CNAME set to the project-specific Vercel DNS target.
+- [x] Canonical-URL assertions observed red before production copy/docs change.
+
+Implementation result:
+
+- Behavioral red: `npm run test -- src/copy.test.ts src/mission-prompt.test.ts
+  src/delivery.test.ts` ran 8 tests and failed exactly the three assertions that
+  still observed the Vercel alias in the canonical constant, generated handoff,
+  and README.
+- Focused green: the canonical copy, prompt, delivery, and footer-version suites
+  passed 13/13 tests after `SIDEQUEST_URL` changed once at its source.
+- Full local gate: `npm run check` passed 74/74 Vitest tests, the strict
+  TypeScript/Vite build, and 5/5 Chromium flows.
+- Mature-TypeScript round 1 retained no domain state for a deployment address.
+  Round 2 traced the copied handoff through the existing `SIDEQUEST_URL`
+  boundary and kept portable session links based on the page actually opened.
+  Round 3 rejected a second environment/config service for one public constant.
+  Round 4 required no new helper, wrapper, type, or cast. Round 5 required no
+  React component, state, effect, or renderer change.
 
 ## Risks and dependencies
 

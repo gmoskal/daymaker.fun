@@ -36,7 +36,7 @@ describe("English product copy", () => {
     expect(Object.values(COPY)).toContain("Make {need} non-negotiable")
     expect(Object.values(COPY)).not.toContain("Fixed")
     expect(Object.values(COPY)).not.toContain("Flexible")
-    expect(SIDEQUEST_URL).toBe("https://sidequest-webmcp-eta.vercel.app")
+    expect(SIDEQUEST_URL).toBe("https://daymaker.fun")
     expect(COPY.emptyPlanHint).toContain("open items for details and maps")
     expect(COPY.emptyPlanHint).toContain(
       "Open the complete proposal in Google Maps",

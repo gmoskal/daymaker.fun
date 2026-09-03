@@ -1,6 +1,6 @@
 import type { DemoMissionId } from "./domain/seed"
 
-export const SIDEQUEST_URL = "https://sidequest-webmcp-eta.vercel.app"
+export const SIDEQUEST_URL = "https://daymaker.fun"
 
 export const COPY = {
   addRequirement: "Add need",
@@ -44,7 +44,7 @@ export const COPY = {
   promptProtocol:
     "Call get_mission_state as soon as the page opens, before any write. The JSON below is the copied planning input. If the live board is blank, bootstrap it from the copied planning input using the live revision. Do not discard the copied brief just because its revision differs from a newly opened browser. If the live board already contains work for this request, preserve its current Needs and locked commitments. After each write, use the returned revision for the next write. Write all user-facing questions, progress summaries, and the final response in the same language as the person's free-form brief or latest Needs request. If the request mixes languages or is ambiguous, use the language of the person's latest message. Keep proper names, source titles, and exact tool-returned values unchanged. Every successful read or write returns a sessionUrl containing the complete current board. Do not translate the exact session link. After the final successful write, end your response with [Open updated Sidequest plan](sessionUrl), replacing sessionUrl with the exact returned URL. If no write was needed, use the URL returned by the final read. Do not finish without the clickable link.",
   promptSnapshot: "Planning input at copy time:",
-  release: "v0.2.5",
+  release: "v0.2.6",
   updated: "updated",
   planTitle: "Proposed schedule",
   scheduleTitle: "Schedule",

@@ -256,7 +256,7 @@ test("edits Needs and copies the current handoff", async ({ page }) => {
     () => (window as typeof window & { __copiedText: string }).__copiedText,
   )
   expect(initialCopied).toContain(
-    "https://sidequest-webmcp-eta.vercel.app/needs",
+    "https://daymaker.fun/needs",
   )
   expect(initialCopied).toContain("continue in Work")
   expect(initialCopied).toContain("If the live board is blank")

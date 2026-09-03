@@ -16,7 +16,7 @@ describe("delivery repository", () => {
     expect(readme).toContain("reorder_mission_stops")
     expect(readme).toContain("Manual browser checks")
     expect(readme).toContain(
-      "Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)",
+      "Production URL: [daymaker.fun](https://daymaker.fun)",
     )
     expect(readme).not.toContain("Deployment: pending")
     expect(readme).toContain("Demo video: pending")

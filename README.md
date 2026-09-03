@@ -8,10 +8,10 @@ This repository is an English-only entry for [The WebMCP Challenge](https://webm
 
 ## Submission status
 
-- Production URL: [sidequest-webmcp-eta.vercel.app](https://sidequest-webmcp-eta.vercel.app)
+- Production URL: [daymaker.fun](https://daymaker.fun)
 - Public repository: [github.com/gmoskal/sidequest-webmcp](https://github.com/gmoskal/sidequest-webmcp)
-- Local release: v0.2.5
-- Production deployment: v0.2.5 live
+- Local release: v0.2.6
+- Production deployment: v0.2.5 live; v0.2.6 pending
 - Automatic Git deployments: pending GitHub/Vercel repository permission
 - Demo video: pending
 - License: MIT

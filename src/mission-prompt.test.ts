@@ -55,7 +55,7 @@ describe("mission prompt", () => {
     const prompt = toMissionPrompt(mission)
 
     expect(prompt).toContain(
-      "https://sidequest-webmcp-eta.vercel.app/needs",
+      "https://daymaker.fun/needs",
     )
     expect(prompt).toContain("continue in Work")
     expect(prompt).toContain("Do not stop")
